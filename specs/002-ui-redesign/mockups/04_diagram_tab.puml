@@ -1,0 +1,47 @@
+@startsalt
+{+
+<size:18><b>Diagram Tab View</b>
+==
+{^
+{/ [Overview] | [Content] | [Triggers] | [<b>Diagram</b>] | [References] | [Scripts] }
+==
+{SI
+<size:16><b>📊 Skill Architecture</b>
+.
+<size:12>Visual representation of <b>pdf</b> and its dependencies
+.
+{^
+{
+.
+           ┌─────────────────┐
+           │  📦 pdf Skill   │
+           │   (Main)        │
+           └────────┬────────┘
+                    │
+        ┌───────────┴───────────┐
+        │                       │
+   ┌────▼────┐            ┌────▼────┐
+   │ 📚 Refs │            │ ⚙️ Scripts│
+   │   (5)   │            │   (2)   │
+   └────┬────┘            └────┬────┘
+        │                      │
+   ┌────┴────┐            ┌────┴────┐
+   │ 📄 ops  │            │🐍extract│
+   │ 📄 forms│            │🐍 fill  │
+   │ 📄 text │            └─────────┘
+   │ 📄 table│
+   │ 📄 examp│
+   └─────────┘
+.
+}
+.
+<size:14><b>Export Options</b>
+[ Download SVG ] [ Download PNG ] [ Copy to Clipboard ]
+.
+<size:14><b>Diagram Legend</b>
+<color:blue>📦 Main Skill</color>  |  <color:green>📚 References</color>  |  <color:orange>⚙️ Scripts</color>
+}
+}
+}
+}
+@endsalt

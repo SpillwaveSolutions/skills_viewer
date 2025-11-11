@@ -1,0 +1,51 @@
+@startsalt
+{+
+<size:18><b>Content Tab View</b>
+==
+{^
+{/ [Overview] | [<b>Content</b>] | [Triggers] | [Diagram] | [References] | [Scripts] }
+==
+{SI
+<size:16><b>📄 Skill Documentation</b>
+.
+<size:14><b># PDF Skill</b>
+.
+<size:12>This skill provides comprehensive PDF manipulation capabilities
+for working with PDF documents programmatically.
+.
+<size:14><b>## When to Use</b>
+.
+<size:12>• Extract text from PDF documents
+• Parse tables and structured data
+• Fill PDF forms programmatically
+• Merge multiple PDFs
+• Split PDFs into separate files
+• Create new PDF documents
+.
+<size:14><b>## Features</b>
+.
+<size:12><b>Text Extraction:</b>
+Extract text content from single or multiple pages
+with support for text positioning and formatting.
+.
+<size:12><b>Table Parsing:</b>
+Intelligent table detection and extraction with
+support for complex layouts.
+.
+<size:12><b>Form Filling:</b>
+Fill PDF forms with data programmatically, including
+text fields, checkboxes, and dropdowns.
+.
+<size:14><b>## Example Usage</b>
+.
+<size:11>```python
+from pdf_tools import extract_text
+.
+# Extract text from a PDF
+text = extract_text('document.pdf')
+print(text)
+```</size>
+}
+}
+}
+@endsalt
