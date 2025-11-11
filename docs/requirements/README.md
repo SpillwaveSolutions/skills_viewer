@@ -22,22 +22,25 @@ This directory contains comprehensive product requirements documentation for the
 | **[user-stories.md](./user-stories.md)** | Detailed user stories with acceptance criteria (US1-US6) | ✅ Complete |
 | **[technical-architecture.md](./technical-architecture.md)** | System architecture, component design, data flow | ✅ Complete |
 | **[data-model.md](./data-model.md)** | Entity definitions, relationships, validation rules | ✅ Complete |
+| **[ui-ux-requirements.md](./ui-ux-requirements.md)** | User interface design, visual specifications, interaction patterns | ✅ Complete |
+| **[UI_UX_SUMMARY.md](./UI_UX_SUMMARY.md)** | Quick reference guide to UI/UX documentation | ✅ Complete |
 
 ### Feature-Specific Documentation
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| **[features/trigger-analysis.md](./features/trigger-analysis.md)** | Detailed requirements for trigger analysis feature | ✅ Complete |
-| [features/skill-discovery.md](./features/skill-discovery.md) | Requirements for skill discovery and listing | 📋 To be created |
-| [features/skill-viewing.md](./features/skill-viewing.md) | Requirements for skill detail viewing | 📋 To be created |
-| [features/navigation.md](./features/navigation.md) | Requirements for navigation system | 📋 To be created |
-| [features/visualization.md](./features/visualization.md) | Requirements for Mermaid diagrams | 📋 To be created |
-| [features/search-filtering.md](./features/search-filtering.md) | Requirements for search functionality | 📋 To be created |
+| **[features/skill-discovery.md](./features/skill-discovery.md)** | Requirements for skill discovery and listing (US1) | ✅ Complete |
+| **[features/skill-viewing.md](./features/skill-viewing.md)** | Requirements for skill detail viewing (US2) | ✅ Complete |
+| **[features/navigation.md](./features/navigation.md)** | Requirements for navigation system (US3) | ✅ Complete |
+| **[features/trigger-analysis.md](./features/trigger-analysis.md)** | Requirements for trigger analysis feature (US4) | ✅ Complete |
+| **[features/visualization.md](./features/visualization.md)** | Requirements for Mermaid diagrams (US5) | ✅ Complete |
+| **[features/search-filtering.md](./features/search-filtering.md)** | Requirements for search functionality (US6) | ✅ Complete |
 
 ### Supporting Documentation
 
 | Document | Description | Status |
 |----------|-------------|--------|
+| **[diagrams/ui-component-hierarchy.md](./diagrams/ui-component-hierarchy.md)** | UI component tree, data flow, state diagrams | ✅ Complete |
 | [security-requirements.md](./security-requirements.md) | Security constraints, threat model, CSP | 📋 To be created |
 | [testing-requirements.md](./testing-requirements.md) | Testing strategy, coverage requirements | 📋 To be created |
 | [edge-cases.md](./edge-cases.md) | Comprehensive edge case documentation | 📋 To be created |
@@ -67,9 +70,11 @@ This directory contains comprehensive product requirements documentation for the
 - See individual feature documents for test cases
 
 **UX Designers**
-- Review [user-stories.md](./user-stories.md) for user journeys
-- Check [non-functional-requirements.md](./non-functional-requirements.md) for usability requirements
-- See feature documents for UI specifications
+- Start with [UI_UX_SUMMARY.md](./UI_UX_SUMMARY.md) for comprehensive UI/UX overview
+- Review [ui-ux-requirements.md](./ui-ux-requirements.md) for detailed design requirements
+- Check [diagrams/ui-component-hierarchy.md](./diagrams/ui-component-hierarchy.md) for component structure
+- See [user-stories.md](./user-stories.md) for user journeys
+- Reference [non-functional-requirements.md](./non-functional-requirements.md) for usability requirements
 
 ### By Phase
 
