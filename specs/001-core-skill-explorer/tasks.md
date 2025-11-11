@@ -1,3 +1,9 @@
+# Status Update: 2025-11-10 - v0.1.0 Implementation Complete
+
+**Implementation Status**: ~75% complete (MVP fully functional)
+**Legend**: [x] Complete | [~] Partial/Simplified | [ ] Not started
+
+---
 # Tasks: Core Skill Explorer
 
 **Input**: Design documents from `/specs/001-core-skill-explorer/`
@@ -24,15 +30,15 @@ Per plan.md, this is a Tauri hybrid application:
 
 **Purpose**: Project initialization and basic Tauri + React structure
 
-- [ ] T001 Initialize Tauri 2.x project with `npm create tauri-app@latest`
-- [ ] T002 Configure Tauri permissions in `src-tauri/tauri.conf.json` (file system read-only for skill directories)
-- [ ] T003 [P] Setup TypeScript configuration in `tsconfig.json` with strict mode
-- [ ] T004 [P] Configure Vite build settings in `vite.config.ts`
-- [ ] T005 [P] Setup Tailwind CSS in `tailwind.config.js` and `src/index.css`
-- [ ] T006 [P] Configure ESLint and Prettier in `.eslintrc.json` and `.prettierrc`
-- [ ] T007 [P] Add Rust dependencies to `src-tauri/Cargo.toml` (serde, walkdir, yaml-rust2, tokio)
-- [ ] T008 [P] Add frontend dependencies to `package.json` (react-markdown, mermaid, zustand, @radix-ui/*, @tanstack/react-query)
-- [ ] T009 Create project directory structure as defined in plan.md
+- [x] T001 Initialize Tauri 2.x project with `npm create tauri-app@latest`
+- [x] T002 Configure Tauri permissions in `src-tauri/tauri.conf.json` (file system read-only for skill directories)
+- [x] T003 [P] Setup TypeScript configuration in `tsconfig.json` with strict mode
+- [x] T004 [P] Configure Vite build settings in `vite.config.ts`
+- [x] T005 [P] Setup Tailwind CSS in `tailwind.config.js` and `src/index.css`
+- [~] T006 [P] Configure ESLint and Prettier in `.eslintrc.json` and `.prettierrc`
+- [x] T007 [P] Add Rust dependencies to `src-tauri/Cargo.toml` (serde, walkdir, yaml-rust2, tokio)
+- [x] T008 [P] Add frontend dependencies to `package.json` (react-markdown, mermaid, zustand, @radix-ui/*, @tanstack/react-query)
+- [x] T009 Create project directory structure as defined in plan.md
 
 ---
 
@@ -42,18 +48,18 @@ Per plan.md, this is a Tauri hybrid application:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T010 [P] Define Rust Skill model in `src-tauri/src/models/skill.rs` with Serialize/Deserialize
-- [ ] T011 [P] Define Rust Reference model in `src-tauri/src/models/reference.rs`
-- [ ] T012 [P] Define Rust Script model in `src-tauri/src/models/script.rs`
-- [ ] T013 [P] Define TypeScript Skill type in `src/types/skill.ts`
-- [ ] T014 [P] Define TypeScript Reference type in `src/types/reference.ts`
-- [ ] T015 [P] Define TypeScript Script type in `src/types/script.ts`
-- [ ] T016 Implement path utilities in `src-tauri/src/utils/path_utils.rs` (home dir expansion, path sanitization)
-- [ ] T017 [P] Implement YAML parser in `src-tauri/src/utils/yaml_parser.rs` for frontmatter extraction
-- [ ] T018 Setup Zustand skill store in `src/stores/skillStore.ts` with skill list state
-- [ ] T019 [P] Setup Zustand navigation store in `src/stores/navigationStore.ts` with history management
-- [ ] T020 Configure React Query provider in `src/main.tsx`
-- [ ] T021 Create base Layout component in `src/components/Layout.tsx` (sidebar + main content areas)
+- [x] T010 [P] Define Rust Skill model in `src-tauri/src/models/skill.rs` with Serialize/Deserialize
+- [x] T011 [P] Define Rust Reference model in `src-tauri/src/models/reference.rs`
+- [x] T012 [P] Define Rust Script model in `src-tauri/src/models/script.rs`
+- [x] T013 [P] Define TypeScript Skill type in `src/types/skill.ts`
+- [x] T014 [P] Define TypeScript Reference type in `src/types/reference.ts`
+- [x] T015 [P] Define TypeScript Script type in `src/types/script.ts`
+- [x] T016 Implement path utilities in `src-tauri/src/utils/path_utils.rs` (home dir expansion, path sanitization)
+- [x] T017 [P] Implement YAML parser in `src-tauri/src/utils/yaml_parser.rs` for frontmatter extraction
+- [x] T018 Setup Zustand skill store in `src/stores/skillStore.ts` with skill list state
+- [~] T019 [P] Setup Zustand navigation store in `src/stores/navigationStore.ts` with history management
+- [~] T020 Configure React Query provider in `src/main.tsx`
+- [x] T021 Create base Layout component in `src/components/Layout.tsx` (sidebar + main content areas)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -76,17 +82,17 @@ Per plan.md, this is a Tauri hybrid application:
 
 ### Implementation for User Story 1
 
-- [ ] T026 [US1] Implement skill_scanner command in `src-tauri/src/commands/skill_scanner.rs` (scan both directories in parallel using tokio::join!)
-- [ ] T027 [US1] Implement skill_service in `src-tauri/src/services/skill_service.rs` (business logic for skill discovery)
-- [ ] T028 [US1] Register scan_skills Tauri command in `src-tauri/src/main.rs`
-- [ ] T029 [P] [US1] Create Tauri command wrapper in `src/services/tauriCommands.ts` for scan_skills
-- [ ] T030 [P] [US1] Create useSkills hook in `src/hooks/useSkills.ts` using React Query
-- [ ] T031 [US1] Create SkillListItem component in `src/components/SkillList/SkillListItem.tsx`
-- [ ] T032 [US1] Create SkillList component in `src/components/SkillList/SkillList.tsx` with virtual scrolling (@tanstack/react-virtual)
-- [ ] T033 [US1] Create Sidebar component in `src/components/Layout.tsx` integrating SkillList
-- [ ] T034 [US1] Add empty state UI for no skills found
-- [ ] T035 [US1] Add error handling for directory access failures
-- [ ] T036 [US1] Add loading state during skill scanning
+- [x] T026 [US1] Implement skill_scanner command in `src-tauri/src/commands/skill_scanner.rs` (scan both directories in parallel using tokio::join!)
+- [~] T027 [US1] Implement skill_service in `src-tauri/src/services/skill_service.rs` (business logic for skill discovery)
+- [x] T028 [US1] Register scan_skills Tauri command in `src-tauri/src/main.rs`
+- [~] T029 [P] [US1] Create Tauri command wrapper in `src/services/tauriCommands.ts` for scan_skills
+- [x] T030 [P] [US1] Create useSkills hook in `src/hooks/useSkills.ts` using React Query
+- [~] T031 [US1] Create SkillListItem component in `src/components/SkillList/SkillListItem.tsx`
+- [x] T032 [US1] Create SkillList component in `src/components/SkillList/SkillList.tsx` with virtual scrolling (@tanstack/react-virtual)
+- [x] T033 [US1] Create Sidebar component in `src/components/Layout.tsx` integrating SkillList
+- [x] T034 [US1] Add empty state UI for no skills found
+- [x] T035 [US1] Add error handling for directory access failures
+- [x] T036 [US1] Add loading state during skill scanning
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can see all skills and select them
 
@@ -107,20 +113,20 @@ Per plan.md, this is a Tauri hybrid application:
 
 ### Implementation for User Story 2
 
-- [ ] T041 [US2] Implement file_reader command in `src-tauri/src/commands/file_reader.rs` (read markdown files with error handling)
-- [ ] T042 [US2] Implement metadata_parser command in `src-tauri/src/commands/metadata_parser.rs` (parse YAML frontmatter)
-- [ ] T043 [US2] Register read_skill and read_file Tauri commands in `src-tauri/src/main.rs`
-- [ ] T044 [P] [US2] Create Tauri command wrappers in `src/services/tauriCommands.ts` for file operations
-- [ ] T045 [P] [US2] Create useMarkdown hook in `src/hooks/useMarkdown.ts`
-- [ ] T046 [US2] Create MetadataDisplay component in `src/components/SkillViewer/MetadataDisplay.tsx`
-- [ ] T047 [US2] Create MarkdownRenderer component in `src/components/SkillViewer/MarkdownRenderer.tsx` using react-markdown and react-syntax-highlighter
-- [ ] T048 [US2] Create ReferenceList component in `src/components/SkillViewer/ReferenceList.tsx`
-- [ ] T049 [US2] Create ScriptList component in `src/components/SkillViewer/ScriptList.tsx`
-- [ ] T050 [US2] Create SkillViewer component in `src/components/SkillViewer/SkillViewer.tsx` composing all subcomponents
-- [ ] T051 [US2] Create TabBar component in `src/components/Navigation/TabBar.tsx` for Overview/Triggers/Diagram tabs
-- [ ] T052 [US2] Integrate SkillViewer into MainContent area of Layout
-- [ ] T053 [US2] Add error handling for malformed YAML frontmatter (graceful degradation)
-- [ ] T054 [US2] Add error handling for missing skill.md files
+- [x] T041 [US2] Implement file_reader command in `src-tauri/src/commands/file_reader.rs` (read markdown files with error handling)
+- [~] T042 [US2] Implement metadata_parser command in `src-tauri/src/commands/metadata_parser.rs` (parse YAML frontmatter)
+- [x] T043 [US2] Register read_skill and read_file Tauri commands in `src-tauri/src/main.rs`
+- [~] T044 [P] [US2] Create Tauri command wrappers in `src/services/tauriCommands.ts` for file operations
+- [~] T045 [P] [US2] Create useMarkdown hook in `src/hooks/useMarkdown.ts`
+- [x] T046 [US2] Create MetadataDisplay component in `src/components/SkillViewer/MetadataDisplay.tsx`
+- [x] T047 [US2] Create MarkdownRenderer component in `src/components/SkillViewer/MarkdownRenderer.tsx` using react-markdown and react-syntax-highlighter
+- [x] T048 [US2] Create ReferenceList component in `src/components/SkillViewer/ReferenceList.tsx`
+- [x] T049 [US2] Create ScriptList component in `src/components/SkillViewer/ScriptList.tsx`
+- [x] T050 [US2] Create SkillViewer component in `src/components/SkillViewer/SkillViewer.tsx` composing all subcomponents
+- [x] T051 [US2] Create TabBar component in `src/components/Navigation/TabBar.tsx` for Overview/Triggers/Diagram tabs
+- [x] T052 [US2] Integrate SkillViewer into MainContent area of Layout
+- [x] T053 [US2] Add error handling for malformed YAML frontmatter (graceful degradation)
+- [x] T054 [US2] Add error handling for missing skill.md files
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - users can browse skills and view their full details
 
@@ -170,13 +176,13 @@ Per plan.md, this is a Tauri hybrid application:
 
 ### Implementation for User Story 4
 
-- [ ] T072 [P] [US4] Implement trigger keyword extraction logic in `src/services/triggerAnalyzer.ts` (regex patterns for "when...", "use this...", keywords)
-- [ ] T073 [US4] Create KeywordHighlighter component in `src/components/TriggerAnalyzer/KeywordHighlighter.tsx`
-- [ ] T074 [US4] Create TriggerAnalyzer component in `src/components/TriggerAnalyzer/TriggerAnalyzer.tsx` showing categorized triggers
-- [ ] T075 [US4] Add example query generator in `src/services/triggerAnalyzer.ts`
-- [ ] T076 [US4] Integrate TriggerAnalyzer into Triggers tab of TabContent
-- [ ] T077 [US4] Add confidence level visualization (how likely skill triggers)
-- [ ] T078 [US4] Add reference trigger analysis (what loads specific references)
+- [x] T072 [P] [US4] Implement trigger keyword extraction logic in `src/services/triggerAnalyzer.ts` (regex patterns for "when...", "use this...", keywords)
+- [~] T073 [US4] Create KeywordHighlighter component in `src/components/TriggerAnalyzer/KeywordHighlighter.tsx`
+- [x] T074 [US4] Create TriggerAnalyzer component in `src/components/TriggerAnalyzer/TriggerAnalyzer.tsx` showing categorized triggers
+- [~] T075 [US4] Add example query generator in `src/services/triggerAnalyzer.ts`
+- [x] T076 [US4] Integrate TriggerAnalyzer into Triggers tab of TabContent
+- [x] T077 [US4] Add confidence level visualization (how likely skill triggers)
+- [x] T078 [US4] Add reference trigger analysis (what loads specific references)
 
 **Checkpoint**: User Story 4 complete - users can debug why skills do/don't trigger
 
@@ -195,11 +201,11 @@ Per plan.md, this is a Tauri hybrid application:
 
 ### Implementation for User Story 5
 
-- [ ] T081 [P] [US5] Implement Mermaid syntax generator in `src/services/diagramGenerator.ts` (generate flowchart from skill structure)
-- [ ] T082 [US5] Create MermaidRenderer component in `src/components/DiagramView/MermaidRenderer.tsx` using mermaid.js
-- [ ] T083 [US5] Create DiagramView component in `src/components/DiagramView/DiagramView.tsx`
-- [ ] T084 [US5] Lazy load mermaid library using React.lazy() for code splitting
-- [ ] T085 [US5] Integrate DiagramView into Diagram tab of TabContent
+- [x] T081 [P] [US5] Implement Mermaid syntax generator in `src/services/diagramGenerator.ts` (generate flowchart from skill structure)
+- [x] T082 [US5] Create MermaidRenderer component in `src/components/DiagramView/MermaidRenderer.tsx` using mermaid.js
+- [x] T083 [US5] Create DiagramView component in `src/components/DiagramView/DiagramView.tsx`
+- [~] T084 [US5] Lazy load mermaid library using React.lazy() for code splitting
+- [x] T085 [US5] Integrate DiagramView into Diagram tab of TabContent
 - [ ] T086 [US5] Add zoom and pan controls for complex diagrams
 - [ ] T087 [US5] Add click handlers on diagram nodes to navigate to files
 - [ ] T088 [US5] Add export functionality (save as PNG or Mermaid source)
@@ -221,12 +227,12 @@ Per plan.md, this is a Tauri hybrid application:
 
 ### Implementation for User Story 6
 
-- [ ] T091 [US6] Create SkillListSearch component in `src/components/SkillList/SkillListSearch.tsx` with debounced input (300ms)
-- [ ] T092 [US6] Add search filter logic to skill store in `src/stores/skillStore.ts`
-- [ ] T093 [US6] Add location filter (claude/opencode) to SkillListSearch
-- [ ] T094 [US6] Integrate SkillListSearch into Sidebar above SkillList
-- [ ] T095 [US6] Add search result count display
-- [ ] T096 [US6] Add "no results" empty state with search suggestions
+- [x] T091 [US6] Create SkillListSearch component in `src/components/SkillList/SkillListSearch.tsx` with debounced input (300ms)
+- [x] T092 [US6] Add search filter logic to skill store in `src/stores/skillStore.ts`
+- [~] T093 [US6] Add location filter (claude/opencode) to SkillListSearch
+- [x] T094 [US6] Integrate SkillListSearch into Sidebar above SkillList
+- [x] T095 [US6] Add search result count display
+- [x] T096 [US6] Add "no results" empty state with search suggestions
 - [ ] T097 [US6] Add keyboard shortcut (Cmd/Ctrl+F) to focus search
 
 **Checkpoint**: All user stories complete - full feature set implemented
@@ -237,16 +243,16 @@ Per plan.md, this is a Tauri hybrid application:
 
 **Purpose**: Improvements that affect multiple user stories and final production readiness
 
-- [ ] T098 [P] Add application icons for macOS/Linux/Windows in `public/icons/`
-- [ ] T099 [P] Configure application metadata in `src-tauri/tauri.conf.json` (app name, version, description)
-- [ ] T100 [P] Setup Content Security Policy in `src-tauri/tauri.conf.json`
+- [~] T098 [P] Add application icons for macOS/Linux/Windows in `public/icons/`
+- [x] T099 [P] Configure application metadata in `src-tauri/tauri.conf.json` (app name, version, description)
+- [x] T100 [P] Setup Content Security Policy in `src-tauri/tauri.conf.json`
 - [ ] T101 [P] Add keyboard shortcut documentation in Help menu
 - [ ] T102 [P] Implement global error boundary in `src/App.tsx`
 - [ ] T103 [P] Add performance monitoring (startup time logging, scan time measurement)
 - [ ] T104 Code cleanup and refactoring pass across all components
 - [ ] T105 [P] Optimize bundle size (analyze with Vite build analyzer)
 - [ ] T106 [P] Add accessibility improvements (ARIA labels, focus management)
-- [ ] T107 [P] Create README.md with installation and usage instructions
+- [x] T107 [P] Create README.md with installation and usage instructions
 - [ ] T108 [P] Create CONTRIBUTING.md with development setup
 - [ ] T109 [P] Add license file (MIT per standard practice)
 - [ ] T110 Run full test suite and achieve >80% coverage target
