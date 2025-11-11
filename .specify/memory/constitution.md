@@ -126,4 +126,128 @@ This constitution represents the foundational principles and standards for the S
 - Complexity must be justified with reference to specific principles
 - Deviations require explicit documentation and approval
 
-**Version**: 1.0.0 | **Ratified**: 2025-11-10 | **Last Amended**: 2025-11-10
+## Lessons Learned (v0.1.0)
+
+### What Went Wrong
+
+During v0.1.0 implementation (features 001 and 002), we **violated the Specification-Driven Development (SDD) methodology** in critical ways:
+
+**Critical Deviation #1: Ignored Tasks During Implementation**
+- Created spec artifacts (spec.md, plan.md, tasks.md)
+- Then **implemented features based on intuition**, not the task list
+- Retroactively marked tasks as complete after implementation
+- Result: 42% of tasks skipped or simplified without documentation
+
+**Critical Deviation #2: Zero Test Coverage**
+- Skipped all 24 testing tasks from tasks.md
+- Final test coverage: 0% (violates Principle VII requiring >80%)
+- No TDD practices established
+- Result: Cannot refactor safely, no regression detection
+
+**Critical Deviation #3: Treated Specs as Documentation, Not Executable Artifacts**
+- SDD principle: Specs drive implementation
+- What we did: Implemented first, documented after
+- Tasks.md became retrospective record, not work queue
+- Result: Spec-implementation drift, unclear what was actually built
+
+### Proper SDD Workflow
+
+All future features **MUST** follow this workflow from the [SDD skill](~/.claude/skills/sdd/):
+
+```bash
+# 1. Create feature branch
+git checkout -b feature/XXX-feature-name
+
+# 2. Initialize feature specification
+/speckit.specify <detailed requirements>
+
+# 3. Clarify ambiguities (MANDATORY if spec unclear)
+/speckit.clarify
+
+# 4. Create implementation plan with constraints
+/speckit.plan <technical decisions, architecture, constraints>
+
+# 5. Generate task breakdown
+/speckit.tasks
+
+# 6. Validate consistency across artifacts
+/speckit.analyze
+
+# 7. Implement by following tasks.md STRICTLY
+/speckit.implement
+# - Read tasks.md sequentially
+# - Complete each task in order
+# - Mark [x] ONLY when fully done
+# - Mark [~] if simplified (with notes)
+# - Do NOT skip ahead
+# - Do NOT freelance
+```
+
+### Mandatory Process Improvements (v0.2.0+)
+
+**1. Test-Driven Development (TDD) Enforcement**
+- Write tests BEFORE implementation code
+- Each task in tasks.md must specify test requirements
+- CI must enforce test coverage >80% for new code
+- Feature branches cannot merge without passing tests
+
+**2. Real-Time Task Tracking**
+- Mark tasks [x]/[~]/[ ] DURING implementation, not after
+- Document deviations immediately when they occur
+- Use [~] for simplifications with inline rationale notes
+- Tasks.md is the single source of truth for progress
+
+**3. Checkpoint Validation**
+- After each SDD command (/speckit.specify, .plan, .tasks), STOP
+- Review artifacts before proceeding
+- Use /speckit.analyze to validate consistency
+- Do not implement until tasks.md is approved
+
+**4. Constitutional Compliance Checks**
+- Every PR must include compliance statement
+- Reference which principles are satisfied
+- Document any deviations with justification
+- Reviewers must verify alignment
+
+**5. SDD Skill Reference**
+- Location: `~/.claude/skills/sdd/`
+- Contains: Greenfield workflow, brownfield strategies, command reference
+- Consult before starting ANY new feature
+- Follow examples in `references/` directory
+
+### Remediation Plan
+
+**v0.1.1 (Documentation Release)**
+- ✅ Document actual implementation (IMPLEMENTATION_REALITY.md)
+- ✅ Track all deviations (DEVIATIONS.md for 001, 002)
+- ✅ Consolidate backlog (BACKLOG.md)
+- ✅ Update constitution (this section)
+
+**v0.2.0 (Testing + TDD Patterns)**
+- Feature/002: Keyboard shortcuts using PROPER SDD workflow
+- Establish TDD patterns (100% coverage for feature/002)
+- Backfill critical tests (target >50% overall coverage)
+- Configure ESLint/Prettier
+- Accessibility audit
+
+**v0.3.0 (Constitutional Compliance)**
+- Achieve >80% test coverage (Principle VII)
+- WCAG 2.1 AA compliance
+- Full E2E test suite
+- Cross-platform validation
+
+### Never Again
+
+The following practices are **BANNED** from v0.2.0 forward:
+
+- ❌ Implementing without approved tasks.md
+- ❌ Skipping /speckit commands
+- ❌ Marking tasks complete retroactively
+- ❌ Deferring tests "for later"
+- ❌ Treating specs as documentation instead of executable artifacts
+- ❌ Freelancing features not in tasks.md
+- ❌ Merging without test coverage
+
+**Enforcement**: Any PR violating these rules will be rejected immediately.
+
+**Version**: 1.1.0 | **Ratified**: 2025-11-10 | **Last Amended**: 2025-11-10
