@@ -1,0 +1,285 @@
+version: '3'
+
+vars:
+  PROJECT_NAME: skill-debugger
+  VERSION: 0.1.0
+  FRONTEND_DIR: .
+  BACKEND_DIR: src-tauri
+
+# Environment files (loaded in order, later overrides earlier)
+dotenv:
+  - .env
+
+tasks:
+  # =============================================================================
+  # Meta Tasks
+  # =============================================================================
+
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  # =============================================================================
+  # Development Tasks
+  # =============================================================================
+
+  dev:
+    desc: Start development mode (Vite + Tauri)
+    cmds:
+      - npm run dev
+
+  run-app:
+    desc: Run the Skill Debugger application (launches Tauri desktop app)
+    cmds:
+      - npm run tauri dev
+
+  tauri:dev:
+    desc: Start Tauri in development mode
+    cmds:
+      - npm run tauri dev
+
+  # =============================================================================
+  # Build Tasks
+  # =============================================================================
+
+  build:
+    desc: Build entire project (frontend + backend)
+    deps:
+      - build:frontend
+      - build:backend
+
+  build:frontend:
+    desc: Build frontend (TypeScript + Vite)
+    dir: "{{.FRONTEND_DIR}}"
+    sources:
+      - src/**/*.ts
+      - src/**/*.tsx
+      - index.html
+      - vite.config.ts
+      - tsconfig.json
+    generates:
+      - dist/**/*
+    cmds:
+      - tsc --noEmit
+      - vite build
+
+  build:backend:
+    desc: Build Rust backend
+    dir: "{{.BACKEND_DIR}}"
+    sources:
+      - src/**/*.rs
+      - Cargo.toml
+      - Cargo.lock
+    generates:
+      - target/debug/{{.PROJECT_NAME}}
+    cmds:
+      - cargo build
+
+  build:release:
+    desc: Build optimized release version (Tauri app)
+    cmds:
+      - npm run tauri build
+
+  # =============================================================================
+  # Test Tasks
+  # =============================================================================
+
+  test:
+    desc: Run all tests (frontend unit + backend)
+    deps:
+      - test:frontend
+      - test:backend
+
+  test:frontend:
+    desc: Run frontend unit tests (Vitest)
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - npm run test
+
+  test:backend:
+    desc: Run Rust backend tests
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - cargo test
+
+  test:ui:
+    desc: Run frontend tests with UI
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - npm run test:ui
+
+  test:e2e:
+    desc: Run end-to-end tests (Playwright)
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - npm run test:e2e
+
+  test:coverage:
+    desc: Run frontend tests with coverage
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - npm run test:coverage
+
+  test:all:
+    desc: Run all test types (unit, integration, e2e)
+    deps:
+      - test:frontend
+      - test:backend
+      - test:e2e
+
+  # =============================================================================
+  # Code Quality Tasks
+  # =============================================================================
+
+  lint:
+    desc: Run linters (when configured)
+    cmds:
+      - echo "Lint tasks not yet configured. Add ESLint for frontend, clippy for backend."
+
+  format:
+    desc: Format code (Prettier for frontend, rustfmt for backend)
+    deps:
+      - format:frontend
+      - format:backend
+
+  format:frontend:
+    desc: Format frontend code with Prettier (if configured)
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - echo "Prettier not configured. Consider adding npm install --save-dev prettier"
+
+  format:backend:
+    desc: Format Rust code with rustfmt
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - cargo fmt
+
+  format:check:backend:
+    desc: Check Rust code formatting
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - cargo fmt --check
+
+  clippy:
+    desc: Run Rust linter (clippy)
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - cargo clippy -- -D warnings
+
+  # =============================================================================
+  # Clean Tasks
+  # =============================================================================
+
+  clean:
+    desc: Clean all build artifacts and caches
+    deps:
+      - clean:frontend
+      - clean:backend
+
+  clean:frontend:
+    desc: Clean frontend build artifacts
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - rm -rf dist
+      - rm -rf node_modules/.vite
+      - rm -rf .task
+
+  clean:backend:
+    desc: Clean Rust build artifacts
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - cargo clean
+
+  clean:all:
+    desc: Deep clean including node_modules
+    deps:
+      - clean
+    cmds:
+      - rm -rf node_modules
+      - rm -rf package-lock.json
+
+  # =============================================================================
+  # Install/Setup Tasks
+  # =============================================================================
+
+  install:
+    desc: Install all dependencies (frontend + backend)
+    cmds:
+      - npm install
+      - echo "Rust dependencies are managed by Cargo automatically"
+
+  setup:
+    desc: Initial project setup (install dependencies, verify tools)
+    cmds:
+      - task: verify
+      - task: install
+      - echo "Setup complete! Run 'task dev' to start development."
+
+  verify:
+    desc: Verify required tools are installed
+    cmds:
+      - |
+        echo "Verifying required tools..."
+        command -v node >/dev/null 2>&1 || { echo "Node.js is required but not installed."; exit 1; }
+        command -v npm >/dev/null 2>&1 || { echo "npm is required but not installed."; exit 1; }
+        command -v cargo >/dev/null 2>&1 || { echo "Rust/Cargo is required but not installed."; exit 1; }
+        echo "✓ All required tools are installed"
+
+  # =============================================================================
+  # CI/CD Tasks
+  # =============================================================================
+
+  ci:
+    desc: Run full CI pipeline locally (build + test + lint)
+    cmds:
+      - task: clean
+      - task: install
+      - task: build
+      - task: test:all
+      - task: clippy
+      - task: format:check:backend
+
+  # =============================================================================
+  # Documentation Tasks
+  # =============================================================================
+
+  doc:
+    desc: Generate Rust documentation
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - cargo doc --no-deps --open
+
+  # =============================================================================
+  # Utility Tasks
+  # =============================================================================
+
+  update:
+    desc: Update all dependencies
+    cmds:
+      - npm update
+      - cd {{.BACKEND_DIR}} && cargo update
+
+  outdated:
+    desc: Check for outdated dependencies
+    cmds:
+      - npm outdated || true
+      - cd {{.BACKEND_DIR}} && cargo outdated || echo "Install cargo-outdated with cargo install cargo-outdated"
+
+  size:
+    desc: Show project size breakdown
+    cmds:
+      - echo "Frontend build size:"
+      - du -sh dist 2>/dev/null || echo "No dist/ directory (run 'task build:frontend')"
+      - echo ""
+      - echo "Backend build size:"
+      - du -sh {{.BACKEND_DIR}}/target 2>/dev/null || echo "No target/ directory (run 'task build:backend')"
+
+  # =============================================================================
+  # Playwright Setup
+  # =============================================================================
+
+  playwright:install:
+    desc: Install Playwright browsers
+    cmds:
+      - npx playwright install chromium

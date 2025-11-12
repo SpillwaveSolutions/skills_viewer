@@ -7,7 +7,7 @@ import javascript from 'highlight.js/lib/languages/javascript';
 import json from 'highlight.js/lib/languages/json';
 import markdown from 'highlight.js/lib/languages/markdown';
 import 'highlight.js/styles/github.css';
-import { Skill, Script } from '../types';
+import { Skill } from '../types';
 
 // Register languages
 hljs.registerLanguage('typescript', typescript);
@@ -28,6 +28,18 @@ interface ScriptsTabProps {
 
 export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
   const [selectedScript, setSelectedScript] = useState<number | null>(null);
+
+  // Reset selected script when skill changes
+  useEffect(() => {
+    setSelectedScript(null);
+  }, [skill.path]);
+
+  // Defensive: Ensure selectedScript is valid for current skill
+  const isValidSelection =
+    selectedScript !== null &&
+    selectedScript >= 0 &&
+    selectedScript < skill.scripts.length &&
+    skill.scripts[selectedScript] !== undefined;
 
   // Apply syntax highlighting when script changes
   useEffect(() => {
@@ -110,7 +122,7 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
 
       {/* Script Content */}
       <div className="flex-1 overflow-y-auto">
-        {selectedScript === null ? (
+        {!isValidSelection ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <div className="text-center">
               <div className="text-4xl mb-4">👈</div>
@@ -124,18 +136,29 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
               <div className="mb-4 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-2xl">
-                    {getLanguageIcon(skill.scripts[selectedScript].language)}
+                    {getLanguageIcon(
+                      selectedScript !== null && skill.scripts[selectedScript]
+                        ? skill.scripts[selectedScript].language
+                        : 'unknown'
+                    )}
                   </span>
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">
-                      {skill.scripts[selectedScript].name}
+                      {selectedScript !== null && skill.scripts[selectedScript]
+                        ? skill.scripts[selectedScript].name
+                        : 'Unknown'}
                     </h2>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-sm text-gray-600">
-                        {skill.scripts[selectedScript].language}
+                        {selectedScript !== null && skill.scripts[selectedScript]
+                          ? skill.scripts[selectedScript].language
+                          : ''}
                       </span>
                       <span className="text-sm text-gray-500">
-                        {skill.scripts[selectedScript].content.split('\n').length} lines
+                        {selectedScript !== null && skill.scripts[selectedScript]
+                          ? skill.scripts[selectedScript].content.split('\n').length
+                          : 0}{' '}
+                        lines
                       </span>
                     </div>
                   </div>
@@ -145,8 +168,16 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
               {/* Script Content */}
               <div className="border border-gray-200 rounded-lg overflow-hidden ml-8">
                 <pre className="p-4 bg-gray-50 overflow-x-auto text-sm">
-                  <code className={`language-${skill.scripts[selectedScript].language}`}>
-                    {skill.scripts[selectedScript].content}
+                  <code
+                    className={`language-${
+                      selectedScript !== null && skill.scripts[selectedScript]
+                        ? skill.scripts[selectedScript].language
+                        : 'text'
+                    }`}
+                  >
+                    {selectedScript !== null && skill.scripts[selectedScript]
+                      ? skill.scripts[selectedScript].content
+                      : ''}
                   </code>
                 </pre>
               </div>

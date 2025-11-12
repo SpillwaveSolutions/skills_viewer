@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useSkills } from '../hooks';
 import { useSkillStore } from '../stores';
+import { useKeyboardStore } from '../stores/keyboardStore';
+import { useListNavigation } from '../hooks/useListNavigation';
 import { Skill } from '../types';
 import { SearchBar } from './SearchBar';
 
@@ -8,6 +10,8 @@ export const SkillList: React.FC = () => {
   const { skills, isLoading, error, reload } = useSkills();
   const { selectedSkill, selectSkill } = useSkillStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const highlightedSkillIndex = useKeyboardStore((state) => state.highlightedSkillIndex);
+  const setVisibleSkillCount = useKeyboardStore((state) => state.setVisibleSkillCount);
 
   // Filter skills based on search query
   const filteredSkills = useMemo(() => {
@@ -20,6 +24,21 @@ export const SkillList: React.FC = () => {
       skill.location.toLowerCase().includes(query)
     );
   }, [skills, searchQuery]);
+
+  // Update visible skill count for keyboard navigation
+  useEffect(() => {
+    setVisibleSkillCount(filteredSkills.length);
+  }, [filteredSkills.length, setVisibleSkillCount]);
+
+  // Enable keyboard list navigation
+  useListNavigation({
+    skillCount: filteredSkills.length,
+    onSelectSkill: (index) => {
+      if (filteredSkills[index]) {
+        selectSkill(filteredSkills[index]);
+      }
+    },
+  });
 
   if (error) {
     return (
@@ -73,17 +92,29 @@ export const SkillList: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div
+        className="flex-1 overflow-y-auto"
+        role="listbox"
+        aria-activedescendant={
+          highlightedSkillIndex !== null &&
+          highlightedSkillIndex >= 0 &&
+          highlightedSkillIndex < filteredSkills.length
+            ? `skill-item-${highlightedSkillIndex}`
+            : undefined
+        }
+      >
         {filteredSkills.length === 0 ? (
           <div className="p-4 text-center">
             <p className="text-sm text-gray-600">No skills match "{searchQuery}"</p>
           </div>
         ) : (
-          filteredSkills.map((skill) => (
+          filteredSkills.map((skill, index) => (
             <SkillListItem
               key={skill.path}
               skill={skill}
+              index={index}
               isSelected={selectedSkill?.path === skill.path}
+              isHighlighted={highlightedSkillIndex === index}
               onClick={() => selectSkill(skill)}
             />
           ))
@@ -95,16 +126,45 @@ export const SkillList: React.FC = () => {
 
 interface SkillListItemProps {
   skill: Skill;
+  index: number;
   isSelected: boolean;
+  isHighlighted: boolean;
   onClick: () => void;
 }
 
-const SkillListItem: React.FC<SkillListItemProps> = ({ skill, isSelected, onClick }) => {
+const SkillListItem: React.FC<SkillListItemProps> = ({ skill, index, isSelected, isHighlighted, onClick }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (isHighlighted && ref.current) {
+      ref.current.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth',
+      });
+    }
+  }, [isHighlighted]);
+
+  // Determine background styling based on selection and highlight state
+  const getBackgroundClass = () => {
+    if (isSelected) {
+      return 'bg-blue-50 border-l-4 border-l-blue-500';
+    }
+    if (isHighlighted) {
+      return 'bg-amber-50 border-l-2 border-l-amber-400';
+    }
+    return '';
+  };
+
   return (
     <div
-      className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-        isSelected ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-      }`}
+      ref={ref}
+      id={`skill-item-${index}`}
+      role="option"
+      aria-selected={isSelected}
+      data-testid="skill-item"
+      data-highlighted={isHighlighted}
+      className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${getBackgroundClass()}`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">

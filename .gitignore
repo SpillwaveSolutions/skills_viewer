@@ -22,3 +22,26 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables
+.env*
+!.env.example
+
+# Build and test output
+build/
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+
+# Tauri
+src-tauri/target/
+src-tauri/Cargo.lock
+
+# Test artifacts
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+playwright/.cache/
