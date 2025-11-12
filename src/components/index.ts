@@ -8,3 +8,5 @@ export { OverviewPanel } from './OverviewPanel';
 export { DescriptionSection } from './DescriptionSection';
 export { ReferencesTab } from './ReferencesTab';
 export { ScriptsTab } from './ScriptsTab';
+export { KeyboardShortcutHelp } from './KeyboardShortcutHelp';
+export { ErrorBoundary } from './ErrorBoundary';

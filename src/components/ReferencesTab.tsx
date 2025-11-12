@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Skill } from '../types';
 import ReactMarkdown from 'react-markdown';
@@ -13,6 +13,19 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
   const [selectedRef, setSelectedRef] = useState<number | null>(null);
   const [refContent, setRefContent] = useState<string>('');
   const [loading, setLoading] = useState(false);
+
+  // Reset selected reference when skill changes
+  useEffect(() => {
+    setSelectedRef(null);
+    setRefContent('');
+  }, [skill.path]); // Reset when skill changes
+
+  // Defensive: Ensure selectedRef is valid for current skill
+  const isValidSelection =
+    selectedRef !== null &&
+    selectedRef >= 0 &&
+    selectedRef < skill.references.length &&
+    skill.references[selectedRef] !== undefined;
 
   const loadReferenceContent = async (path: string, index: number) => {
     setSelectedRef(index);
@@ -85,7 +98,7 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
 
       {/* Reference Content */}
       <div className="flex-1 overflow-y-auto">
-        {selectedRef === null ? (
+        {!isValidSelection ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <div className="text-center">
               <div className="text-4xl mb-4">👈</div>
@@ -104,10 +117,14 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
             <div className="max-w-4xl mx-auto">
               <div className="mb-4 pb-4 border-b border-gray-200">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {skill.references[selectedRef].path.split('/').pop()}
+                  {selectedRef !== null && skill.references[selectedRef]
+                    ? skill.references[selectedRef].path.split('/').pop()
+                    : 'Unknown'}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  {skill.references[selectedRef].path}
+                  {selectedRef !== null && skill.references[selectedRef]
+                    ? skill.references[selectedRef].path
+                    : ''}
                 </p>
               </div>
               <div className="prose prose-slate max-w-none">

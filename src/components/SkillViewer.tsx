@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { useSkillStore } from '../stores';
+import { useKeyboardStore } from '../stores/keyboardStore';
 import { TriggerAnalysis } from './TriggerAnalysis';
 import { DiagramView } from './DiagramView';
 import { OverviewPanel } from './OverviewPanel';
@@ -13,12 +14,33 @@ import 'highlight.js/styles/github.css';
 
 type TabType = 'overview' | 'content' | 'references' | 'scripts' | 'triggers' | 'diagram';
 
+// Tab order matches spec (Cmd/Ctrl+1-6):
+// 1: Overview, 2: Content, 3: Triggers, 4: Diagram, 5: References, 6: Scripts
+const TABS: { id: TabType; label: string; icon: string }[] = [
+  { id: 'overview', label: 'Overview', icon: '📊' },     // Cmd/Ctrl+1
+  { id: 'content', label: 'Content', icon: '📄' },       // Cmd/Ctrl+2
+  { id: 'triggers', label: 'Triggers', icon: '🎯' },     // Cmd/Ctrl+3
+  { id: 'diagram', label: 'Diagram', icon: '🔀' },       // Cmd/Ctrl+4
+  { id: 'references', label: 'References', icon: '📚' }, // Cmd/Ctrl+5
+  { id: 'scripts', label: 'Scripts', icon: '🔧' },       // Cmd/Ctrl+6
+];
+
 export const SkillViewer: React.FC = () => {
-  const { selectedSkill, setSelectedSkill } = useSkillStore();
+  const { selectedSkill, selectSkill } = useSkillStore();
+  const activeTabIndex = useKeyboardStore((state) => state.activeTabIndex);
+  const setActiveTabIndex = useKeyboardStore((state) => state.setActiveTabIndex);
   const [activeTab, setActiveTab] = useState<TabType>('content');
 
+  // Sync activeTabIndex from store to local tab state
+  // CRITICAL: This hook MUST be called before any early returns (React rules)
+  useEffect(() => {
+    if (activeTabIndex !== null && activeTabIndex >= 0 && activeTabIndex < TABS.length) {
+      setActiveTab(TABS[activeTabIndex].id);
+    }
+  }, [activeTabIndex]);
+
   const handleBackClick = () => {
-    setSelectedSkill(null);
+    selectSkill(null);
   };
 
   const handleNavigateToTab = (tab: string) => {
@@ -39,15 +61,6 @@ export const SkillViewer: React.FC = () => {
       </div>
     );
   }
-
-  const tabs: { id: TabType; label: string; icon: string }[] = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'content', label: 'Content', icon: '📄' },
-    { id: 'references', label: 'References', icon: '📚' },
-    { id: 'scripts', label: 'Scripts', icon: '🔧' },
-    { id: 'triggers', label: 'Triggers', icon: '🎯' },
-    { id: 'diagram', label: 'Diagram', icon: '🔀' },
-  ];
 
   return (
     <div className="flex flex-col h-full">
@@ -71,15 +84,20 @@ export const SkillViewer: React.FC = () => {
       {/* Tabs */}
       <div className="border-b border-gray-200 bg-white">
         <div className="flex gap-1 px-6">
-          {tabs.map((tab) => (
+          {TABS.map((tab, index) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setActiveTabIndex(index); // Update store for keyboard shortcuts
+              }}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
               }`}
+              aria-selected={activeTab === tab.id}
+              role="tab"
             >
               <span className="mr-2">{tab.icon}</span>
               {tab.label}

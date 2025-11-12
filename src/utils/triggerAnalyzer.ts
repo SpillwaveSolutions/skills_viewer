@@ -52,7 +52,7 @@ export function analyzeTriggers(skill: Skill): TriggerPattern[] {
   return unique;
 }
 
-export function generateExampleQueries(skill: Skill, patterns: TriggerPattern[]): string[] {
+export function generateExampleQueries(_skill: Skill, patterns: TriggerPattern[]): string[] {
   const examples: string[] = [];
   const actions = patterns.filter(p => p.category === 'action').map(p => p.keyword);
   const topics = patterns.filter(p => p.category === 'technology' || p.category === 'format').map(p => p.keyword);
