@@ -20,10 +20,7 @@ export const useListNavigation = ({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Don't interfere with input fields
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      ) {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
         return;
       }
 

@@ -12,11 +12,16 @@ export const TriggerAnalysis: React.FC<TriggerAnalysisProps> = ({ skill }) => {
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'action': return 'bg-blue-100 text-blue-700';
-      case 'technology': return 'bg-purple-100 text-purple-700';
-      case 'format': return 'bg-green-100 text-green-700';
-      case 'topic': return 'bg-yellow-100 text-yellow-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'action':
+        return 'bg-blue-100 text-blue-700';
+      case 'technology':
+        return 'bg-purple-100 text-purple-700';
+      case 'format':
+        return 'bg-green-100 text-green-700';
+      case 'topic':
+        return 'bg-yellow-100 text-yellow-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -60,11 +65,15 @@ export const TriggerAnalysis: React.FC<TriggerAnalysisProps> = ({ skill }) => {
         <h3 className="text-lg font-medium text-gray-900 mb-3">Analysis Summary</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-700">{patterns.filter(p => p.category === 'action').length}</div>
+            <div className="text-2xl font-bold text-blue-700">
+              {patterns.filter((p) => p.category === 'action').length}
+            </div>
             <div className="text-sm text-blue-600">Action Keywords</div>
           </div>
           <div className="p-4 bg-purple-50 rounded-lg">
-            <div className="text-2xl font-bold text-purple-700">{patterns.filter(p => p.category === 'technology').length}</div>
+            <div className="text-2xl font-bold text-purple-700">
+              {patterns.filter((p) => p.category === 'technology').length}
+            </div>
             <div className="text-sm text-purple-600">Technology Keywords</div>
           </div>
         </div>

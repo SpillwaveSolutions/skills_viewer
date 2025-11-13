@@ -13,7 +13,7 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
 
   // Analyze triggers from skill content
   const triggerPatterns = useMemo(() => analyzeTriggers(skill), [skill]);
-  const triggerKeywords = triggerPatterns.slice(0, 5).map(p => p.keyword);
+  const triggerKeywords = triggerPatterns.slice(0, 5).map((p) => p.keyword);
 
   // Get description from metadata or skill.description
   const description = skill.metadata?.description || skill.description;
@@ -66,9 +66,7 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
       {/* 4. Trigger Preview (first 5) */}
       {triggerKeywords.length > 0 && (
         <div>
-          <div className="text-sm font-medium text-gray-700 mb-2">
-            🎯 Common Triggers
-          </div>
+          <div className="text-sm font-medium text-gray-700 mb-2">🎯 Common Triggers</div>
           <div className="flex flex-wrap gap-2">
             {triggerKeywords.map((keyword, idx) => (
               <span
@@ -96,9 +94,7 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
           className="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
         >
           <div className="text-sm text-gray-600 mb-1">📚 References</div>
-          <div className="text-2xl font-bold text-gray-900">
-            {skill.references.length}
-          </div>
+          <div className="text-2xl font-bold text-gray-900">{skill.references.length}</div>
         </div>
 
         {/* Scripts */}
@@ -107,9 +103,7 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
           className="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
         >
           <div className="text-sm text-gray-600 mb-1">🔧 Scripts</div>
-          <div className="text-2xl font-bold text-gray-900">
-            {skill.scripts.length}
-          </div>
+          <div className="text-2xl font-bold text-gray-900">{skill.scripts.length}</div>
         </div>
 
         {/* Triggers */}
@@ -118,17 +112,13 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
           className="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
         >
           <div className="text-sm text-gray-600 mb-1">🎯 Triggers</div>
-          <div className="text-2xl font-bold text-gray-900">
-            {triggerPatterns.length}
-          </div>
+          <div className="text-2xl font-bold text-gray-900">{triggerPatterns.length}</div>
         </div>
 
         {/* Lines */}
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="text-sm text-gray-600 mb-1">📏 Lines</div>
-          <div className="text-2xl font-bold text-gray-900">
-            {lineCount.toLocaleString()}
-          </div>
+          <div className="text-2xl font-bold text-gray-900">{lineCount.toLocaleString()}</div>
         </div>
       </div>
 

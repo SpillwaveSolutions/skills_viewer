@@ -29,10 +29,7 @@ interface ShortcutGroup {
   shortcuts: Shortcut[];
 }
 
-export const KeyboardShortcutHelp: React.FC<KeyboardShortcutHelpProps> = ({
-  isOpen,
-  onClose,
-}) => {
+export const KeyboardShortcutHelp: React.FC<KeyboardShortcutHelpProps> = ({ isOpen, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const { modifierSymbol } = usePlatformModifier();
@@ -225,12 +222,7 @@ export const KeyboardShortcutHelp: React.FC<KeyboardShortcutHelpProps> = ({
             className="text-gray-400 hover:text-gray-600 transition-colors"
             aria-label="Close help modal"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -251,10 +243,7 @@ export const KeyboardShortcutHelp: React.FC<KeyboardShortcutHelpProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {shortcutGroups.map((group) => (
             <div key={group.title} role="group" aria-labelledby={`group-${group.title}`}>
-              <h3
-                id={`group-${group.title}`}
-                className="text-lg font-semibold text-gray-900 mb-3"
-              >
+              <h3 id={`group-${group.title}`} className="text-lg font-semibold text-gray-900 mb-3">
                 {group.title}
               </h3>
 
@@ -279,9 +268,7 @@ export const KeyboardShortcutHelp: React.FC<KeyboardShortcutHelpProps> = ({
                     </div>
 
                     {/* Description */}
-                    <span className="text-sm text-gray-600 ml-4">
-                      {shortcut.description}
-                    </span>
+                    <span className="text-sm text-gray-600 ml-4">{shortcut.description}</span>
                   </div>
                 ))}
               </div>

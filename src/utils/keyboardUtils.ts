@@ -42,30 +42,29 @@ const CONTEXT_TITLES: Record<ShortcutContext, string> = {
  * // Returns: [{ title: 'Global', shortcuts: [...] }, { title: 'List', shortcuts: [...] }]
  * ```
  */
-export function groupShortcutsByContext(
-  shortcuts: KeyboardShortcut[]
-): ShortcutGroup[] {
+export function groupShortcutsByContext(shortcuts: KeyboardShortcut[]): ShortcutGroup[] {
   if (shortcuts.length === 0) {
     return [];
   }
 
   // Group shortcuts by context
-  const groupedMap = shortcuts.reduce((acc, shortcut) => {
-    const context = shortcut.context;
-    if (!acc[context]) {
-      acc[context] = [];
-    }
-    acc[context].push(shortcut);
-    return acc;
-  }, {} as Record<ShortcutContext, KeyboardShortcut[]>);
+  const groupedMap = shortcuts.reduce(
+    (acc, shortcut) => {
+      const context = shortcut.context;
+      if (!acc[context]) {
+        acc[context] = [];
+      }
+      acc[context].push(shortcut);
+      return acc;
+    },
+    {} as Record<ShortcutContext, KeyboardShortcut[]>
+  );
 
   // Convert to ShortcutGroup array in correct order
-  return CONTEXT_ORDER.filter((context) => groupedMap[context]).map(
-    (context) => ({
-      title: CONTEXT_TITLES[context],
-      shortcuts: groupedMap[context],
-    })
-  );
+  return CONTEXT_ORDER.filter((context) => groupedMap[context]).map((context) => ({
+    title: CONTEXT_TITLES[context],
+    shortcuts: groupedMap[context],
+  }));
 }
 
 /**

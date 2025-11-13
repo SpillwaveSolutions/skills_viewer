@@ -70,20 +70,15 @@ export const useKeyboardStore = create<KeyboardState>((set) => ({
   modifierSymbol: '⌘',
 
   // Actions
-  setSearchFocusRequested: (requested) =>
-    set({ searchFocusRequested: requested }),
+  setSearchFocusRequested: (requested) => set({ searchFocusRequested: requested }),
 
-  setHighlightedSkillIndex: (index) =>
-    set({ highlightedSkillIndex: index }),
+  setHighlightedSkillIndex: (index) => set({ highlightedSkillIndex: index }),
 
-  setVisibleSkillCount: (count) =>
-    set({ visibleSkillCount: count }),
+  setVisibleSkillCount: (count) => set({ visibleSkillCount: count }),
 
-  setActiveTabIndex: (index) =>
-    set({ activeTabIndex: index }),
+  setActiveTabIndex: (index) => set({ activeTabIndex: index }),
 
-  setHelpModalOpen: (open) =>
-    set({ isHelpModalOpen: open }),
+  setHelpModalOpen: (open) => set({ isHelpModalOpen: open }),
 
   /**
    * Detect platform and set appropriate modifier key

@@ -1,9 +1,11 @@
 # Taskfile YAML Errors Found During skill-debugger Setup
 
 ## Date
+
 2025-11-11
 
 ## Context
+
 While setting up Taskfile.yml for the skill-debugger monorepo project, I encountered YAML syntax errors that prevented Task from parsing the file correctly.
 
 ## Errors Encountered
@@ -12,15 +14,17 @@ While setting up Taskfile.yml for the skill-debugger monorepo project, I encount
 
 **Location**: `format:frontend` task
 **Original Code**:
+
 ```yaml
 format:frontend:
   desc: Format frontend code with Prettier (if configured)
-  dir: "{{.FRONTEND_DIR}}"
+  dir: '{{.FRONTEND_DIR}}'
   cmds:
     - echo "Prettier not configured. Consider adding: npm install --save-dev prettier"
 ```
 
 **Error Message**:
+
 ```
 invalid keys in command
 file: /Users/richardhightower/src/skill-debugger/Taskfile.yml:145:9
@@ -35,6 +39,7 @@ The colon (`:`) after "adding" in the echo string confused the YAML parser. Even
 
 **Solution**:
 Remove the colon from the echo message:
+
 ```yaml
 cmds:
   - echo "Prettier not configured. Consider adding npm install --save-dev prettier"
@@ -46,6 +51,7 @@ cmds:
 
 **Location**: `outdated` task
 **Original Code**:
+
 ```yaml
 outdated:
   desc: Check for outdated dependencies
@@ -55,6 +61,7 @@ outdated:
 ```
 
 **Error Message**:
+
 ```
 invalid keys in command
 file: /Users/richardhightower/src/skill-debugger/Taskfile.yml:262:9
@@ -69,6 +76,7 @@ Same issue - the colon after "cargo-outdated" in the echo string caused YAML par
 
 **Solution**:
 Remove or rephrase to avoid the colon:
+
 ```yaml
 cmds:
   - npm outdated || true
@@ -82,6 +90,7 @@ cmds:
 **Common Issue**: Colons inside string values in YAML, even when double-quoted, can cause parsing errors in Task's YAML processor.
 
 **Why This Happens**:
+
 - YAML uses colons as key-value separators
 - The YAML parser may scan ahead and get confused when it sees `"text: more text"` patterns
 - Task's specific YAML library may be stricter than some others
@@ -102,6 +111,7 @@ cmds:
    - ✅ `echo 'Error: Something went wrong'` (may work better)
 
 4. **Break into multiple echo statements**
+
    ```yaml
    cmds:
      - echo "To install cargo-outdated, run the following command"
@@ -121,6 +131,7 @@ cmds:
 ### 1. Add "Common YAML Pitfalls" Section
 
 Create a new reference file: `references/common-yaml-pitfalls.md` that covers:
+
 - Colon handling in strings
 - Quoting best practices
 - Multi-line string handling
@@ -129,6 +140,7 @@ Create a new reference file: `references/common-yaml-pitfalls.md` that covers:
 ### 2. Update All Templates
 
 Review all template files in `assets/templates/` and ensure:
+
 - No echo statements with colons in strings
 - All examples use YAML-safe string formats
 - Add comments warning about colon usage
@@ -137,7 +149,7 @@ Review all template files in `assets/templates/` and ensure:
 
 Update `references/taskfile-comprehensive-guide.md` Troubleshooting section with:
 
-```markdown
+````markdown
 ### YAML Parsing Errors with Colons
 
 **Symptom**: `invalid keys in command` error pointing to a `cmds:` line
@@ -145,12 +157,14 @@ Update `references/taskfile-comprehensive-guide.md` Troubleshooting section with
 **Cause**: Colons inside echo strings can confuse YAML parser
 
 **Solution**:
+
 - Remove colons from echo messages
 - Use alternative punctuation (-, comma, semicolon)
 - Break into multiple echo statements
 - Use printf for complex strings
 
 **Example**:
+
 ```yaml
 # ❌ This may fail
 cmds:
@@ -162,6 +176,8 @@ cmds:
   # OR
   - echo "Error, file not found"
 ```
+````
+
 ```
 
 ### 4. Add Validation Checklist
@@ -211,3 +227,4 @@ Add to skill.md or a new `references/validation-checklist.md`:
 - Quick iteration and fix (minutes, not hours)
 - No impact on functionality once fixed
 - Good learning opportunity for YAML best practices
+```
