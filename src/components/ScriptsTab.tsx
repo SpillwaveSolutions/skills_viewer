@@ -1,26 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import hljs from 'highlight.js/lib/core';
-import typescript from 'highlight.js/lib/languages/typescript';
-import python from 'highlight.js/lib/languages/python';
-import bash from 'highlight.js/lib/languages/bash';
-import javascript from 'highlight.js/lib/languages/javascript';
-import json from 'highlight.js/lib/languages/json';
-import markdown from 'highlight.js/lib/languages/markdown';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css';
 import { Skill } from '../types';
-
-// Register languages
-hljs.registerLanguage('typescript', typescript);
-hljs.registerLanguage('python', python);
-hljs.registerLanguage('bash', bash);
-hljs.registerLanguage('javascript', javascript);
-hljs.registerLanguage('json', json);
-hljs.registerLanguage('markdown', markdown);
-hljs.registerLanguage('ts', typescript);
-hljs.registerLanguage('py', python);
-hljs.registerLanguage('sh', bash);
-hljs.registerLanguage('js', javascript);
-hljs.registerLanguage('md', markdown);
 
 interface ScriptsTabProps {
   skill: Skill;
@@ -40,15 +23,6 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
     selectedScript >= 0 &&
     selectedScript < skill.scripts.length &&
     skill.scripts[selectedScript] !== undefined;
-
-  // Apply syntax highlighting when script changes
-  useEffect(() => {
-    if (selectedScript !== null) {
-      document.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block as HTMLElement);
-      });
-    }
-  }, [selectedScript]);
 
   const getLanguageIcon = (language: string) => {
     const icons: Record<string, string> = {
@@ -83,12 +57,12 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
     <div className="flex h-full">
       {/* Scripts List */}
       <div className="w-80 border-r border-gray-200 overflow-y-auto bg-gray-50">
-        <div className="p-4 border-b border-gray-200 bg-white">
+        <div className="p-6 border-b border-gray-200 bg-white">
           <h3 className="font-semibold text-gray-900">
             Scripts ({skill.scripts.length})
           </h3>
         </div>
-        <div className="p-2">
+        <div className="p-3">
           {skill.scripts.map((script, idx) => (
             <div
               key={idx}
@@ -104,7 +78,7 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
                   {getLanguageIcon(script.language)}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
+                  <div className="text-sm font-medium text-gray-900 truncate mr-1">
                     {script.name}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
@@ -130,7 +104,7 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
             </div>
           </div>
         ) : (
-          <div className="p-6">
+          <div className="pt-8 px-6 pb-6">
             <div className="max-w-5xl mx-auto">
               {/* Script Header */}
               <div className="mb-4 pb-4 border-b border-gray-200">
@@ -165,21 +139,16 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
                 </div>
               </div>
 
-              {/* Script Content */}
-              <div className="border border-gray-200 rounded-lg overflow-hidden ml-8">
-                <pre className="p-4 bg-gray-50 overflow-x-auto text-sm">
-                  <code
-                    className={`language-${
-                      selectedScript !== null && skill.scripts[selectedScript]
-                        ? skill.scripts[selectedScript].language
-                        : 'text'
-                    }`}
-                  >
-                    {selectedScript !== null && skill.scripts[selectedScript]
-                      ? skill.scripts[selectedScript].content
-                      : ''}
-                  </code>
-                </pre>
+              {/* Script Content - Using ReactMarkdown for reliable syntax highlighting */}
+              <div className="prose prose-slate max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
+                >
+                  {selectedScript !== null && skill.scripts[selectedScript]
+                    ? `\`\`\`${skill.scripts[selectedScript].language}\n${skill.scripts[selectedScript].content}\n\`\`\``
+                    : ''}
+                </ReactMarkdown>
               </div>
             </div>
           </div>

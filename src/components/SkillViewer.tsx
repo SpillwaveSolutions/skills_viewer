@@ -7,7 +7,6 @@ import { useKeyboardStore } from '../stores/keyboardStore';
 import { TriggerAnalysis } from './TriggerAnalysis';
 import { DiagramView } from './DiagramView';
 import { OverviewPanel } from './OverviewPanel';
-import { DescriptionSection } from './DescriptionSection';
 import { ReferencesTab } from './ReferencesTab';
 import { ScriptsTab } from './ScriptsTab';
 import 'highlight.js/styles/github.css';
@@ -75,11 +74,8 @@ export const SkillViewer: React.FC = () => {
         </button>
       </div>
 
-      {/* Overview Panel (top banner) */}
+      {/* Overview Panel (top banner) - now includes description */}
       <OverviewPanel skill={selectedSkill} onNavigateToTab={handleNavigateToTab} />
-
-      {/* Description Section */}
-      <DescriptionSection skill={selectedSkill} />
 
       {/* Tabs */}
       <div className="border-b border-gray-200 bg-white">

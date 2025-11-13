@@ -1,0 +1,62 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - heading "Skill Debugger" [level=1] [ref=e6]
+      - paragraph [ref=e7]: Browse and analyze Claude skills
+    - generic [ref=e9]:
+      - textbox "Search skills..." [ref=e11]
+      - generic [ref=e13]:
+        - generic [ref=e14]: 2 of 2 skills
+        - button "Refresh" [ref=e15]
+      - listbox [ref=e16]:
+        - option "test-skill-1 user" [selected] [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]:
+            - heading "test-skill-1" [level=3] [ref=e19]
+            - generic [ref=e20]: user
+        - option "test-skill-2 user" [ref=e21] [cursor=pointer]:
+          - generic [ref=e22]:
+            - heading "test-skill-2" [level=3] [ref=e23]
+            - generic [ref=e24]: user
+  - main [ref=e25]:
+    - generic [ref=e26]:
+      - button "← Back to Skills" [ref=e28]:
+        - generic [ref=e29]: ←
+        - generic [ref=e30]: Back to Skills
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - heading "test-skill-1" [level=1] [ref=e33]
+          - generic [ref=e34]: 📍 user
+        - generic [ref=e35]:
+          - generic [ref=e36] [cursor=pointer]:
+            - generic [ref=e37]: 📚 References
+            - generic [ref=e38]: "0"
+          - generic [ref=e39] [cursor=pointer]:
+            - generic [ref=e40]: 🔧 Scripts
+            - generic [ref=e41]: "0"
+          - generic [ref=e42] [cursor=pointer]:
+            - generic [ref=e43]: 🎯 Triggers
+            - generic [ref=e44]: "3"
+          - generic [ref=e45]:
+            - generic [ref=e46]: 📏 Lines
+            - generic [ref=e47]: "1"
+        - generic [ref=e48]:
+          - generic [ref=e49]: 🎯 Common Triggers
+          - generic [ref=e50]:
+            - generic [ref=e51]: test
+            - generic [ref=e52]: skill
+            - generic [ref=e53]: testing
+      - generic [ref=e54]:
+        - heading "📝 Description" [level=2] [ref=e55]
+        - paragraph [ref=e56]: A test skill for E2E testing
+      - generic [ref=e58]:
+        - tab "📊Overview" [selected] [ref=e59]
+        - tab "📄Content" [ref=e60]
+        - tab "🎯Triggers" [ref=e61]
+        - tab "🔀Diagram" [ref=e62]
+        - tab "📚References" [ref=e63]
+        - tab "🔧Scripts" [ref=e64]
+      - generic [ref=e68]: No YAML frontmatter found in this skill.
+```

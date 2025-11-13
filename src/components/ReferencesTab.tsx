@@ -57,12 +57,12 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
     <div className="flex h-full">
       {/* References List */}
       <div className="w-80 border-r border-gray-200 overflow-y-auto bg-gray-50">
-        <div className="p-4 border-b border-gray-200 bg-white">
+        <div className="p-6 border-b border-gray-200 bg-white">
           <h3 className="font-semibold text-gray-900">
             References ({skill.references.length})
           </h3>
         </div>
-        <div className="p-2">
+        <div className="p-3">
           {skill.references.map((ref, idx) => (
             <div
               key={idx}
@@ -78,7 +78,7 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
                   {ref.ref_type === 'glob' ? '🌐' : '📄'}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
+                  <div className="text-sm font-medium text-gray-900 truncate mr-1">
                     {ref.path.split('/').pop()}
                   </div>
                   <div className="text-xs text-gray-500 mt-1 truncate">
@@ -113,7 +113,7 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
             </div>
           </div>
         ) : (
-          <div className="p-6">
+          <div className="pt-8 px-6 pb-6">
             <div className="max-w-4xl mx-auto">
               <div className="mb-4 pb-4 border-b border-gray-200">
                 <h2 className="text-xl font-bold text-gray-900">

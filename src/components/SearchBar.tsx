@@ -52,7 +52,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   }
 
   return (
-    <div className="p-3 border-b border-gray-200">
+    <div className="p-4 border-b border-gray-200">
       <input
         ref={inputRef}
         type="text"

@@ -76,7 +76,9 @@ export const SkillList: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <SearchBar value={searchQuery} onChange={setSearchQuery} />
+      <div className="mt-2">
+        <SearchBar value={searchQuery} onChange={setSearchQuery} />
+      </div>
 
       <div className="p-3 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -148,7 +150,7 @@ const SkillListItem: React.FC<SkillListItemProps> = ({ skill, index, isSelected,
   // Determine background styling based on selection and highlight state
   const getBackgroundClass = () => {
     if (isSelected) {
-      return 'bg-blue-50 border-l-4 border-l-blue-500';
+      return 'bg-blue-50 border-l-4 border-l-blue-500 pl-3.5';
     }
     if (isHighlighted) {
       return 'bg-amber-50 border-l-2 border-l-amber-400';
@@ -164,12 +166,17 @@ const SkillListItem: React.FC<SkillListItemProps> = ({ skill, index, isSelected,
       aria-selected={isSelected}
       data-testid="skill-item"
       data-highlighted={isHighlighted}
-      className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${getBackgroundClass()}`}
+      className={`px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${getBackgroundClass()}`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium text-gray-900 text-sm">{skill.name}</h3>
-        <span className={`text-xs px-2 py-0.5 rounded ${
+      <div className="flex items-center justify-between gap-2">
+        <h3
+          className="font-medium text-gray-900 text-sm mr-2 truncate flex-1 min-w-0"
+          title={skill.name}
+        >
+          {skill.name}
+        </h3>
+        <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${
           skill.location === 'claude'
             ? 'bg-purple-100 text-purple-700'
             : 'bg-green-100 text-green-700'
