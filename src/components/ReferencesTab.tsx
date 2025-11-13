@@ -4,6 +4,8 @@ import { Skill } from '../types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import { useNavigationStore } from '../stores/navigationStore';
+import type { NavigationEntry } from '../types/navigation';
 
 interface ReferencesTabProps {
   skill: Skill;
@@ -13,6 +15,7 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
   const [selectedRef, setSelectedRef] = useState<number | null>(null);
   const [refContent, setRefContent] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const navigateTo = useNavigationStore((state) => state.navigateTo);
 
   // Reset selected reference when skill changes
   useEffect(() => {
@@ -35,6 +38,17 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
       // Use Tauri command to read the file content
       const content = await invoke<string>('read_file_content', { path });
       setRefContent(content);
+
+      // Track navigation to reference
+      const entry: NavigationEntry = {
+        type: 'reference',
+        skill,
+        referenceIndex: index,
+        referencePath: path,
+        timestamp: Date.now(),
+        label: path.split('/').pop() || 'Reference',
+      };
+      navigateTo(entry);
     } catch (error) {
       setRefContent(`Error loading reference: ${path}\n\n${error}`);
     } finally {

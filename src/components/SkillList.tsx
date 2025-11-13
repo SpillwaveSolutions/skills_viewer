@@ -1,30 +1,27 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useSkills } from '../hooks';
-import { useSkillStore } from '../stores';
+import { useSkillStore, getFilteredSkills } from '../stores';
 import { useKeyboardStore } from '../stores/keyboardStore';
 import { useListNavigation } from '../hooks/useListNavigation';
 import { Skill } from '../types';
 import { SearchBar } from './SearchBar';
+import { FilterPanel } from './filters/FilterPanel';
+import { Filter } from 'lucide-react';
+import { highlightMatches } from '../utils/searchOperators';
 
 export const SkillList: React.FC = () => {
   const { skills, isLoading, error, reload } = useSkills();
-  const { selectedSkill, selectSkill } = useSkillStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { selectedSkill, selectSkill, setSearchFilters, searchFilters } = useSkillStore();
   const highlightedSkillIndex = useKeyboardStore((state) => state.highlightedSkillIndex);
   const setVisibleSkillCount = useKeyboardStore((state) => state.setVisibleSkillCount);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
-  // Filter skills based on search query
+  // Get filtered skills using selector
   const filteredSkills = useMemo(() => {
-    if (!searchQuery.trim()) return skills;
-
-    const query = searchQuery.toLowerCase();
-    return skills.filter(
-      (skill) =>
-        skill.name.toLowerCase().includes(query) ||
-        skill.description?.toLowerCase().includes(query) ||
-        skill.location.toLowerCase().includes(query)
-    );
-  }, [skills, searchQuery]);
+    return getFilteredSkills(useSkillStore.getState());
+    // We intentionally include both skills and searchFilters as dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skills, searchFilters]);
 
   // Update visible skill count for keyboard navigation
   useEffect(() => {
@@ -77,15 +74,27 @@ export const SkillList: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
+      <FilterPanel isOpen={isFilterPanelOpen} onClose={() => setIsFilterPanelOpen(false)} />
+
       <div className="mt-2">
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        <SearchBar value={searchFilters.query} onChange={(query) => setSearchFilters({ query })} />
       </div>
 
       <div className="p-3 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600" role="status" aria-live="polite">
-            {filteredSkills.length} of {skills.length} skills
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsFilterPanelOpen(true)}
+              className="flex items-center gap-1 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Open filter panel"
+            >
+              <Filter className="w-4 h-4" aria-hidden="true" />
+              Filters
+            </button>
+            <span className="text-sm text-gray-600" role="status" aria-live="polite">
+              {filteredSkills.length} of {skills.length} skills
+            </span>
+          </div>
           <button
             onClick={reload}
             className="text-sm text-blue-500 hover:text-blue-600"
@@ -111,7 +120,7 @@ export const SkillList: React.FC = () => {
       >
         {filteredSkills.length === 0 ? (
           <div className="p-4 text-center">
-            <p className="text-sm text-gray-600">No skills match "{searchQuery}"</p>
+            <p className="text-sm text-gray-600">No skills match your search criteria</p>
           </div>
         ) : (
           filteredSkills.map((skill, index) => (
@@ -122,6 +131,7 @@ export const SkillList: React.FC = () => {
               isSelected={selectedSkill?.path === skill.path}
               isHighlighted={highlightedSkillIndex === index}
               onClick={() => selectSkill(skill)}
+              searchQuery={searchFilters.query}
             />
           ))
         )}
@@ -136,6 +146,7 @@ interface SkillListItemProps {
   isSelected: boolean;
   isHighlighted: boolean;
   onClick: () => void;
+  searchQuery: string;
 }
 
 const SkillListItem: React.FC<SkillListItemProps> = ({
@@ -144,6 +155,7 @@ const SkillListItem: React.FC<SkillListItemProps> = ({
   isSelected,
   isHighlighted,
   onClick,
+  searchQuery,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -168,6 +180,32 @@ const SkillListItem: React.FC<SkillListItemProps> = ({
     return '';
   };
 
+  // Highlight matching text
+  const highlightedName = searchQuery.trim()
+    ? highlightMatches(skill.name, searchQuery).map((match, i) =>
+        match.isMatch ? (
+          <mark key={i} className="bg-yellow-200 text-gray-900">
+            {match.text}
+          </mark>
+        ) : (
+          match.text
+        )
+      )
+    : skill.name;
+
+  const highlightedDescription =
+    searchQuery.trim() && skill.description
+      ? highlightMatches(skill.description, searchQuery).map((match, i) =>
+          match.isMatch ? (
+            <mark key={i} className="bg-yellow-200 text-gray-900">
+              {match.text}
+            </mark>
+          ) : (
+            match.text
+          )
+        )
+      : skill.description;
+
   return (
     <div
       ref={ref}
@@ -187,12 +225,14 @@ const SkillListItem: React.FC<SkillListItemProps> = ({
       }}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3
-          className="font-medium text-gray-900 text-sm mr-2 truncate flex-1 min-w-0"
-          title={skill.name}
-        >
-          {skill.name}
-        </h3>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-gray-900 text-sm mr-2 truncate" title={skill.name}>
+            {highlightedName}
+          </h3>
+          {skill.description && (
+            <p className="text-xs text-gray-600 truncate mt-0.5">{highlightedDescription}</p>
+          )}
+        </div>
         <span
           className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${
             skill.location === 'claude'
