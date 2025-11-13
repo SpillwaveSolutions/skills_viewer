@@ -4,11 +4,13 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { useSkillStore } from '../stores';
 import { useKeyboardStore } from '../stores/keyboardStore';
+import { useNavigationStore } from '../stores/navigationStore';
 import { TriggerAnalysis } from './TriggerAnalysis';
 import { DiagramView } from './DiagramView';
 import { OverviewPanel } from './OverviewPanel';
 import { ReferencesTab } from './ReferencesTab';
 import { ScriptsTab } from './ScriptsTab';
+import type { NavigationEntry } from '../types/navigation';
 import 'highlight.js/styles/github.css';
 
 type TabType = 'overview' | 'content' | 'references' | 'scripts' | 'triggers' | 'diagram';
@@ -28,6 +30,7 @@ export const SkillViewer: React.FC = () => {
   const { selectedSkill, selectSkill } = useSkillStore();
   const activeTabIndex = useKeyboardStore((state) => state.activeTabIndex);
   const setActiveTabIndex = useKeyboardStore((state) => state.setActiveTabIndex);
+  const navigateTo = useNavigationStore((state) => state.navigateTo);
   const [activeTab, setActiveTab] = useState<TabType>('content');
 
   // Sync activeTabIndex from store to local tab state
@@ -37,6 +40,20 @@ export const SkillViewer: React.FC = () => {
       setActiveTab(TABS[activeTabIndex].id);
     }
   }, [activeTabIndex]);
+
+  // Track navigation when skill is selected
+  useEffect(() => {
+    if (selectedSkill) {
+      const entry: NavigationEntry = {
+        type: 'skill',
+        skill: selectedSkill,
+        tab: activeTab,
+        timestamp: Date.now(),
+        label: selectedSkill.name,
+      };
+      navigateTo(entry);
+    }
+  }, [selectedSkill, activeTab, navigateTo]);
 
   const handleBackClick = () => {
     selectSkill(null);
