@@ -75,7 +75,7 @@ export const SkillViewer: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div data-testid="skill-viewer" className="flex flex-col h-full">
       {/* Back Navigation */}
       <div className="px-6 py-3 bg-white border-b border-gray-200">
         <button

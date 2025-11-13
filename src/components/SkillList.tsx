@@ -106,6 +106,7 @@ export const SkillList: React.FC = () => {
       </div>
 
       <div
+        data-testid="skill-list"
         className="flex-1 overflow-y-auto"
         role="listbox"
         aria-label="Available skills"
