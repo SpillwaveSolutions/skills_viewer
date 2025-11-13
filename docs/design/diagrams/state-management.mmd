@@ -1,0 +1,78 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#87CEEB', 'primaryTextColor':'#333', 'lineColor':'#333'}}}%%
+
+graph LR
+    %% Zustand Stores
+    subgraph "Zustand State Stores"
+        SkillStore[useSkillStore<br/>Skills & Selection]
+        KeyboardStore[keyboardStore<br/>Shortcuts & Platform]
+    end
+
+    %% Store State
+    subgraph "Skill Store State"
+        Skills[skills: Skill[]]
+        SelectedSkill[selectedSkill: Skill | null]
+        Loading[isLoading: boolean]
+        Error[error: string | null]
+    end
+
+    subgraph "Keyboard Store State"
+        SearchFocus[searchFocusRequested: boolean]
+        Highlight[highlightedSkillIndex: number]
+        ActiveTab[activeTabIndex: number]
+        HelpOpen[isHelpModalOpen: boolean]
+        Platform[platform: mac/win/linux]
+        ModifierKey[modifierKey: Cmd/Ctrl]
+    end
+
+    %% Components that consume state
+    subgraph "Consumer Components"
+        SkillListComp[SkillList<br/>Lists all skills]
+        SkillViewerComp[SkillViewer<br/>Shows selected skill]
+        SearchBarComp[SearchBar<br/>Search input]
+        LayoutComp[Layout<br/>Main container]
+        AppComp[App<br/>Root component]
+        HelpModalComp[KeyboardShortcutHelp<br/>Help modal]
+    end
+
+    %% State flow connections
+    SkillStore --> Skills
+    SkillStore --> SelectedSkill
+    SkillStore --> Loading
+    SkillStore --> Error
+
+    KeyboardStore --> SearchFocus
+    KeyboardStore --> Highlight
+    KeyboardStore --> ActiveTab
+    KeyboardStore --> HelpOpen
+    KeyboardStore --> Platform
+    KeyboardStore --> ModifierKey
+
+    %% Component subscriptions
+    Skills --> SkillListComp
+    SelectedSkill --> SkillViewerComp
+    Loading --> SkillListComp
+    Loading --> LayoutComp
+    Error --> SkillListComp
+
+    SearchFocus --> SearchBarComp
+    Highlight --> SkillListComp
+    ActiveTab --> SkillViewerComp
+    HelpOpen --> HelpModalComp
+    Platform --> AppComp
+    ModifierKey --> HelpModalComp
+
+    %% Actions (write operations)
+    SkillListComp -.->|selectSkill| SkillStore
+    SearchBarComp -.->|setSearchFocusRequested| KeyboardStore
+    AppComp -.->|setHelpModalOpen| KeyboardStore
+    SkillViewerComp -.->|setActiveTabIndex| KeyboardStore
+    SkillListComp -.->|setHighlightedSkillIndex| KeyboardStore
+
+    %% Styling
+    classDef storeClass fill:#87CEEB,stroke:#5B9BD5,stroke-width:3px,color:black
+    classDef stateClass fill:#90EE90,stroke:#6BBF59,stroke-width:2px,color:black
+    classDef componentClass fill:#FFD700,stroke:#DAA520,stroke-width:2px,color:black
+
+    class SkillStore,KeyboardStore storeClass
+    class Skills,SelectedSkill,Loading,Error,SearchFocus,Highlight,ActiveTab,HelpOpen,Platform,ModifierKey stateClass
+    class SkillListComp,SkillViewerComp,SearchBarComp,LayoutComp,AppComp,HelpModalComp componentClass

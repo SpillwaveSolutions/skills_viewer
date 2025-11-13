@@ -1,0 +1,115 @@
+%%{init: {'theme':'base', 'flowchart': {'curve': 'basis', 'nodeSpacing': 50, 'rankSpacing': 75}}}%%
+
+flowchart TB
+    %% Start
+    Start([scan_skills Command])
+
+    %% Get directories
+    GetDirs[get_skill_directories<br/>Returns claude & opencode paths]
+
+    %% Directory check
+    CheckHome{Home directory<br/>exists?}
+    NoHome[Return empty Vec]
+
+    %% Skill directory paths
+    ClaudeDir[~/.claude/skills]
+    OpenCodeDir[~/.config/opencode/skills]
+
+    %% Process each directory
+    ForEachDir{For each<br/>directory}
+
+    %% Directory exists check
+    DirExists{Directory<br/>exists?}
+    SkipDir[Skip to next]
+
+    %% Scan directory
+    ScanDir[scan_directory<br/>Read directory entries]
+
+    %% Process entries
+    ForEachEntry{For each<br/>entry}
+
+    %% Entry checks
+    IsDir{Is<br/>directory?}
+    SkipEntry[Skip entry]
+
+    %% Check for SKILL.md
+    CheckSkillFile{SKILL.md<br/>exists?}
+
+    %% Load skill
+    LoadSkill[load_skill<br/>Parse SKILL.md]
+
+    %% Parse components
+    ReadContent[Read file content]
+    ExtractFM[extract_frontmatter<br/>Parse YAML]
+    ExtractDesc[extract_description<br/>First paragraph]
+    LoadRefs[load_references<br/>Scan references/]
+    LoadScripts[load_scripts<br/>Scan scripts/]
+
+    %% Build skill object
+    BuildSkill[Build Skill object<br/>Combine all data]
+
+    %% Add to results
+    AddToResults[Add to skills Vec]
+
+    %% Error handling
+    LogError[Log error<br/>Continue scanning]
+
+    %% Return results
+    ReturnSkills([Return Vec&lt;Skill&gt;])
+
+    %% Flow connections
+    Start --> GetDirs
+    GetDirs --> CheckHome
+    CheckHome -->|No| NoHome
+    CheckHome -->|Yes| ClaudeDir
+    CheckHome -->|Yes| OpenCodeDir
+
+    ClaudeDir --> ForEachDir
+    OpenCodeDir --> ForEachDir
+
+    ForEachDir -->|Next| DirExists
+    ForEachDir -->|Done| ReturnSkills
+
+    DirExists -->|No| SkipDir
+    DirExists -->|Yes| ScanDir
+    SkipDir --> ForEachDir
+
+    ScanDir --> ForEachEntry
+    ForEachEntry -->|Next| IsDir
+    ForEachEntry -->|Done| ForEachDir
+
+    IsDir -->|No| SkipEntry
+    IsDir -->|Yes| CheckSkillFile
+    SkipEntry --> ForEachEntry
+
+    CheckSkillFile -->|No| SkipEntry
+    CheckSkillFile -->|Yes| LoadSkill
+
+    LoadSkill --> ReadContent
+    ReadContent --> ExtractFM
+    ExtractFM --> ExtractDesc
+    ExtractDesc --> LoadRefs
+    LoadRefs --> LoadScripts
+    LoadScripts --> BuildSkill
+    BuildSkill --> AddToResults
+    AddToResults --> ForEachEntry
+
+    %% Error paths
+    ReadContent -.->|Error| LogError
+    ExtractFM -.->|Error| LogError
+    LoadRefs -.->|Error| LogError
+    LoadScripts -.->|Error| LogError
+    LogError --> ForEachEntry
+
+    %% Styling
+    classDef startEnd fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:white
+    classDef process fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:white
+    classDef decision fill:#FFC107,stroke:#F57C00,stroke-width:2px,color:black
+    classDef data fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:white
+    classDef error fill:#F44336,stroke:#C62828,stroke-width:2px,color:white
+
+    class Start,ReturnSkills,NoHome startEnd
+    class GetDirs,ScanDir,LoadSkill,ReadContent,ExtractFM,ExtractDesc,LoadRefs,LoadScripts,BuildSkill,AddToResults process
+    class CheckHome,ForEachDir,DirExists,ForEachEntry,IsDir,CheckSkillFile decision
+    class ClaudeDir,OpenCodeDir data
+    class LogError,SkipDir,SkipEntry error

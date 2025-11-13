@@ -83,10 +83,14 @@ export const SkillList: React.FC = () => {
 
       <div className="p-3 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-gray-600" role="status" aria-live="polite">
             {filteredSkills.length} of {skills.length} skills
           </span>
-          <button onClick={reload} className="text-sm text-blue-500 hover:text-blue-600">
+          <button
+            onClick={reload}
+            className="text-sm text-blue-500 hover:text-blue-600"
+            aria-label="Refresh skill list"
+          >
             Refresh
           </button>
         </div>
@@ -95,6 +99,8 @@ export const SkillList: React.FC = () => {
       <div
         className="flex-1 overflow-y-auto"
         role="listbox"
+        aria-label="Available skills"
+        tabIndex={0}
         aria-activedescendant={
           highlightedSkillIndex !== null &&
           highlightedSkillIndex >= 0 &&
@@ -168,10 +174,17 @@ const SkillListItem: React.FC<SkillListItemProps> = ({
       id={`skill-item-${index}`}
       role="option"
       aria-selected={isSelected}
+      tabIndex={-1}
       data-testid="skill-item"
       data-highlighted={isHighlighted}
       className={`px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${getBackgroundClass()}`}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       <div className="flex items-center justify-between gap-2">
         <h3

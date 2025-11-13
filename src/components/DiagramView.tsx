@@ -97,24 +97,31 @@ export const DiagramView: React.FC<DiagramViewProps> = ({ skill }) => {
           <button
             onClick={handleZoomOut}
             className="px-4 py-2 bg-white rounded hover:bg-gray-50 border border-gray-300 text-sm font-medium"
+            aria-label="Zoom out diagram"
             title="Zoom Out"
           >
-            🔍−
+            <span aria-hidden="true">🔍−</span>
           </button>
-          <span className="text-sm font-medium text-gray-700 min-w-[5rem] text-center">
+          <span
+            className="text-sm font-medium text-gray-700 min-w-[5rem] text-center"
+            role="status"
+            aria-label={`Current zoom level: ${Math.round(zoom * 100)} percent`}
+          >
             {Math.round(zoom * 100)}%
           </span>
           <button
             onClick={handleZoomIn}
             className="px-4 py-2 bg-white rounded hover:bg-gray-50 border border-gray-300 text-sm font-medium"
+            aria-label="Zoom in diagram"
             title="Zoom In"
           >
-            🔍+
+            <span aria-hidden="true">🔍+</span>
           </button>
-          <div className="w-px h-6 bg-gray-300"></div>
+          <div className="w-px h-6 bg-gray-300" aria-hidden="true"></div>
           <button
             onClick={handleZoomReset}
             className="px-4 py-2 bg-white rounded hover:bg-gray-50 border border-gray-300 text-sm font-medium"
+            aria-label="Reset diagram view to fit screen"
             title="Reset View"
           >
             Reset
@@ -140,12 +147,15 @@ export const DiagramView: React.FC<DiagramViewProps> = ({ skill }) => {
 
       <div
         className="flex-1 overflow-hidden bg-gray-50 rounded-lg border border-gray-200 relative"
+        role="img"
+        aria-label={`Architecture diagram for ${skill.name} showing ${skill.references.length} references and ${skill.scripts.length} scripts. Use mouse to drag and zoom, or use zoom controls above.`}
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
+        tabIndex={0}
       >
         <div
           ref={containerRef}

@@ -62,17 +62,21 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
         </div>
         <div className="p-3">
           {skill.scripts.map((script, idx) => (
-            <div
+            <button
               key={idx}
               onClick={() => setSelectedScript(idx)}
-              className={`p-3 mb-2 rounded cursor-pointer transition-colors ${
+              className={`w-full text-left p-3 mb-2 rounded cursor-pointer transition-colors ${
                 selectedScript === idx
                   ? 'bg-blue-100 border-blue-300 border'
                   : 'bg-white hover:bg-gray-100 border border-gray-200'
               }`}
+              aria-label={`View script: ${script.name} (${script.language})`}
+              aria-pressed={selectedScript === idx}
             >
               <div className="flex items-start gap-2">
-                <span className="text-lg flex-shrink-0">{getLanguageIcon(script.language)}</span>
+                <span className="text-lg flex-shrink-0" aria-hidden="true">
+                  {getLanguageIcon(script.language)}
+                </span>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-gray-900 truncate mr-1">
                     {script.name}
@@ -83,7 +87,7 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
                   </div>
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

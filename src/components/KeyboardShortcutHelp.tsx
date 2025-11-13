@@ -201,6 +201,12 @@ export const KeyboardShortcutHelp: React.FC<KeyboardShortcutHelpProps> = ({ isOp
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
       onClick={handleOverlayClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          handleOverlayClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+        }
+      }}
+      role="presentation"
     >
       <div
         ref={modalRef}
@@ -210,6 +216,7 @@ export const KeyboardShortcutHelp: React.FC<KeyboardShortcutHelpProps> = ({ isOp
         aria-describedby="help-modal-description"
         className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto p-6"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

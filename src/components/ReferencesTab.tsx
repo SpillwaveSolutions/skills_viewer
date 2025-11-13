@@ -62,17 +62,19 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
         </div>
         <div className="p-3">
           {skill.references.map((ref, idx) => (
-            <div
+            <button
               key={idx}
               onClick={() => loadReferenceContent(ref.path, idx)}
-              className={`p-3 mb-2 rounded cursor-pointer transition-colors ${
+              className={`w-full text-left p-3 mb-2 rounded cursor-pointer transition-colors ${
                 selectedRef === idx
                   ? 'bg-blue-100 border-blue-300 border'
                   : 'bg-white hover:bg-gray-100 border border-gray-200'
               }`}
+              aria-label={`View reference: ${ref.path.split('/').pop()}`}
+              aria-pressed={selectedRef === idx}
             >
               <div className="flex items-start gap-2">
-                <span className="text-lg flex-shrink-0">
+                <span className="text-lg flex-shrink-0" aria-hidden="true">
                   {ref.ref_type === 'glob' ? '🌐' : '📄'}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -87,7 +89,7 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
                   )}
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
