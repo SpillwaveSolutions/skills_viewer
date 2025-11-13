@@ -1,0 +1,95 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#F44336', 'primaryTextColor':'#333', 'lineColor':'#333', 'secondaryColor':'#4CAF50'}}}%%
+
+graph TB
+    %% Security Layers
+    subgraph "User Space"
+        User[User<br/>Developer]
+        OS[Operating System<br/>File Permissions]
+    end
+
+    subgraph "Application Layer"
+        subgraph "Frontend Security"
+            ReactEscape[React XSS Protection<br/>Auto-escaping]
+            MarkdownSafe[react-markdown<br/>Safe mode - no HTML]
+            InputVal[Input Validation<br/>Client-side checks]
+        end
+
+        subgraph "IPC Security"
+            TauriIPC[Tauri IPC<br/>Type validation]
+            Serialization[JSON Serialization<br/>Safe parsing]
+            CommandVal[Command Validation<br/>Parameter checking]
+        end
+
+        subgraph "Backend Security"
+            ReadOnly[Read-Only Access<br/>No write operations]
+            PathSanitize[Path Sanitization<br/>⚠️ Not implemented]
+            YAMLLimits[YAML Parser<br/>Depth limits: 128]
+            ErrorHandle[Error Handling<br/>Graceful failures]
+        end
+    end
+
+    subgraph "Data Layer"
+        FileSystem[File System<br/>Local directories only]
+        SkillDirs[Skill Directories<br/>~/.claude/skills<br/>~/.config/opencode/skills]
+    end
+
+    %% Security Zones
+    subgraph "Trusted Zone"
+        TrustedOps[Trusted Operations<br/>scan_skills()]
+    end
+
+    subgraph "Untrusted Zone"
+        UntrustedInput[Untrusted Input<br/>Reference paths<br/>User search queries]
+    end
+
+    %% Vulnerability Points
+    subgraph "Vulnerability Points"
+        PathTraversal[⚠️ Path Traversal<br/>read_file_content()<br/>No validation]
+        CSPDisabled[⚠️ CSP Disabled<br/>Development mode<br/>XSS risk]
+    end
+
+    %% Security Flow
+    User --> OS
+    OS --> ReactEscape
+    ReactEscape --> InputVal
+    InputVal --> TauriIPC
+    TauriIPC --> Serialization
+    Serialization --> CommandVal
+    CommandVal --> ReadOnly
+
+    ReadOnly --> PathSanitize
+    PathSanitize --> YAMLLimits
+    YAMLLimits --> ErrorHandle
+    ErrorHandle --> FileSystem
+    FileSystem --> SkillDirs
+
+    %% Trusted/Untrusted flows
+    TrustedOps --> ReadOnly
+    UntrustedInput --> PathTraversal
+    PathTraversal --> FileSystem
+
+    %% Markdown flow
+    MarkdownSafe --> ReactEscape
+
+    %% CSP issue
+    CSPDisabled -.-> ReactEscape
+
+    %% Recommended fixes
+    PathFix[Recommended Fix:<br/>Validate paths within<br/>skill directories]
+    CSPFix[Recommended Fix:<br/>Enable CSP in<br/>production builds]
+
+    PathTraversal -.-> PathFix
+    CSPDisabled -.-> CSPFix
+
+    %% Styling
+    classDef safeClass fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:white
+    classDef warningClass fill:#FF9800,stroke:#E65100,stroke-width:3px,color:white
+    classDef dangerClass fill:#F44336,stroke:#C62828,stroke-width:3px,color:white
+    classDef fixClass fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:white
+    classDef neutralClass fill:#9E9E9E,stroke:#616161,stroke-width:2px,color:white
+
+    class User,OS,FileSystem,SkillDirs neutralClass
+    class ReactEscape,MarkdownSafe,ReadOnly,YAMLLimits,ErrorHandle,TrustedOps safeClass
+    class PathTraversal,CSPDisabled,UntrustedInput dangerClass
+    class InputVal,TauriIPC,Serialization,CommandVal,PathSanitize warningClass
+    class PathFix,CSPFix fixClass

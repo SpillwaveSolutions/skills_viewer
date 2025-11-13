@@ -64,8 +64,9 @@ export const SkillViewer: React.FC = () => {
         <button
           onClick={handleBackClick}
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          aria-label="Return to skills list"
         >
-          <span>←</span>
+          <span aria-hidden="true">←</span>
           <span>Back to Skills</span>
         </button>
       </div>
@@ -75,10 +76,15 @@ export const SkillViewer: React.FC = () => {
 
       {/* Tabs */}
       <div className="border-b border-gray-200 bg-white">
-        <div className="flex gap-1 px-6">
+        <div className="flex gap-1 px-6" role="tablist" aria-label="Skill detail tabs">
           {TABS.map((tab, index) => (
             <button
               key={tab.id}
+              id={`tab-${tab.id}`}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`tabpanel-${tab.id}`}
+              tabIndex={activeTab === tab.id ? 0 : -1}
               onClick={() => {
                 setActiveTab(tab.id);
                 setActiveTabIndex(index); // Update store for keyboard shortcuts
@@ -88,10 +94,10 @@ export const SkillViewer: React.FC = () => {
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
               }`}
-              aria-selected={activeTab === tab.id}
-              role="tab"
             >
-              <span className="mr-2">{tab.icon}</span>
+              <span className="mr-2" aria-hidden="true">
+                {tab.icon}
+              </span>
               {tab.label}
             </button>
           ))}
@@ -99,7 +105,13 @@ export const SkillViewer: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto bg-white">
+      <div
+        id={`tabpanel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${activeTab}`}
+        tabIndex={0}
+        className="flex-1 overflow-y-auto bg-white"
+      >
         {activeTab === 'overview' && (
           <div className="p-6">
             <div className="max-w-4xl mx-auto">

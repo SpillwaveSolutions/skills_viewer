@@ -89,35 +89,50 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
       {/* 5. Quick Stats Grid */}
       <div className="grid grid-cols-4 gap-4">
         {/* References */}
-        <div
+        <button
           onClick={() => onNavigateToTab?.('references')}
-          className="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+          className="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors text-left w-full"
+          aria-label={`View ${skill.references.length} references`}
         >
-          <div className="text-sm text-gray-600 mb-1">📚 References</div>
+          <div className="text-sm text-gray-600 mb-1">
+            <span aria-hidden="true">📚</span> References
+          </div>
           <div className="text-2xl font-bold text-gray-900">{skill.references.length}</div>
-        </div>
+        </button>
 
         {/* Scripts */}
-        <div
+        <button
           onClick={() => onNavigateToTab?.('scripts')}
-          className="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+          className="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors text-left w-full"
+          aria-label={`View ${skill.scripts.length} scripts`}
         >
-          <div className="text-sm text-gray-600 mb-1">🔧 Scripts</div>
+          <div className="text-sm text-gray-600 mb-1">
+            <span aria-hidden="true">🔧</span> Scripts
+          </div>
           <div className="text-2xl font-bold text-gray-900">{skill.scripts.length}</div>
-        </div>
+        </button>
 
         {/* Triggers */}
-        <div
+        <button
           onClick={() => onNavigateToTab?.('triggers')}
-          className="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+          className="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors text-left w-full"
+          aria-label={`View ${triggerPatterns.length} trigger keywords`}
         >
-          <div className="text-sm text-gray-600 mb-1">🎯 Triggers</div>
+          <div className="text-sm text-gray-600 mb-1">
+            <span aria-hidden="true">🎯</span> Triggers
+          </div>
           <div className="text-2xl font-bold text-gray-900">{triggerPatterns.length}</div>
-        </div>
+        </button>
 
         {/* Lines */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <div className="text-sm text-gray-600 mb-1">📏 Lines</div>
+        <div
+          className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+          role="group"
+          aria-label="Line count"
+        >
+          <div className="text-sm text-gray-600 mb-1">
+            <span aria-hidden="true">📏</span> Lines
+          </div>
           <div className="text-2xl font-bold text-gray-900">{lineCount.toLocaleString()}</div>
         </div>
       </div>

@@ -1,0 +1,142 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#4CAF50', 'primaryTextColor':'#333', 'lineColor':'#333'}}}%%
+
+graph TD
+    %% Root Testing Strategy
+    TestStrategy[Testing Strategy<br/>Target: &gt;80% Coverage]
+
+    %% Test Types
+    subgraph "Test Types"
+        UnitTests[Unit Tests]
+        IntegrationTests[Integration Tests]
+        E2ETests[End-to-End Tests]
+        PerformanceTests[Performance Tests<br/>⚠️ Not implemented]
+    end
+
+    %% Unit Test Categories
+    subgraph "Frontend Unit Tests"
+        ComponentTests[Component Tests<br/>Vitest + React Testing Library]
+        HookTests[Hook Tests<br/>renderHook]
+        StoreTests[Store Tests<br/>Zustand stores]
+        UtilTests[Utility Tests<br/>Pure functions]
+    end
+
+    subgraph "Backend Unit Tests"
+        RustUnitTests[Rust Unit Tests<br/>cargo test]
+        PathTests[Path Resolution Tests]
+        YAMLTests[YAML Parser Tests]
+        ModelTests[Model Tests]
+    end
+
+    %% Integration Test Categories
+    subgraph "Integration Tests"
+        IPCTests[IPC Tests<br/>⚠️ Not implemented]
+        CommandTests[Command Tests<br/>⚠️ Not implemented]
+        DataFlowTests[Data Flow Tests<br/>⚠️ Not implemented]
+    end
+
+    %% E2E Test Categories
+    subgraph "E2E Tests"
+        KeyboardE2E[Keyboard Shortcuts<br/>Playwright]
+        NavigationE2E[Navigation Flow<br/>Playwright]
+        SearchE2E[Search & Filter<br/>⚠️ Not implemented]
+        TabE2E[Tab Switching<br/>⚠️ Not implemented]
+    end
+
+    %% Coverage Areas
+    subgraph "Coverage Targets"
+        Lines[Lines: 80%]
+        Functions[Functions: 80%]
+        Branches[Branches: 80%]
+        Statements[Statements: 80%]
+    end
+
+    %% Test Execution
+    subgraph "Test Execution"
+        LocalTests[Local: task test]
+        CITests[CI: task ci]
+        CoverageReport[Coverage: task test:coverage]
+        WatchMode[Watch: task test:watch]
+    end
+
+    %% Current Status
+    subgraph "Current Status"
+        Implemented[✅ Implemented]
+        Partial[⚠️ Partial]
+        Missing[❌ Missing]
+    end
+
+    %% Connections
+    TestStrategy --> UnitTests
+    TestStrategy --> IntegrationTests
+    TestStrategy --> E2ETests
+    TestStrategy --> PerformanceTests
+
+    UnitTests --> ComponentTests
+    UnitTests --> HookTests
+    UnitTests --> StoreTests
+    UnitTests --> UtilTests
+    UnitTests --> RustUnitTests
+
+    RustUnitTests --> PathTests
+    RustUnitTests --> YAMLTests
+    RustUnitTests --> ModelTests
+
+    IntegrationTests --> IPCTests
+    IntegrationTests --> CommandTests
+    IntegrationTests --> DataFlowTests
+
+    E2ETests --> KeyboardE2E
+    E2ETests --> NavigationE2E
+    E2ETests --> SearchE2E
+    E2ETests --> TabE2E
+
+    TestStrategy --> Lines
+    TestStrategy --> Functions
+    TestStrategy --> Branches
+    TestStrategy --> Statements
+
+    ComponentTests --> LocalTests
+    HookTests --> LocalTests
+    RustUnitTests --> LocalTests
+    KeyboardE2E --> LocalTests
+
+    LocalTests --> CoverageReport
+    CITests --> CoverageReport
+
+    %% Status indicators
+    ComponentTests -.-> Partial
+    HookTests -.-> Implemented
+    StoreTests -.-> Implemented
+    UtilTests -.-> Implemented
+    PathTests -.-> Implemented
+    YAMLTests -.-> Implemented
+    ModelTests -.-> Partial
+    KeyboardE2E -.-> Implemented
+    NavigationE2E -.-> Partial
+    IPCTests -.-> Missing
+    CommandTests -.-> Missing
+    DataFlowTests -.-> Missing
+    SearchE2E -.-> Missing
+    TabE2E -.-> Missing
+    PerformanceTests -.-> Missing
+
+    %% Styling
+    classDef rootClass fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:white
+    classDef testTypeClass fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:white
+    classDef frontendClass fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:white
+    classDef backendClass fill:#FF5722,stroke:#D84315,stroke-width:2px,color:white
+    classDef integrationClass fill:#FFC107,stroke:#F57C00,stroke-width:2px,color:black
+    classDef e2eClass fill:#00BCD4,stroke:#0097A7,stroke-width:2px,color:white
+    classDef coverageClass fill:#8BC34A,stroke:#689F38,stroke-width:2px,color:white
+    classDef executionClass fill:#607D8B,stroke:#455A64,stroke-width:2px,color:white
+    classDef statusClass fill:#E91E63,stroke:#C2185B,stroke-width:2px,color:white
+
+    class TestStrategy rootClass
+    class UnitTests,IntegrationTests,E2ETests,PerformanceTests testTypeClass
+    class ComponentTests,HookTests,StoreTests,UtilTests frontendClass
+    class RustUnitTests,PathTests,YAMLTests,ModelTests backendClass
+    class IPCTests,CommandTests,DataFlowTests integrationClass
+    class KeyboardE2E,NavigationE2E,SearchE2E,TabE2E e2eClass
+    class Lines,Functions,Branches,Statements coverageClass
+    class LocalTests,CITests,CoverageReport,WatchMode executionClass
+    class Implemented,Partial,Missing statusClass

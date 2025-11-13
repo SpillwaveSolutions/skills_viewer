@@ -1,0 +1,105 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#4CAF50', 'primaryTextColor':'#333', 'lineColor':'#333'}}}%%
+
+flowchart LR
+    %% Development Pipeline
+    subgraph "Development Mode"
+        DevCmd[task dev]
+        ViteDev[Vite Dev Server<br/>Port 1420]
+        TauriDev[Tauri Dev Mode]
+        HMR[Hot Module<br/>Replacement]
+        WebView[WebView<br/>localhost:1420]
+    end
+
+    %% Build Pipeline
+    subgraph "Build Process"
+        BuildCmd[task build]
+        BuildFrontend[task build:frontend]
+        BuildBackend[task build:backend]
+        TSC[TypeScript Check<br/>tsc --noEmit]
+        ViteBuild[Vite Build<br/>→ dist/]
+        CargoBuild[Cargo Build<br/>--release]
+    end
+
+    %% Test Pipeline
+    subgraph "Testing Suite"
+        TestCmd[task test]
+        TestFrontend[Vitest<br/>Unit Tests]
+        TestBackend[Cargo Test<br/>Rust Tests]
+        TestE2E[Playwright<br/>E2E Tests]
+        TestCoverage[Coverage Report<br/>&gt;80% target]
+    end
+
+    %% Release Pipeline
+    subgraph "Release Build"
+        ReleaseCmd[task build:release]
+        TauriBuild[tauri build]
+        PlatformBundles[Platform Bundles]
+        MacBundle[.dmg<br/>macOS]
+        WinBundle[.msi/.exe<br/>Windows]
+        LinuxBundle[.AppImage/.deb<br/>Linux]
+    end
+
+    %% CI/CD Pipeline
+    subgraph "CI Pipeline"
+        CICmd[task ci]
+        Clean[task clean]
+        Install[task install]
+        FullBuild[Full Build]
+        AllTests[All Tests]
+        Clippy[Rust Linter]
+        FormatCheck[Format Check]
+    end
+
+    %% Development Flow
+    DevCmd --> ViteDev
+    DevCmd --> TauriDev
+    ViteDev --> HMR
+    TauriDev --> WebView
+    HMR --> WebView
+
+    %% Build Flow
+    BuildCmd --> BuildFrontend
+    BuildCmd --> BuildBackend
+    BuildFrontend --> TSC
+    TSC --> ViteBuild
+    BuildBackend --> CargoBuild
+
+    %% Test Flow
+    TestCmd --> TestFrontend
+    TestCmd --> TestBackend
+    TestCmd --> TestE2E
+    TestFrontend --> TestCoverage
+    TestBackend --> TestCoverage
+
+    %% Release Flow
+    ReleaseCmd --> TauriBuild
+    TauriBuild --> PlatformBundles
+    PlatformBundles --> MacBundle
+    PlatformBundles --> WinBundle
+    PlatformBundles --> LinuxBundle
+
+    %% CI Flow
+    CICmd --> Clean
+    Clean --> Install
+    Install --> FullBuild
+    FullBuild --> AllTests
+    AllTests --> Clippy
+    Clippy --> FormatCheck
+
+    %% Connections between pipelines
+    ViteBuild -.-> ReleaseCmd
+    CargoBuild -.-> ReleaseCmd
+    AllTests -.-> TestCoverage
+
+    %% Styling
+    classDef devClass fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:white
+    classDef buildClass fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:white
+    classDef testClass fill:#FF9800,stroke:#E65100,stroke-width:2px,color:white
+    classDef releaseClass fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:white
+    classDef ciClass fill:#607D8B,stroke:#455A64,stroke-width:2px,color:white
+
+    class DevCmd,ViteDev,TauriDev,HMR,WebView devClass
+    class BuildCmd,BuildFrontend,BuildBackend,TSC,ViteBuild,CargoBuild buildClass
+    class TestCmd,TestFrontend,TestBackend,TestE2E,TestCoverage testClass
+    class ReleaseCmd,TauriBuild,PlatformBundles,MacBundle,WinBundle,LinuxBundle releaseClass
+    class CICmd,Clean,Install,FullBuild,AllTests,Clippy,FormatCheck ciClass

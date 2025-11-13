@@ -1,0 +1,106 @@
+%%{init: {'theme':'base', 'sequenceDiagram': {'actorFontSize': 14, 'noteFontSize': 12, 'messageFontSize': 14}}}%%
+
+sequenceDiagram
+    participant User
+    participant App as App.tsx
+    participant Hook as useSkills Hook
+    participant Store as Zustand Store
+    participant IPC as Tauri IPC
+    participant Backend as Rust Backend
+    participant FS as File System
+    participant UI as UI Components
+
+    %% Application Startup
+    Note over User,UI: Application Startup Flow
+    User->>App: Opens application
+    activate App
+    App->>Hook: useSkills() on mount
+    activate Hook
+    Hook->>Store: setLoading(true)
+    Hook->>IPC: invoke('scan_skills')
+    activate IPC
+
+    %% Backend Processing
+    IPC->>Backend: scan_skills()
+    activate Backend
+    Backend->>Backend: get_skill_directories()
+    Backend->>FS: read_dir(~/.claude/skills)
+    activate FS
+    FS-->>Backend: Directory entries
+    deactivate FS
+    Backend->>FS: read_dir(~/.config/opencode/skills)
+    activate FS
+    FS-->>Backend: Directory entries
+    deactivate FS
+
+    %% Skill Loading Loop
+    loop For each skill directory
+        Backend->>FS: read SKILL.md
+        activate FS
+        FS-->>Backend: File content
+        deactivate FS
+        Backend->>Backend: extract_frontmatter()
+        Backend->>Backend: extract_description()
+        Backend->>FS: read references/
+        activate FS
+        FS-->>Backend: Reference files
+        deactivate FS
+        Backend->>FS: read scripts/
+        activate FS
+        FS-->>Backend: Script files
+        deactivate FS
+        Backend->>Backend: Build Skill object
+    end
+
+    %% Return to Frontend
+    Backend-->>IPC: Vec<Skill>
+    deactivate Backend
+    IPC-->>Hook: Skill[] array
+    deactivate IPC
+    Hook->>Store: setSkills(skills)
+    Hook->>Store: setLoading(false)
+    deactivate Hook
+
+    %% UI Updates
+    Store-->>UI: State update
+    UI-->>User: Display skills list
+    deactivate App
+
+    %% User Interaction
+    Note over User,UI: User Interaction Flow
+    User->>UI: Selects a skill
+    activate UI
+    UI->>Store: selectSkill(skill)
+    Store-->>UI: State update
+    UI-->>User: Display skill details
+
+    %% Reference File Loading
+    User->>UI: Clicks reference file
+    UI->>IPC: invoke('read_file_content', {path})
+    activate IPC
+    IPC->>Backend: read_file_content(path)
+    activate Backend
+    Backend->>FS: read_to_string(path)
+    activate FS
+    FS-->>Backend: File content
+    deactivate FS
+    Backend-->>IPC: String content
+    deactivate Backend
+    IPC-->>UI: File content
+    deactivate IPC
+    UI-->>User: Display reference
+    deactivate UI
+
+    %% Keyboard Shortcuts
+    Note over User,UI: Keyboard Navigation
+    User->>App: Presses Cmd/Ctrl+F
+    App->>Store: setSearchFocusRequested(true)
+    Store-->>UI: Focus search input
+
+    User->>App: Presses Arrow Keys
+    App->>Store: setHighlightedSkillIndex(index)
+    Store-->>UI: Highlight skill
+
+    User->>App: Presses ?
+    App->>Store: setHelpModalOpen(true)
+    Store-->>UI: Show help modal

@@ -1,0 +1,76 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#90EE90', 'primaryTextColor':'#333', 'lineColor':'#333', 'secondaryColor':'#87CEEB'}}}%%
+
+graph TD
+    %% Root Application
+    App[App.tsx<br/>Root Component]
+
+    %% Error Boundary
+    ErrorBoundary[ErrorBoundary<br/>Error Handler]
+
+    %% Layout Container
+    Layout[Layout<br/>Two-column Container]
+
+    %% Sidebar Components
+    Sidebar[Sidebar Section]
+    SearchBar[SearchBar<br/>Cmd/Ctrl+F Focus]
+    SkillList[SkillList<br/>Skill Browser]
+    SkillListItem[SkillListItem<br/>Individual Skills]
+
+    %% Main Content Area
+    MainContent[Main Content Area]
+    SkillViewer[SkillViewer<br/>Multi-tab Viewer]
+
+    %% Overview Components
+    OverviewPanel[OverviewPanel<br/>Skill Metadata]
+    DescriptionSection[DescriptionSection<br/>Skill Description]
+
+    %% Tab Components
+    TabNav[Tab Navigation<br/>6 Tabs]
+    OverviewTab[Overview Tab<br/>YAML Metadata]
+    ContentTab[Content Tab<br/>Markdown Content]
+    TriggersTab[TriggerAnalysis<br/>Keyword Analysis]
+    DiagramTab[DiagramView<br/>Mermaid Diagrams]
+    ReferencesTab[ReferencesTab<br/>Reference Files]
+    ScriptsTab[ScriptsTab<br/>Script Files]
+
+    %% Modal Components
+    HelpModal[KeyboardShortcutHelp<br/>? Key Modal]
+
+    %% Component Relationships
+    App --> ErrorBoundary
+    ErrorBoundary --> Layout
+    ErrorBoundary --> HelpModal
+
+    Layout --> Sidebar
+    Layout --> MainContent
+
+    Sidebar --> SearchBar
+    Sidebar --> SkillList
+    SkillList --> SkillListItem
+
+    MainContent --> SkillViewer
+    SkillViewer --> OverviewPanel
+    OverviewPanel --> DescriptionSection
+    SkillViewer --> TabNav
+
+    TabNav --> OverviewTab
+    TabNav --> ContentTab
+    TabNav --> TriggersTab
+    TabNav --> DiagramTab
+    TabNav --> ReferencesTab
+    TabNav --> ScriptsTab
+
+    %% Styling
+    classDef rootClass fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:white
+    classDef layoutClass fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:white
+    classDef sidebarClass fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:white
+    classDef contentClass fill:#FF5722,stroke:#D84315,stroke-width:2px,color:white
+    classDef tabClass fill:#FFC107,stroke:#F57C00,stroke-width:2px,color:black
+    classDef modalClass fill:#607D8B,stroke:#455A64,stroke-width:2px,color:white
+
+    class App rootClass
+    class Layout,ErrorBoundary layoutClass
+    class Sidebar,SearchBar,SkillList,SkillListItem sidebarClass
+    class MainContent,SkillViewer,OverviewPanel,DescriptionSection contentClass
+    class TabNav,OverviewTab,ContentTab,TriggersTab,DiagramTab,ReferencesTab,ScriptsTab tabClass
+    class HelpModal modalClass

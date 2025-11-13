@@ -48,7 +48,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   }
 
   return (
-    <div className="p-4 border-b border-gray-200">
+    <div role="search" className="p-4 border-b border-gray-200">
       <input
         ref={inputRef}
         type="text"
@@ -56,8 +56,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
+        aria-label="Search skills by name, description, or location"
+        aria-describedby="search-hint"
         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
+      <span id="search-hint" className="sr-only">
+        Press Escape to clear search
+      </span>
     </div>
   );
 };
