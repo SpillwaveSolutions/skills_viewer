@@ -1,1 +1,6 @@
-export { useSkillStore } from './useSkillStore';
+export {
+  useSkillStore,
+  getFilteredSkills,
+  getAvailableTags,
+  getLocationCounts,
+} from './useSkillStore';
