@@ -27,5 +27,5 @@ export interface Skill {
   scripts: Script[];
 
   /** YAML frontmatter metadata */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

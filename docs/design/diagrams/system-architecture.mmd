@@ -1,0 +1,35 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#90EE90', 'primaryTextColor':'#333', 'primaryBorderColor':'#333', 'lineColor':'#333', 'secondaryColor':'#87CEEB', 'tertiaryColor':'#FFD700', 'background':'#f9f9f9'}}}%%
+
+C4Container
+    title System Architecture - Skill Debugger (C4 Container Level)
+
+    Person(user, "Developer", "Claude Code skill creator/maintainer")
+
+    Boundary(desktop_app, "Tauri Desktop Application") {
+        Container(webview, "WebView", "Chrome/Safari/Edge", "Renders React UI")
+        Container(frontend, "Frontend", "React 19.1.0 + TypeScript 5.8.3", "UI components, state management, keyboard shortcuts")
+        Container(ipc, "IPC Bridge", "Tauri IPC", "Message passing layer")
+        Container(backend, "Backend", "Rust 1.75+", "File scanning, YAML parsing, data models")
+    }
+
+    Boundary(filesystem, "Local File System") {
+        SystemDb_Ext(claude_skills, "~/.claude/skills", "Skill directories with SKILL.md, references/, scripts/")
+        SystemDb_Ext(opencode_skills, "~/.config/opencode/skills", "Alternative skill location")
+    }
+
+    Rel(user, webview, "Interacts with", "Mouse/Keyboard")
+    Rel(webview, frontend, "Renders", "HTML/CSS/JS")
+    Rel(frontend, ipc, "Invokes commands", "JSON-RPC")
+    Rel(ipc, backend, "Calls handlers", "Type-safe")
+    Rel(backend, claude_skills, "Reads", "fs::read_dir")
+    Rel(backend, opencode_skills, "Reads", "fs::read_dir")
+
+    UpdateElementStyle(user, $fontColor="black", $bgColor="#E8F5E9", $borderColor="#4CAF50")
+    UpdateElementStyle(webview, $fontColor="white", $bgColor="#2196F3", $borderColor="#1565C0")
+    UpdateElementStyle(frontend, $fontColor="white", $bgColor="#4CAF50", $borderColor="#2E7D32")
+    UpdateElementStyle(ipc, $fontColor="black", $bgColor="#FFC107", $borderColor="#F57C00")
+    UpdateElementStyle(backend, $fontColor="white", $bgColor="#FF5722", $borderColor="#D84315")
+    UpdateElementStyle(claude_skills, $fontColor="white", $bgColor="#9C27B0", $borderColor="#6A1B9A")
+    UpdateElementStyle(opencode_skills, $fontColor="white", $bgColor="#9C27B0", $borderColor="#6A1B9A")
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="2")

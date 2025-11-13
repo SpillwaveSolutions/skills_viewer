@@ -16,12 +16,12 @@ type TabType = 'overview' | 'content' | 'references' | 'scripts' | 'triggers' | 
 // Tab order matches spec (Cmd/Ctrl+1-6):
 // 1: Overview, 2: Content, 3: Triggers, 4: Diagram, 5: References, 6: Scripts
 const TABS: { id: TabType; label: string; icon: string }[] = [
-  { id: 'overview', label: 'Overview', icon: '📊' },     // Cmd/Ctrl+1
-  { id: 'content', label: 'Content', icon: '📄' },       // Cmd/Ctrl+2
-  { id: 'triggers', label: 'Triggers', icon: '🎯' },     // Cmd/Ctrl+3
-  { id: 'diagram', label: 'Diagram', icon: '🔀' },       // Cmd/Ctrl+4
+  { id: 'overview', label: 'Overview', icon: '📊' }, // Cmd/Ctrl+1
+  { id: 'content', label: 'Content', icon: '📄' }, // Cmd/Ctrl+2
+  { id: 'triggers', label: 'Triggers', icon: '🎯' }, // Cmd/Ctrl+3
+  { id: 'diagram', label: 'Diagram', icon: '🔀' }, // Cmd/Ctrl+4
   { id: 'references', label: 'References', icon: '📚' }, // Cmd/Ctrl+5
-  { id: 'scripts', label: 'Scripts', icon: '🔧' },       // Cmd/Ctrl+6
+  { id: 'scripts', label: 'Scripts', icon: '🔧' }, // Cmd/Ctrl+6
 ];
 
 export const SkillViewer: React.FC = () => {
@@ -50,12 +50,8 @@ export const SkillViewer: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-            Welcome to Skill Debugger
-          </h2>
-          <p className="text-gray-600">
-            Select a skill from the sidebar to view details
-          </p>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-2">Welcome to Skill Debugger</h2>
+          <p className="text-gray-600">Select a skill from the sidebar to view details</p>
         </div>
       </div>
     );
@@ -137,10 +133,7 @@ export const SkillViewer: React.FC = () => {
           <div className="p-8">
             <div className="max-w-4xl mx-auto">
               <div className="prose prose-slate max-w-none">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                >
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
                   {selectedSkill.content_clean || selectedSkill.content}
                 </ReactMarkdown>
               </div>
@@ -148,21 +141,13 @@ export const SkillViewer: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'references' && (
-          <ReferencesTab skill={selectedSkill} />
-        )}
+        {activeTab === 'references' && <ReferencesTab skill={selectedSkill} />}
 
-        {activeTab === 'scripts' && (
-          <ScriptsTab skill={selectedSkill} />
-        )}
+        {activeTab === 'scripts' && <ScriptsTab skill={selectedSkill} />}
 
-        {activeTab === 'triggers' && (
-          <TriggerAnalysis skill={selectedSkill} />
-        )}
+        {activeTab === 'triggers' && <TriggerAnalysis skill={selectedSkill} />}
 
-        {activeTab === 'diagram' && (
-          <DiagramView skill={selectedSkill} />
-        )}
+        {activeTab === 'diagram' && <DiagramView skill={selectedSkill} />}
       </div>
     </div>
   );

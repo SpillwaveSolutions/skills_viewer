@@ -135,8 +135,9 @@ export class ErrorBoundary extends Component<Props, State> {
             {/* Help Text */}
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>For developers:</strong> Check the browser console for more detailed error information.
-                If this error persists, please report it with the technical details above.
+                <strong>For developers:</strong> Check the browser console for more detailed error
+                information. If this error persists, please report it with the technical details
+                above.
               </p>
             </div>
           </div>

@@ -10,17 +10,13 @@ interface SearchBarProps {
 export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
-  placeholder = "Search skills..."
+  placeholder = 'Search skills...',
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Watch for search focus requests from keyboard shortcuts
-  const searchFocusRequested = useKeyboardStore(
-    (state) => state.searchFocusRequested
-  );
-  const setSearchFocusRequested = useKeyboardStore(
-    (state) => state.setSearchFocusRequested
-  );
+  const searchFocusRequested = useKeyboardStore((state) => state.searchFocusRequested);
+  const setSearchFocusRequested = useKeyboardStore((state) => state.setSearchFocusRequested);
 
   // Handle Cmd/Ctrl+F focus request
   useEffect(() => {

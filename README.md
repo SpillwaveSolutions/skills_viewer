@@ -66,41 +66,42 @@ See [specs/BACKLOG.md](specs/BACKLOG.md) for the full roadmap.
 
 ### Search
 
-| Shortcut | Action | Description |
-|----------|--------|-------------|
+| Shortcut       | Action       | Description                        |
+| -------------- | ------------ | ---------------------------------- |
 | `Cmd/Ctrl + F` | Focus search | Jump to search input from anywhere |
-| `Esc` | Clear search | Clear search and unfocus input |
+| `Esc`          | Clear search | Clear search and unfocus input     |
 
 ### List Navigation
 
-| Shortcut | Action | Description |
-|----------|--------|-------------|
-| `↓` | Next skill | Highlight next skill in list (wraps to first) |
-| `↑` | Previous skill | Highlight previous skill (wraps to last) |
-| `Enter` | Select | Select the highlighted skill |
-| `Esc` | Clear highlight | Remove highlight from list |
+| Shortcut | Action          | Description                                   |
+| -------- | --------------- | --------------------------------------------- |
+| `↓`      | Next skill      | Highlight next skill in list (wraps to first) |
+| `↑`      | Previous skill  | Highlight previous skill (wraps to last)      |
+| `Enter`  | Select          | Select the highlighted skill                  |
+| `Esc`    | Clear highlight | Remove highlight from list                    |
 
 ### Tab Navigation
 
 **When viewing a skill**, use these shortcuts to switch between tabs:
 
-| Shortcut | Tab | Content |
-|----------|-----|---------|
-| `Cmd/Ctrl + 1` | Overview | Skill metadata and summary |
-| `Cmd/Ctrl + 2` | Content | Full skill markdown content |
-| `Cmd/Ctrl + 3` | Triggers | Trigger patterns and confidence |
-| `Cmd/Ctrl + 4` | Diagram | Mermaid architecture diagram |
+| Shortcut       | Tab        | Content                           |
+| -------------- | ---------- | --------------------------------- |
+| `Cmd/Ctrl + 1` | Overview   | Skill metadata and summary        |
+| `Cmd/Ctrl + 2` | Content    | Full skill markdown content       |
+| `Cmd/Ctrl + 3` | Triggers   | Trigger patterns and confidence   |
+| `Cmd/Ctrl + 4` | Diagram    | Mermaid architecture diagram      |
 | `Cmd/Ctrl + 5` | References | Referenced files and dependencies |
-| `Cmd/Ctrl + 6` | Scripts | Embedded scripts and commands |
+| `Cmd/Ctrl + 6` | Scripts    | Embedded scripts and commands     |
 
 ### Help
 
-| Shortcut | Action | Description |
-|----------|--------|-------------|
-| `?` | Show help | Display keyboard shortcut reference |
-| `Esc` | Close help | Close the help modal |
+| Shortcut | Action     | Description                         |
+| -------- | ---------- | ----------------------------------- |
+| `?`      | Show help  | Display keyboard shortcut reference |
+| `Esc`    | Close help | Close the help modal                |
 
 **Platform Notes**:
+
 - **macOS**: Use `Cmd` (⌘) key
 - **Windows/Linux**: Use `Ctrl` key
 
@@ -111,6 +112,7 @@ See [specs/BACKLOG.md](specs/BACKLOG.md) for the full roadmap.
 ## 🏗️ Technology Stack
 
 ### Frontend
+
 - **React** 19.1.0 with TypeScript 5.8.3
 - **Vite** 7.0.4 (build tool, dev server)
 - **TailwindCSS** 4.1.17 (utility-first styling)
@@ -120,12 +122,14 @@ See [specs/BACKLOG.md](specs/BACKLOG.md) for the full roadmap.
 - **highlight.js** 11.11.1 (syntax highlighting)
 
 ### Backend
+
 - **Tauri** 2.x (Rust + webview hybrid)
 - **serde** + **serde_json** (serialization)
 - **serde_yaml** 0.9 (YAML frontmatter parsing)
 - **dirs** 5.0 (cross-platform paths)
 
 ### Development
+
 - **Vite** (fast HMR, optimized builds)
 - **TypeScript** (strict mode, no `any`)
 - **Rust** (performance-critical backend)
@@ -141,11 +145,13 @@ See [specs/BACKLOG.md](specs/BACKLOG.md) for the full roadmap.
 - **System dependencies** (varies by platform)
 
 #### macOS
+
 ```bash
 xcode-select --install
 ```
 
 #### Linux (Ubuntu/Debian)
+
 ```bash
 sudo apt update
 sudo apt install libwebkit2gtk-4.1-dev \
@@ -159,6 +165,7 @@ sudo apt install libwebkit2gtk-4.1-dev \
 ```
 
 #### Windows
+
 - Install [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
 - Install [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
 
@@ -260,6 +267,7 @@ This project follows **Specification-Driven Development (SDD)** methodology usin
 ### What is SDD?
 
 SDD is an AI-native development methodology that emphasizes:
+
 - **Intent-driven development**: Define "what" before "how"
 - **Executable specifications**: Specs drive implementation, not document it
 - **Multi-step refinement**: Iterative specification → planning → tasks → implementation
@@ -298,21 +306,22 @@ git checkout -b feature/XXX-feature-name
 
 ### SDD Commands Reference
 
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `/speckit.constitution` | Define project principles | Once at project start |
-| `/speckit.specify` | Create feature specification | Start of every feature |
-| `/speckit.clarify` | Ask clarifying questions | When spec has ambiguities |
-| `/speckit.plan` | Technical implementation plan | After spec approved |
-| `/speckit.tasks` | Generate task breakdown | After plan approved |
-| `/speckit.analyze` | Validate consistency | Before implementing |
-| `/speckit.implement` | Execute tasks | Follow tasks.md strictly |
+| Command                 | Purpose                       | When to Use               |
+| ----------------------- | ----------------------------- | ------------------------- |
+| `/speckit.constitution` | Define project principles     | Once at project start     |
+| `/speckit.specify`      | Create feature specification  | Start of every feature    |
+| `/speckit.clarify`      | Ask clarifying questions      | When spec has ambiguities |
+| `/speckit.plan`         | Technical implementation plan | After spec approved       |
+| `/speckit.tasks`        | Generate task breakdown       | After plan approved       |
+| `/speckit.analyze`      | Validate consistency          | Before implementing       |
+| `/speckit.implement`    | Execute tasks                 | Follow tasks.md strictly  |
 
 ### SDD Skill Location
 
 The SDD skill is located at: **`~/.claude/skills/sdd/`**
 
 **Key References**:
+
 - `~/.claude/skills/sdd/skill.md` - Core methodology
 - `~/.claude/skills/sdd/references/greenfield.md` - Greenfield workflow (6 steps)
 - `~/.claude/skills/sdd/references/brownfield.md` - Brownfield strategies
@@ -321,6 +330,7 @@ The SDD skill is located at: **`~/.claude/skills/sdd/`**
 ### Lessons from v0.1.0
 
 **What Went Wrong**:
+
 - Created spec artifacts but **ignored them during implementation**
 - Implemented features based on intuition, not task list
 - Marked tasks complete retroactively
@@ -329,6 +339,7 @@ The SDD skill is located at: **`~/.claude/skills/sdd/`**
 **Result**: 42% of tasks skipped or simplified
 
 **v0.2.0 Commitment**:
+
 - ✅ Follow SDD workflow strictly
 - ✅ Write tests BEFORE implementation (TDD)
 - ✅ Mark tasks in real-time
@@ -345,13 +356,14 @@ See [.specify/memory/constitution.md](.specify/memory/constitution.md) for full 
 
 ✅ **Test Coverage**: 97.12% (Constitutional compliance achieved!)
 
-| Category | Coverage | Tests |
-|----------|----------|-------|
-| Unit Tests | 97.12% | 113/113 passing |
-| E2E Tests | - | 24/35 passing |
-| Overall | 97.12% | Well above 80% target ✅ |
+| Category   | Coverage | Tests                    |
+| ---------- | -------- | ------------------------ |
+| Unit Tests | 97.12%   | 113/113 passing          |
+| E2E Tests  | -        | 24/35 passing            |
+| Overall    | 97.12%   | Well above 80% target ✅ |
 
 **Coverage Breakdown**:
+
 - Components: 100% (KeyboardShortcutHelp, SearchBar, SkillList)
 - Hooks: 96.82% (useKeyboardShortcuts, usePlatformModifier)
 - Stores: 100% (keyboardStore)
@@ -400,23 +412,20 @@ npm run test:e2e          # Run E2E tests (Playwright)
 
 ### Typography Scale
 
-| Element | Size | Weight |
-|---------|------|--------|
-| H1 (Skill Name) | 24px (1.5rem) | Bold |
-| H2 (Section) | 20px (1.25rem) | Semibold |
-| H3 (Subsection) | 16px (1rem) | Semibold |
-| Body | 14px (0.875rem) | Normal |
-| Small | 12px (0.75rem) | Normal |
+| Element         | Size            | Weight   |
+| --------------- | --------------- | -------- |
+| H1 (Skill Name) | 24px (1.5rem)   | Bold     |
+| H2 (Section)    | 20px (1.25rem)  | Semibold |
+| H3 (Subsection) | 16px (1rem)     | Semibold |
+| Body            | 14px (0.875rem) | Normal   |
+| Small           | 12px (0.75rem)  | Normal   |
 
 ### Color Palette
 
 ```css
---color-primary: #4F46E5     /* Indigo 600 */
---color-bg: #F9FAFB          /* Gray 50 */
---color-surface: #FFFFFF     /* White */
---color-text: #111827        /* Gray 900 */
---color-text-muted: #6B7280  /* Gray 500 */
---color-border: #E5E7EB      /* Gray 200 */
+--color-primary: #4f46e5 /* Indigo 600 */ --color-bg: #f9fafb /* Gray 50 */ --color-surface: #ffffff
+  /* White */ --color-text: #111827 /* Gray 900 */ --color-text-muted: #6b7280 /* Gray 500 */
+  --color-border: #e5e7eb /* Gray 200 */;
 ```
 
 ### Spacing (8px Grid)
@@ -436,25 +445,26 @@ This project follows strict SDD methodology. Before contributing:
 5. No PRs without constitutional compliance statement
 
 **Constitutional Requirements**:
+
 - All core logic must have >80% test coverage (Principle VII)
 - Follow platform design guidelines (Principle I)
 - Developer-first design (Principle II)
 - Read-only safety (Principle III)
 - Cross-platform consistency (Principle IV)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines *(coming in v0.2.0)*.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines _(coming in v0.2.0)_.
 
 ---
 
 ## 📖 Performance Targets
 
-| Metric | Target | Actual (v0.1.0) | Status |
-|--------|--------|-----------------|--------|
-| Cold start | <2s | ~1.2s | ✅ Exceeded |
-| Skill scanning (20 skills) | <500ms | ~300ms | ✅ Exceeded |
-| UI rendering | 60fps | 60fps | ✅ Met |
-| Memory usage | <200MB | ~120MB | ✅ Exceeded |
-| Markdown rendering | <100ms | ~50ms | ✅ Exceeded |
+| Metric                     | Target | Actual (v0.1.0) | Status      |
+| -------------------------- | ------ | --------------- | ----------- |
+| Cold start                 | <2s    | ~1.2s           | ✅ Exceeded |
+| Skill scanning (20 skills) | <500ms | ~300ms          | ✅ Exceeded |
+| UI rendering               | 60fps  | 60fps           | ✅ Met      |
+| Memory usage               | <200MB | ~120MB          | ✅ Exceeded |
+| Markdown rendering         | <100ms | ~50ms           | ✅ Exceeded |
 
 ---
 
@@ -472,7 +482,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines *(coming in v0.2.
 
 ## 📝 License
 
-MIT License - see [LICENSE](LICENSE) file for details *(coming in v0.2.0)*.
+MIT License - see [LICENSE](LICENSE) file for details _(coming in v0.2.0)_.
 
 ---
 
@@ -483,6 +493,7 @@ MIT License - see [LICENSE](LICENSE) file for details *(coming in v0.2.0)*.
 **Status**: Keyboard Shortcuts Complete ✅
 
 **What's Working**:
+
 - ✅ Skill discovery and display
 - ✅ Metadata parsing (YAML frontmatter)
 - ✅ Markdown rendering
@@ -494,12 +505,14 @@ MIT License - see [LICENSE](LICENSE) file for details *(coming in v0.2.0)*.
 - ✅ **Accessibility** (ARIA attributes)
 
 **What's Complete** (Feature 003):
+
 - ✅ US1: Quick Search Access (Cmd/Ctrl+F)
 - ✅ US2: Tab Navigation (Cmd/Ctrl+1-6)
 - ✅ US3: List Navigation (Arrow keys)
 - ✅ US4: Help Modal (? key)
 
 **What's Missing** (see [BACKLOG.md](specs/BACKLOG.md)):
+
 - ⚠️ ESLint/Prettier configuration
 - ⚠️ Navigation history
 - ⚠️ Skill editing capabilities
@@ -512,6 +525,7 @@ MIT License - see [LICENSE](LICENSE) file for details *(coming in v0.2.0)*.
 ## 📞 Support
 
 For issues and feature requests:
+
 - GitHub Issues: [https://github.com/SpillwaveSolutions/skills_viewer/issues](https://github.com/SpillwaveSolutions/skills_viewer/issues)
 
 ---
@@ -519,11 +533,13 @@ For issues and feature requests:
 ## 🎓 Learning Resources
 
 **SDD Methodology**:
+
 - Local skill: `~/.claude/skills/sdd/`
 - Greenfield workflow: `~/.claude/skills/sdd/references/greenfield.md`
 - Command reference: `~/.claude/skills/sdd/references/commands.md`
 
 **Technologies**:
+
 - [Tauri Documentation](https://tauri.app/)
 - [React 19 Documentation](https://react.dev/)
 - [Zustand Documentation](https://zustand-demo.pmnd.rs/)

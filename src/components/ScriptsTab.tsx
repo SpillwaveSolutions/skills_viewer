@@ -58,9 +58,7 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
       {/* Scripts List */}
       <div className="w-80 border-r border-gray-200 overflow-y-auto bg-gray-50">
         <div className="p-6 border-b border-gray-200 bg-white">
-          <h3 className="font-semibold text-gray-900">
-            Scripts ({skill.scripts.length})
-          </h3>
+          <h3 className="font-semibold text-gray-900">Scripts ({skill.scripts.length})</h3>
         </div>
         <div className="p-3">
           {skill.scripts.map((script, idx) => (
@@ -74,16 +72,12 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
               }`}
             >
               <div className="flex items-start gap-2">
-                <span className="text-lg flex-shrink-0">
-                  {getLanguageIcon(script.language)}
-                </span>
+                <span className="text-lg flex-shrink-0">{getLanguageIcon(script.language)}</span>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-gray-900 truncate mr-1">
                     {script.name}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {script.language}
-                  </div>
+                  <div className="text-xs text-gray-500 mt-1">{script.language}</div>
                   <div className="text-xs text-gray-400 mt-1">
                     {script.content.split('\n').length} lines
                   </div>
@@ -141,10 +135,7 @@ export const ScriptsTab: React.FC<ScriptsTabProps> = ({ skill }) => {
 
               {/* Script Content - Using ReactMarkdown for reliable syntax highlighting */}
               <div className="prose prose-slate max-w-none">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                >
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
                   {selectedScript !== null && skill.scripts[selectedScript]
                     ? `\`\`\`${skill.scripts[selectedScript].language}\n${skill.scripts[selectedScript].content}\n\`\`\``
                     : ''}

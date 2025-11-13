@@ -23,10 +23,7 @@ function App() {
       </Layout>
 
       {/* Global keyboard shortcut help modal */}
-      <KeyboardShortcutHelp
-        isOpen={isHelpModalOpen}
-        onClose={() => setHelpModalOpen(false)}
-      />
+      <KeyboardShortcutHelp isOpen={isHelpModalOpen} onClose={() => setHelpModalOpen(false)} />
     </>
   );
 }

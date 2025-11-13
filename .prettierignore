@@ -1,0 +1,26 @@
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Minified files
+*.min.js
+*.min.css
+
+# Changelogs
+CHANGELOG.md
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Tauri
+src-tauri/target/
+
+# Test output
+test-results/
+playwright-report/

@@ -58,9 +58,7 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
       {/* References List */}
       <div className="w-80 border-r border-gray-200 overflow-y-auto bg-gray-50">
         <div className="p-6 border-b border-gray-200 bg-white">
-          <h3 className="font-semibold text-gray-900">
-            References ({skill.references.length})
-          </h3>
+          <h3 className="font-semibold text-gray-900">References ({skill.references.length})</h3>
         </div>
         <div className="p-3">
           {skill.references.map((ref, idx) => (
@@ -81,9 +79,7 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
                   <div className="text-sm font-medium text-gray-900 truncate mr-1">
                     {ref.path.split('/').pop()}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 truncate">
-                    {ref.path}
-                  </div>
+                  <div className="text-xs text-gray-500 mt-1 truncate">{ref.path}</div>
                   {ref.required && (
                     <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded mt-1 inline-block">
                       required
@@ -128,10 +124,7 @@ export const ReferencesTab: React.FC<ReferencesTabProps> = ({ skill }) => {
                 </p>
               </div>
               <div className="prose prose-slate max-w-none">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                >
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
                   {refContent}
                 </ReactMarkdown>
               </div>

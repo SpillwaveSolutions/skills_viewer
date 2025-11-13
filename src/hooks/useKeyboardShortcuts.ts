@@ -31,9 +31,7 @@ import { usePlatformModifier } from './usePlatformModifier';
  */
 export function useKeyboardShortcuts(): void {
   const { isMac } = usePlatformModifier();
-  const setSearchFocusRequested = useKeyboardStore(
-    (state) => state.setSearchFocusRequested
-  );
+  const setSearchFocusRequested = useKeyboardStore((state) => state.setSearchFocusRequested);
   const isHelpModalOpen = useKeyboardStore((state) => state.isHelpModalOpen);
   const setHelpModalOpen = useKeyboardStore((state) => state.setHelpModalOpen);
   const setActiveTabIndex = useKeyboardStore((state) => state.setActiveTabIndex);
@@ -46,9 +44,7 @@ export function useKeyboardShortcuts(): void {
 
       // Don't trigger shortcuts when typing in input fields (except for Cmd/Ctrl+F)
       const isInput =
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable;
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
       // US1: Cmd/Ctrl+F - Focus search
       if (key === 'f') {
@@ -95,13 +91,12 @@ export function useKeyboardShortcuts(): void {
             const nextIndex = (currentHighlight + 1) % currentCount;
             setHighlightedSkillIndex(nextIndex);
           }
-        } else { // arrowup
+        } else {
+          // arrowup
           if (currentHighlight === null) {
             setHighlightedSkillIndex(currentCount - 1);
           } else {
-            const prevIndex = currentHighlight === 0
-              ? currentCount - 1
-              : currentHighlight - 1;
+            const prevIndex = currentHighlight === 0 ? currentCount - 1 : currentHighlight - 1;
             setHighlightedSkillIndex(prevIndex);
           }
         }

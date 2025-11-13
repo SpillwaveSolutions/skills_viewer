@@ -15,22 +15,23 @@ This document summarizes all improvements made to the taskfile and skill-creator
 ### Complete List of Changes
 
 #### 1. Enhanced YAML Frontmatter
+
 ```yaml
 name: taskfile
 description: |
   Expert-level guidance for Task (Go-based task runner)...
-version: 2.0.0                    # NEW - Semantic versioning
-category: build-automation         # NEW - Categorization
-triggers:                          # NEW - 35+ trigger phrases
+version: 2.0.0 # NEW - Semantic versioning
+category: build-automation # NEW - Categorization
+triggers: # NEW - 35+ trigger phrases
   - taskfile
   - task runner
   - Taskfile.yml
   - task --list
   - install task
   # ... 30+ more triggers
-author: Richard Hightower         # NEW - Attribution
-license: MIT                      # NEW - Licensing
-tags:                             # NEW - Searchable tags
+author: Richard Hightower # NEW - Attribution
+license: MIT # NEW - Licensing
+tags: # NEW - Searchable tags
   - build-automation
   - task-runner
   - yaml
@@ -40,6 +41,7 @@ tags:                             # NEW - Searchable tags
 #### 2. New Documentation
 
 **`references/common-yaml-pitfalls.md`** (NEW - 200+ lines)
+
 - Comprehensive YAML syntax troubleshooting
 - Detailed explanation of colon issue in strings
 - 5 different solutions with code examples
@@ -48,6 +50,7 @@ tags:                             # NEW - Searchable tags
 - Testing strategies
 
 **Content highlights:**
+
 ```yaml
 # ❌ WILL FAIL
 cmds:
@@ -61,12 +64,14 @@ cmds:
 #### 3. Enhanced Existing Documentation
 
 **`SKILL.md`** - Added new section:
+
 - "YAML Best Practices and Common Pitfalls"
 - Critical warning about colons
 - Quick solutions list
 - Validation reminders
 
 **`references/taskfile-comprehensive-guide.md`** - Troubleshooting enhanced:
+
 - New subsection: "YAML Parsing Errors with Colons"
 - Symptom identification
 - Root cause explanation
@@ -78,6 +83,7 @@ cmds:
 **Fixed 5 YAML syntax issues across 2 templates:**
 
 **`Taskfile-monorepo-root.yml`**:
+
 ```yaml
 # Before (4 instances)
 - echo "Rust Backend:"
@@ -93,6 +99,7 @@ cmds:
 ```
 
 **`Taskfile-docker.yml`**:
+
 ```yaml
 # Before
 - echo "Deploying {{.IMAGE_NAME}}:{{.VERSION}} to {{.ENV}}"
@@ -106,28 +113,33 @@ cmds:
 #### 5. Metadata Files
 
 **`skill.json`** (NEW - optional, for documentation)
+
 - Mirrors YAML frontmatter in JSON
 - NOT read by Claude Code (documented)
 - Useful for external tooling
 
 **`CHANGELOG.md`** (NEW)
+
 - Comprehensive version history
 - Detailed change documentation
 - Migration guidance
 - Testing notes
 
 ### Files Added
+
 - `references/common-yaml-pitfalls.md`
 - `skill.json`
 - `CHANGELOG.md`
 
 ### Files Updated
+
 - `SKILL.md` - Enhanced frontmatter, new YAML section
 - `references/taskfile-comprehensive-guide.md` - Enhanced troubleshooting
 - `assets/templates/Taskfile-monorepo-root.yml` - Fixed 4 issues
 - `assets/templates/Taskfile-docker.yml` - Fixed 1 issue
 
 ### Impact
+
 - ✅ Better discoverability through triggers
 - ✅ Prevents YAML parsing errors
 - ✅ Comprehensive troubleshooting guidance
@@ -145,10 +157,12 @@ cmds:
 **Expanded from 2 sentences to full section** in `SKILL.md`:
 
 **Required fields** (detailed):
+
 - **name**: Naming conventions, examples, restrictions
 - **description**: Third-person voice, use case specificity, multi-line support
 
 **Recommended optional fields** (NEW documentation):
+
 - **version**: Semantic versioning guidance
 - **triggers**: Trigger phrase arrays with examples
 - **category**: Categorization examples
@@ -161,7 +175,9 @@ cmds:
 #### 2. Critical Clarification Added
 
 **Prominent note about skill.json**:
+
 > **Note about skill.json files:**
+>
 > - Claude Code **does NOT support skill.json files** for metadata
 > - Only SKILL.md with YAML frontmatter is read by Claude Code
 > - If you create a skill.json file, it will be ignored
@@ -172,23 +188,25 @@ cmds:
 #### 3. Enhanced init_skill.py Template
 
 **Before (v1.0.0)**:
+
 ```yaml
 ---
-name: {skill_name}
+name: { skill_name }
 description: [TODO...]
 ---
 ```
 
 **After (v1.1.0)**:
+
 ```yaml
 ---
-name: {skill_name}
+name: { skill_name }
 description: |
   [TODO: Complete guidance with third-person requirement]
 version: 1.0.0
 category: [TODO: Examples provided]
 triggers:
-  - {skill_name}
+  - { skill_name }
   - [TODO: Specific guidance]
 author: [TODO: Your Name]
 license: MIT
@@ -198,6 +216,7 @@ tags:
 ```
 
 **Added explanatory note** in generated SKILL.md explaining:
+
 - Which fields are required vs. optional
 - That skill.json is NOT supported
 - YAML frontmatter is the only source
@@ -205,17 +224,20 @@ tags:
 #### 4. Metadata Quality Tips
 
 **Added guidance on**:
+
 - Making descriptions specific and action-oriented
 - Including concrete use cases
 - Listing common user phrases in triggers
 - Proper YAML indentation (2 spaces)
 
 ### Files Updated
+
 - `SKILL.md` - Comprehensive frontmatter documentation
 - `scripts/init_skill.py` - Enhanced template
 - `CHANGELOG.md` - Version history
 
 ### Impact
+
 - ✅ Clear understanding of metadata requirements
 - ✅ No wasted effort on skill.json files
 - ✅ Consistent metadata across all new skills
@@ -229,14 +251,17 @@ tags:
 These updates are based on:
 
 ### 1. Real-World Usage
+
 - Encountered during skill-debugger monorepo setup
 - 2 specific YAML parsing errors identified
 - Pattern recognition across multiple instances
 
 ### 2. Perplexity Research
+
 **Question**: "What is the correct YAML frontmatter format for Claude Code skills?"
 
 **Key findings**:
+
 - ✅ Only `name` and `description` are required
 - ✅ Optional fields: `version`, `author`, `license`, `allowed-tools`
 - ❌ **`triggers` field NOT officially documented** (but useful for docs)
@@ -244,6 +269,7 @@ These updates are based on:
 - ✅ All metadata must be in SKILL.md YAML frontmatter
 
 ### 3. Pattern Analysis
+
 - Examined existing skills (SDD skill had both SKILL.md and skill.json)
 - Researched official Claude Code documentation
 - Identified user conventions vs. official requirements
@@ -255,9 +281,11 @@ These updates are based on:
 Both skills packaged and ready for distribution:
 
 ### Taskfile Skill v2.0.0
+
 **Location**: `/Users/richardhightower/src/skill-debugger/taskfile.zip`
 
 **Contents** (24 files):
+
 - SKILL.md (enhanced)
 - CHANGELOG.md (new)
 - skill.json (new, optional)
@@ -269,9 +297,11 @@ Both skills packaged and ready for distribution:
 **Size**: ~75KB
 
 ### Skill Creator Skill v1.1.0
+
 **Location**: `/Users/richardhightower/src/skill-debugger/skill-creator.zip`
 
 **Contents** (10 files):
+
 - SKILL.md (significantly enhanced)
 - CHANGELOG.md (new)
 - LICENSE.txt
@@ -289,6 +319,7 @@ Both skills packaged and ready for distribution:
 **No breaking changes** - All existing functionality preserved.
 
 **To benefit from new features**:
+
 1. Use `references/common-yaml-pitfalls.md` when troubleshooting
 2. All templates now follow stricter YAML best practices
 3. Run `task --list` immediately after creating/modifying Taskfiles
@@ -298,11 +329,13 @@ Both skills packaged and ready for distribution:
 **No breaking changes** - Existing skill creation process unchanged.
 
 **For new skills**:
+
 1. Use enhanced `init_skill.py` template with all metadata fields
 2. Follow comprehensive YAML frontmatter documentation
 3. Don't create skill.json files (they're not used)
 
 **For existing skills**:
+
 1. Consider adding optional metadata fields (triggers, tags, category)
 2. Remove skill.json files if present (they're ignored)
 3. Verify YAML frontmatter follows best practices
@@ -312,6 +345,7 @@ Both skills packaged and ready for distribution:
 ## Testing Verification
 
 ### Taskfile Skill
+
 - ✅ All 11 templates validated with `task --list`
 - ✅ All echo statements verified colon-free (0 matches found)
 - ✅ YAML frontmatter validated
@@ -319,6 +353,7 @@ Both skills packaged and ready for distribution:
 - ✅ Skill packaged and validated successfully
 
 ### Skill Creator Skill
+
 - ✅ init_skill.py tested with new template
 - ✅ Generated skill validated successfully
 - ✅ All TODO prompts verified for clarity
@@ -332,6 +367,7 @@ Both skills packaged and ready for distribution:
 ### Immediate Actions
 
 1. **Install updated skills**:
+
    ```bash
    # Backup existing
    mv ~/.claude/skills/taskfile ~/.claude/skills/taskfile.backup
@@ -353,12 +389,14 @@ Both skills packaged and ready for distribution:
 ### Best Practices Going Forward
 
 **When creating Taskfiles**:
+
 - ✅ Avoid colons in echo/printf strings
 - ✅ Run `task --list` immediately after creation
 - ✅ Use dashes, commas, or rephrase instead of colons
 - ✅ Reference `common-yaml-pitfalls.md` for issues
 
 **When creating skills**:
+
 - ✅ Use comprehensive YAML frontmatter with all recommended fields
 - ✅ Include triggers array for documentation
 - ✅ Add tags for categorization
@@ -370,6 +408,7 @@ Both skills packaged and ready for distribution:
 ## Acknowledgments
 
 These improvements were made possible through:
+
 - Real-world usage on the skill-debugger project
 - Systematic error tracking and documentation
 - Research validation via Perplexity

@@ -18,10 +18,11 @@ export const SkillList: React.FC = () => {
     if (!searchQuery.trim()) return skills;
 
     const query = searchQuery.toLowerCase();
-    return skills.filter(skill =>
-      skill.name.toLowerCase().includes(query) ||
-      skill.description?.toLowerCase().includes(query) ||
-      skill.location.toLowerCase().includes(query)
+    return skills.filter(
+      (skill) =>
+        skill.name.toLowerCase().includes(query) ||
+        skill.description?.toLowerCase().includes(query) ||
+        skill.location.toLowerCase().includes(query)
     );
   }, [skills, searchQuery]);
 
@@ -85,10 +86,7 @@ export const SkillList: React.FC = () => {
           <span className="text-sm text-gray-600">
             {filteredSkills.length} of {skills.length} skills
           </span>
-          <button
-            onClick={reload}
-            className="text-sm text-blue-500 hover:text-blue-600"
-          >
+          <button onClick={reload} className="text-sm text-blue-500 hover:text-blue-600">
             Refresh
           </button>
         </div>
@@ -134,7 +132,13 @@ interface SkillListItemProps {
   onClick: () => void;
 }
 
-const SkillListItem: React.FC<SkillListItemProps> = ({ skill, index, isSelected, isHighlighted, onClick }) => {
+const SkillListItem: React.FC<SkillListItemProps> = ({
+  skill,
+  index,
+  isSelected,
+  isHighlighted,
+  onClick,
+}) => {
   const ref = useRef<HTMLDivElement>(null);
 
   // Scroll highlighted item into view
@@ -176,11 +180,13 @@ const SkillListItem: React.FC<SkillListItemProps> = ({ skill, index, isSelected,
         >
           {skill.name}
         </h3>
-        <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${
-          skill.location === 'claude'
-            ? 'bg-purple-100 text-purple-700'
-            : 'bg-green-100 text-green-700'
-        }`}>
+        <span
+          className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${
+            skill.location === 'claude'
+              ? 'bg-purple-100 text-purple-700'
+              : 'bg-green-100 text-green-700'
+          }`}
+        >
           {skill.location}
         </span>
       </div>

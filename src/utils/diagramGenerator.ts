@@ -6,11 +6,11 @@ import { Skill } from '../types';
  */
 function sanitizeForMermaid(text: string): string {
   return text
-    .replace(/"/g, '\\"')  // Escape quotes
-    .replace(/\[/g, '(')   // Replace brackets with parens
+    .replace(/"/g, '\\"') // Escape quotes
+    .replace(/\[/g, '(') // Replace brackets with parens
     .replace(/]/g, ')')
-    .replace(/#/g, '')     // Remove hash symbols
-    .replace(/\n/g, ' ')   // Replace newlines with spaces
+    .replace(/#/g, '') // Remove hash symbols
+    .replace(/\n/g, ' ') // Replace newlines with spaces
     .trim();
 }
 
