@@ -23,7 +23,7 @@ export const TriggerAnalysis: React.FC<TriggerAnalysisProps> = ({ skill }) => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Trigger Keywords</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4 mt-2">Trigger Keywords</h2>
         <p className="text-sm text-gray-600 mb-4">
           These keywords may trigger this skill when mentioned in queries to Claude Code:
         </p>
@@ -42,7 +42,7 @@ export const TriggerAnalysis: React.FC<TriggerAnalysisProps> = ({ skill }) => {
 
       {examples.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Example Queries</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 mt-2">Example Queries</h2>
           <p className="text-sm text-gray-600 mb-4">
             These example queries would likely trigger this skill:
           </p>

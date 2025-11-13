@@ -15,11 +15,27 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
   const triggerPatterns = useMemo(() => analyzeTriggers(skill), [skill]);
   const triggerKeywords = triggerPatterns.slice(0, 5).map(p => p.keyword);
 
+  // Get description from metadata or skill.description
+  const description = skill.metadata?.description || skill.description;
+
+  // Get version from metadata
+  const version = skill.metadata?.version;
+
+  // Filter metadata to exclude duplicates (name, description, version)
+  const remainingMetadata = useMemo(() => {
+    if (!skill.metadata) return {};
+
+    const { description: _, version: __, ...rest } = skill.metadata;
+    return rest;
+  }, [skill.metadata]);
+
+  const hasRemainingMetadata = Object.keys(remainingMetadata).length > 0;
+
   return (
-    <div className="bg-white border-b border-gray-200 p-6">
-      {/* Top row: Skill name and location */}
-      <div className="flex items-start justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{skill.name}</h1>
+    <div className="bg-white border-b border-gray-200 p-6 space-y-6">
+      {/* 1. Top row: Skill name and location */}
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-2xl font-bold text-gray-900 mr-4">{skill.name}</h1>
         <span
           className={`text-sm px-3 py-1 rounded font-medium ${
             skill.location === 'claude'
@@ -31,8 +47,49 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
         </span>
       </div>
 
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      {/* 2. Description (if present) */}
+      {description && (
+        <div>
+          <h2 className="text-sm font-semibold text-gray-700 mb-2">📝 Description</h2>
+          <p className="text-base text-gray-800 leading-relaxed px-2">{description}</p>
+        </div>
+      )}
+
+      {/* 3. Version (if present) */}
+      {version && (
+        <div>
+          <h2 className="text-sm font-semibold text-gray-700 mb-2">🏷️ Version</h2>
+          <p className="text-base text-gray-800 px-2">{version}</p>
+        </div>
+      )}
+
+      {/* 4. Trigger Preview (first 5) */}
+      {triggerKeywords.length > 0 && (
+        <div>
+          <div className="text-sm font-medium text-gray-700 mb-2">
+            🎯 Common Triggers
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {triggerKeywords.map((keyword, idx) => (
+              <span
+                key={idx}
+                className="text-sm px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200 max-w-xs truncate inline-block"
+                title={keyword}
+              >
+                {keyword}
+              </span>
+            ))}
+            {triggerPatterns.length > 5 && (
+              <span className="text-sm px-3 py-1 text-gray-600">
+                +{triggerPatterns.length - 5} more
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 5. Quick Stats Grid */}
+      <div className="grid grid-cols-4 gap-4">
         {/* References */}
         <div
           onClick={() => onNavigateToTab?.('references')}
@@ -75,26 +132,17 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
         </div>
       </div>
 
-      {/* Trigger Preview */}
-      {triggerKeywords.length > 0 && (
+      {/* 6. Remaining Metadata (filtered to exclude name/description/version) */}
+      {hasRemainingMetadata && (
         <div>
-          <div className="text-sm font-medium text-gray-700 mb-2">
-            🎯 Common Triggers
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {triggerKeywords.map((keyword, idx) => (
-              <span
-                key={idx}
-                className="text-sm px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200"
-              >
-                {keyword}
-              </span>
+          <h2 className="text-sm font-semibold text-gray-700 mb-2">ℹ️ Additional Metadata</h2>
+          <div className="space-y-2">
+            {Object.entries(remainingMetadata).map(([key, value]) => (
+              <div key={key} className="px-2">
+                <span className="text-sm font-medium text-gray-700">{key}:</span>{' '}
+                <span className="text-sm text-gray-800">{String(value)}</span>
+              </div>
             ))}
-            {triggerPatterns.length > 5 && (
-              <span className="text-sm px-3 py-1 text-gray-600">
-                +{triggerPatterns.length - 5} more
-              </span>
-            )}
           </div>
         </div>
       )}

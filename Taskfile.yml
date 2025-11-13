@@ -29,8 +29,17 @@ tasks:
     cmds:
       - npm run dev
 
+  clean-up-app-run:
+    desc: Kill zombie processes on port 1420 and cleanup dev servers
+    cmds:
+      - lsof -ti:1420 | xargs kill -9 2>/dev/null || true
+      - pkill -f "vite|tauri" 2>/dev/null || true
+      - echo "Cleaned up zombie processes on port 1420"
+
   run-app:
     desc: Run the Skill Debugger application (launches Tauri desktop app)
+    deps:
+      - clean-up-app-run
     cmds:
       - npm run tauri dev
 
