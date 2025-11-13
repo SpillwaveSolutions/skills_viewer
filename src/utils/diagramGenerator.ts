@@ -1,5 +1,7 @@
 import { Skill } from '../types';
 
+export type DiagramLayout = 'TD' | 'LR';
+
 /**
  * Sanitize text for use in Mermaid diagrams
  * Replaces characters that can break Mermaid syntax
@@ -14,10 +16,10 @@ function sanitizeForMermaid(text: string): string {
     .trim();
 }
 
-export function generateSkillDiagram(skill: Skill): string {
+export function generateSkillDiagram(skill: Skill, layout: DiagramLayout = 'TD'): string {
   const lines: string[] = [];
 
-  lines.push('graph TD');
+  lines.push(`graph ${layout}`);
   lines.push(`    SKILL["📦 ${sanitizeForMermaid(skill.name)}"]`);
   lines.push(`    style SKILL fill:#4F46E5,stroke:#312E81,stroke-width:3px,color:#fff`);
 
