@@ -204,11 +204,16 @@ npm run build            # Build frontend (dist/)
 npm run tauri build      # Build desktop app (src-tauri/target/)
 
 # Testing
-npm test                 # Run tests (⚠️ Not yet implemented)
+npm test                 # Run unit tests (Vitest)
+npm run test:ui          # Run tests with interactive UI
+npm run test:coverage    # Run tests with coverage report
+npm run test:e2e         # Run end-to-end tests (Playwright)
 
-# Linting
-npm run lint             # ESLint (⚠️ Not yet configured)
-npm run format           # Prettier (⚠️ Not yet configured)
+# Code Quality
+npm run lint             # Check for linting errors (ESLint)
+npm run lint:fix         # Auto-fix linting issues
+npm run format           # Format all files (Prettier)
+npm run format:check     # Verify formatting without changes
 ```
 
 ### Project Structure
