@@ -1,5 +1,6 @@
+export { InteractiveDiagram } from './InteractiveDiagram';
+export { DiagramToolbar } from './DiagramToolbar';
 export { ZoomControls } from './ZoomControls';
 export { ExportControls } from './ExportControls';
-export { LayoutSelector, type DiagramLayout } from './LayoutSelector';
-export { DiagramToolbar } from './DiagramToolbar';
-export { InteractiveDiagram } from './InteractiveDiagram';
+export { LayoutSelector } from './LayoutSelector';
+export type { DiagramLayout } from './LayoutSelector';

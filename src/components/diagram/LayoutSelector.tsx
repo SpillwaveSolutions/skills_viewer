@@ -1,37 +1,49 @@
 import React from 'react';
+import { ArrowDown, ArrowRight } from 'lucide-react';
 
 export type DiagramLayout = 'TD' | 'LR';
 
 interface LayoutSelectorProps {
-  currentLayout: DiagramLayout;
+  layout: DiagramLayout;
   onLayoutChange: (layout: DiagramLayout) => void;
+  className?: string;
 }
 
 export const LayoutSelector: React.FC<LayoutSelectorProps> = ({
-  currentLayout,
+  layout,
   onLayoutChange,
+  className = '',
 }) => {
   return (
-    <div className="flex items-center gap-1 bg-white border rounded-lg p-1">
+    <div className={`flex items-center gap-1 bg-gray-100 rounded px-2 py-1 ${className}`}>
+      <span className="text-xs font-medium text-gray-600 mr-1">Layout:</span>
       <button
         onClick={() => onLayoutChange('TD')}
-        className={`px-3 py-2 rounded text-sm transition-colors ${
-          currentLayout === 'TD' ? 'bg-blue-100 text-blue-700 font-medium' : 'hover:bg-gray-100'
+        className={`p-2 rounded transition-colors ${
+          layout === 'TD'
+            ? 'bg-indigo-100 border border-indigo-300'
+            : 'bg-white hover:bg-gray-50 border border-gray-300'
         }`}
-        aria-pressed={currentLayout === 'TD'}
-        title="Top to bottom layout"
+        aria-label="Top to bottom layout"
+        title="Top to Bottom"
+        aria-pressed={layout === 'TD'}
       >
-        Top-Down
+        <ArrowDown className={`w-4 h-4 ${layout === 'TD' ? 'text-indigo-700' : 'text-gray-700'}`} />
       </button>
       <button
         onClick={() => onLayoutChange('LR')}
-        className={`px-3 py-2 rounded text-sm transition-colors ${
-          currentLayout === 'LR' ? 'bg-blue-100 text-blue-700 font-medium' : 'hover:bg-gray-100'
+        className={`p-2 rounded transition-colors ${
+          layout === 'LR'
+            ? 'bg-indigo-100 border border-indigo-300'
+            : 'bg-white hover:bg-gray-50 border border-gray-300'
         }`}
-        aria-pressed={currentLayout === 'LR'}
-        title="Left to right layout"
+        aria-label="Left to right layout"
+        title="Left to Right"
+        aria-pressed={layout === 'LR'}
       >
-        Left-Right
+        <ArrowRight
+          className={`w-4 h-4 ${layout === 'LR' ? 'text-indigo-700' : 'text-gray-700'}`}
+        />
       </button>
     </div>
   );
