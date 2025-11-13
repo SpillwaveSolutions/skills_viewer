@@ -27,10 +27,17 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:1420',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // For Tauri apps, the webServer cannot be auto-started because Playwright
+  // cannot directly control the Tauri app lifecycle. Instead:
+  // 1. Start the app manually: npm run tauri dev
+  // 2. Wait for it to load completely
+  // 3. Run tests: npm run test:e2e
+  //
+  // The tests will connect to the running app on port 1420.
+  // webServer: {
+  //   command: 'npm run tauri dev',
+  //   url: 'http://localhost:1420',
+  //   reuseExistingServer: !process.env.CI,
+  //   timeout: 120 * 1000,
+  // },
 });
