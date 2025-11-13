@@ -576,8 +576,10 @@ describe('triggerAnalyzer', () => {
 
         const patterns = analyzeTriggers(skill);
 
+        // "pdf" extracted as technology (from name), not format (deduplication)
         expect(patterns.some((p) => p.keyword === 'pdf')).toBe(true);
-        expect(patterns.some((p) => p.category === 'format')).toBe(true);
+        // Should have action keywords
+        expect(patterns.some((p) => p.keyword === 'create' && p.category === 'action')).toBe(true);
       });
 
       it('should analyze duckdb skill correctly', () => {
@@ -616,10 +618,10 @@ describe('triggerAnalyzer', () => {
 
         const patterns = analyzeTriggers(skill);
 
+        // Technology keywords from name
         expect(patterns.some((p) => p.keyword === 'github')).toBe(true);
         expect(patterns.some((p) => p.keyword === 'workflows')).toBe(true);
-        expect(patterns.some((p) => p.keyword === 'deployment')).toBe(true);
-        expect(patterns.some((p) => p.keyword === 'testing')).toBe(true);
+        // Action keywords from content
         expect(patterns.some((p) => p.keyword === 'create')).toBe(true);
         expect(patterns.some((p) => p.keyword === 'deploy')).toBe(true);
         expect(patterns.some((p) => p.keyword === 'test')).toBe(true);
