@@ -10,21 +10,13 @@ import { DiagramView } from './DiagramView';
 import { OverviewPanel } from './OverviewPanel';
 import { ReferencesTab } from './ReferencesTab';
 import { ScriptsTab } from './ScriptsTab';
+import { TabBar } from './TabBar';
+import { TabAnnouncer } from './TabAnnouncer';
+import { TABS } from '../types/layout';
 import type { NavigationEntry } from '../types/navigation';
 import 'highlight.js/styles/github.css';
 
 type TabType = 'overview' | 'content' | 'references' | 'scripts' | 'triggers' | 'diagram';
-
-// Tab order matches spec (Cmd/Ctrl+1-6):
-// 1: Overview, 2: Content, 3: Triggers, 4: Diagram, 5: References, 6: Scripts
-const TABS: { id: TabType; label: string; icon: string }[] = [
-  { id: 'overview', label: 'Overview', icon: '📊' }, // Cmd/Ctrl+1
-  { id: 'content', label: 'Content', icon: '📄' }, // Cmd/Ctrl+2
-  { id: 'triggers', label: 'Triggers', icon: '🎯' }, // Cmd/Ctrl+3
-  { id: 'diagram', label: 'Diagram', icon: '🔀' }, // Cmd/Ctrl+4
-  { id: 'references', label: 'References', icon: '📚' }, // Cmd/Ctrl+5
-  { id: 'scripts', label: 'Scripts', icon: '🔧' }, // Cmd/Ctrl+6
-];
 
 export const SkillViewer: React.FC = () => {
   const { selectedSkill, selectSkill } = useSkillStore();
@@ -37,7 +29,7 @@ export const SkillViewer: React.FC = () => {
   // CRITICAL: This hook MUST be called before any early returns (React rules)
   useEffect(() => {
     if (activeTabIndex !== null && activeTabIndex >= 0 && activeTabIndex < TABS.length) {
-      setActiveTab(TABS[activeTabIndex].id);
+      setActiveTab(TABS[activeTabIndex].id as TabType);
     }
   }, [activeTabIndex]);
 
@@ -91,35 +83,17 @@ export const SkillViewer: React.FC = () => {
       {/* Overview Panel (top banner) - now includes description */}
       <OverviewPanel skill={selectedSkill} onNavigateToTab={handleNavigateToTab} />
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 bg-white">
-        <div className="flex gap-1 px-6" role="tablist" aria-label="Skill detail tabs">
-          {TABS.map((tab, index) => (
-            <button
-              key={tab.id}
-              id={`tab-${tab.id}`}
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              aria-controls={`tabpanel-${tab.id}`}
-              tabIndex={activeTab === tab.id ? 0 : -1}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setActiveTabIndex(index); // Update store for keyboard shortcuts
-              }}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
-              }`}
-            >
-              <span className="mr-2" aria-hidden="true">
-                {tab.icon}
-              </span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Tab Navigation - positioned at top below header */}
+      <TabBar
+        activeTabIndex={activeTabIndex ?? 0}
+        onTabChange={(index) => {
+          setActiveTabIndex(index);
+          setActiveTab(TABS[index].id as TabType);
+        }}
+      />
+
+      {/* Screen Reader Announcements for Tab Changes */}
+      <TabAnnouncer activeTabIndex={activeTabIndex} />
 
       {/* Tab Content */}
       <div

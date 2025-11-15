@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { Skill } from '../types';
 import { analyzeTriggers } from '../utils/triggerAnalyzer';
 
@@ -16,10 +16,16 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
   const triggerKeywords = triggerPatterns.slice(0, 5).map((p) => p.keyword);
 
   // Get description from metadata or skill.description
-  const description = skill.metadata?.description || skill.description;
+  // Type guard to narrow unknown to string | undefined
+  const metadataDescription =
+    typeof skill.metadata?.description === 'string' ? skill.metadata.description : undefined;
+  const description = metadataDescription || skill.description;
+  const hasDescription = Boolean(description);
 
   // Get version from metadata
-  const version = skill.metadata?.version;
+  const metadataVersion =
+    typeof skill.metadata?.version === 'string' ? skill.metadata.version : undefined;
+  const version = metadataVersion;
 
   // Filter metadata to exclude duplicates (name, description, version)
   const remainingMetadata = useMemo(() => {
@@ -48,10 +54,12 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
       </div>
 
       {/* 2. Description (if present) */}
-      {description && (
+      {hasDescription && (
         <div>
           <h2 className="text-sm font-semibold text-gray-700 mb-2">📝 Description</h2>
-          <p className="text-base text-gray-800 leading-relaxed px-2">{description}</p>
+          <p className="text-base text-gray-800 leading-relaxed px-2">
+            {(description as ReactNode) || null}
+          </p>
         </div>
       )}
 
@@ -59,7 +67,7 @@ export const OverviewPanel: React.FC<OverviewPanelProps> = ({ skill, onNavigateT
       {version && (
         <div>
           <h2 className="text-sm font-semibold text-gray-700 mb-2">🏷️ Version</h2>
-          <p className="text-base text-gray-800 px-2">{version}</p>
+          <p className="text-base text-gray-800 px-2">{(version as ReactNode) || null}</p>
         </div>
       )}
 

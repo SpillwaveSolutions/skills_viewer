@@ -7,7 +7,7 @@
  * This prevents the dreaded "blank white screen" when React components throw errors.
  */
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;

@@ -26,12 +26,13 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
   onNavigateToReference,
   onNavigateToScript,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transformRef = useRef<any>(null);
   const [layout, setLayout] = useState<DiagramLayout>('TD');
   const [mermaidSource, setMermaidSource] = useState('');
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [fontSize, setFontSize] = useState<number>(14);
 
   const addInteractivity = useCallback(() => {
     if (!containerRef.current) return;
@@ -94,6 +95,16 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
     });
   }, [skill.references, skill.scripts, onNavigateToReference, onNavigateToScript]);
 
+  // Apply font size to existing SVG (separate from render)
+  useEffect(() => {
+    if (containerRef.current) {
+      const svg = containerRef.current.querySelector('svg');
+      if (svg) {
+        svg.style.fontSize = `${fontSize}px`;
+      }
+    }
+  }, [fontSize]);
+
   useEffect(() => {
     const renderDiagram = async () => {
       if (containerRef.current) {
@@ -108,6 +119,12 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
             nodes: [containerRef.current.querySelector(`#${id}`)!],
           });
 
+          // Apply font size to SVG after render
+          const svg = containerRef.current.querySelector('svg');
+          if (svg) {
+            svg.style.fontSize = `${fontSize}px`;
+          }
+
           // Add click and hover handlers to diagram nodes
           addInteractivity();
         } catch (error) {
@@ -117,7 +134,8 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
     };
 
     renderDiagram();
-  }, [skill, layout, addInteractivity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skill, layout]);
 
   const handleZoomIn = () => {
     transformRef.current?.zoomIn(0.5);
@@ -131,9 +149,33 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
     transformRef.current?.resetTransform();
   };
 
+  const handleFontSizeIncrease = () => {
+    setFontSize((prev) => Math.min(prev + 2, 32));
+  };
+
+  const handleFontSizeDecrease = () => {
+    setFontSize((prev) => Math.max(prev - 2, 8));
+  };
+
+  const handleFontSizeReset = () => {
+    setFontSize(14);
+  };
+
+  const handleRegenerateDiagram = async () => {
+    console.log('✨ AI Regenerate clicked for skill:', skill.name);
+    console.log('📝 Feature 013: Intelligent Diagram Generation will be implemented here');
+    console.log('Will call Claude CLI to generate improved Mermaid diagram');
+    // TODO: Implement Claude CLI integration per Feature 013 spec (FR-003, FR-004, FR-005)
+    // 1. Validate current Mermaid syntax (FR-001)
+    // 2. Call `claude -p` with skill content (FR-003, FR-004)
+    // 3. Parse response for Mermaid syntax (FR-005)
+    // 4. Update diagram with generated content
+    // 5. Show loading/error states (FR-013, FR-016)
+  };
+
   return (
-    <div className="p-6 bg-white h-full flex flex-col">
-      <div className="mb-4">
+    <div className="p-6 bg-white h-full flex flex-col overflow-hidden">
+      <div className="mb-4 flex-shrink-0">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Skill Architecture</h2>
         <p className="text-sm text-gray-600">
           Visual representation of {skill.name} and its dependencies
@@ -145,35 +187,55 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
         initialScale={1}
         minScale={0.1}
         maxScale={5}
-        centerOnInit={true}
-        wheel={{ step: 0.1 }}
+        centerOnInit={false}
+        centerZoomedOut={false}
+        limitToBounds={false}
+        alignmentAnimation={{ disabled: true }}
+        velocityAnimation={{ disabled: true }}
+        wheel={{
+          step: 0.1,
+          disabled: false,
+        }}
+        panning={{
+          disabled: false,
+          velocityDisabled: true,
+        }}
         doubleClick={{ disabled: true }}
       >
         {({ ...rest }) => (
-          <>
-            <DiagramToolbar
-              zoom={rest.state.scale}
-              onZoomIn={handleZoomIn}
-              onZoomOut={handleZoomOut}
-              onZoomReset={handleZoomReset}
-              layout={layout}
-              onLayoutChange={setLayout}
-              diagramRef={containerRef}
-              mermaidSource={mermaidSource}
-              skillName={skill.name}
-            />
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-shrink-0">
+              <DiagramToolbar
+                zoom={rest.instance?.transformState.scale || 1}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onZoomReset={handleZoomReset}
+                fontSize={fontSize}
+                onFontSizeIncrease={handleFontSizeIncrease}
+                onFontSizeDecrease={handleFontSizeDecrease}
+                onFontSizeReset={handleFontSizeReset}
+                layout={layout}
+                onLayoutChange={setLayout}
+                diagramRef={containerRef}
+                mermaidSource={mermaidSource}
+                skillName={skill.name}
+                onRegenerateDiagram={handleRegenerateDiagram}
+              />
+            </div>
 
-            <div className="flex-1 overflow-hidden bg-gray-50 rounded-lg border border-gray-200 relative mt-4">
+            <div className="flex-1 min-h-0 overflow-hidden bg-gray-50 rounded-lg border border-gray-200 relative mt-4">
               <TransformComponent
-                wrapperClass="w-full h-full"
-                contentClass="w-full h-full flex items-center justify-center"
+                wrapperClass="w-full h-full !overflow-visible"
+                contentClass="w-full h-full !overflow-visible"
               >
-                <div
-                  ref={containerRef}
-                  className="p-8"
-                  role="img"
-                  aria-label={`Architecture diagram for ${skill.name} showing ${skill.references.length} references and ${skill.scripts.length} scripts. Click nodes to navigate, scroll to zoom, drag to pan.`}
-                />
+                <div className="w-full h-full flex items-center justify-center">
+                  <div
+                    ref={containerRef}
+                    className="p-8"
+                    role="img"
+                    aria-label={`Architecture diagram for ${skill.name} showing ${skill.references.length} references and ${skill.scripts.length} scripts. Click nodes to navigate, scroll to zoom, drag to pan.`}
+                  />
+                </div>
               </TransformComponent>
 
               {hoveredNode && (
@@ -183,7 +245,7 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
                 </div>
               )}
             </div>
-          </>
+          </div>
         )}
       </TransformWrapper>
     </div>
