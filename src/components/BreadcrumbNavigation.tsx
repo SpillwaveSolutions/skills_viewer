@@ -11,7 +11,7 @@
  * - Semantic HTML (nav, ol, li)
  * - ARIA attributes for accessibility
  * - Long skill names truncated with tooltip
- * - Dark background (#2d2d2d)
+ * - Light background (gray-50)
  * - Integration with navigationStore for history navigation
  */
 
@@ -32,7 +32,7 @@ export const BreadcrumbNavigation: React.FC = () => {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="bg-[#2d2d2d] px-4 py-2 flex items-center gap-3 border-b border-gray-700"
+      className="bg-gray-50 px-4 py-2 flex items-center gap-3 border-b border-gray-200"
     >
       {/* Back/Forward Navigation Arrows */}
       <div className="flex items-center gap-1">
@@ -44,8 +44,8 @@ export const BreadcrumbNavigation: React.FC = () => {
             px-2 py-1 rounded transition-colors duration-200
             ${
               canGoBack
-                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                : 'text-gray-600 cursor-not-allowed'
+                ? 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                : 'text-gray-400 cursor-not-allowed'
             }
           `}
         >
@@ -59,8 +59,8 @@ export const BreadcrumbNavigation: React.FC = () => {
             px-2 py-1 rounded transition-colors duration-200
             ${
               canGoForward
-                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                : 'text-gray-600 cursor-not-allowed'
+                ? 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                : 'text-gray-400 cursor-not-allowed'
             }
           `}
         >
@@ -69,7 +69,7 @@ export const BreadcrumbNavigation: React.FC = () => {
       </div>
 
       {/* Separator between arrows and breadcrumb */}
-      <div className="h-4 w-px bg-gray-600" />
+      <div className="h-4 w-px bg-gray-300" />
 
       {/* Breadcrumb Trail */}
       <ol className="flex items-center gap-2 text-sm">
@@ -84,7 +84,7 @@ export const BreadcrumbNavigation: React.FC = () => {
                   onClick={segment.onClick}
                   aria-label={segment.ariaLabel}
                   title={segment.label}
-                  className="text-blue-400 hover:text-blue-300 hover:underline transition-colors duration-200 truncate max-w-xs"
+                  className="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 truncate max-w-xs"
                 >
                   {segment.label}
                 </button>
@@ -92,7 +92,7 @@ export const BreadcrumbNavigation: React.FC = () => {
                 <span
                   aria-current={isActive ? 'page' : undefined}
                   title={segment.label}
-                  className="text-gray-300 font-medium truncate max-w-xs"
+                  className="text-gray-700 font-medium truncate max-w-xs"
                 >
                   {segment.label}
                 </span>
@@ -100,7 +100,7 @@ export const BreadcrumbNavigation: React.FC = () => {
 
               {/* Separator (›) between segments */}
               {!isLast && (
-                <span aria-hidden="true" className="text-gray-500">
+                <span aria-hidden="true" className="text-gray-400">
                   ›
                 </span>
               )}

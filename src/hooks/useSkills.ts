@@ -10,7 +10,6 @@ export function useSkills() {
     try {
       setLoading(true);
       setError(null);
-
       const result = await invoke<Skill[]>('scan_skills');
       setSkills(result);
     } catch (err) {

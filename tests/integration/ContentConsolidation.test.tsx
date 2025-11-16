@@ -220,13 +220,22 @@ describe('Content Consolidation', () => {
   });
 
   describe('Content Distribution Verification', () => {
-    it('should verify SkillHeader contains only title and badge', () => {
+    it('should verify SkillHeader contains only title and badge (standard mode)', () => {
       const { container } = render(<SkillHeader skill={testSkill} />);
 
-      // Count major content sections - should be zero (only title + badge)
-      const sections = container.querySelectorAll('div > div');
-      // Header structure: outer div > flex div (title + badge) > no other sections
-      expect(sections.length).toBeLessThanOrEqual(1);
+      // Should have title (h1)
+      const heading = container.querySelector('h1');
+      expect(heading).toBeInTheDocument();
+
+      // Should have location badge
+      const badge = container.querySelector('span');
+      expect(badge).toBeInTheDocument();
+      expect(badge?.textContent).toContain('claude');
+
+      // Should NOT have description sections
+      expect(screen.queryByText(/description/i)).not.toBeInTheDocument();
+      // Should NOT have stats grid (only inline stats in compact mode)
+      expect(container.querySelector('.grid-cols-4')).not.toBeInTheDocument();
     });
 
     it('should verify OverviewTab contains all content sections', () => {

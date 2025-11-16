@@ -114,12 +114,15 @@ describe('SkillHeader', () => {
     it('should only contain title and badge elements', () => {
       const { container } = render(<SkillHeader skill={mockSkill} />);
 
-      // Should have h1 (title) and span (badge)
+      // Should have h1 (title), button (toggle), and location badge
       const h1Elements = container.querySelectorAll('h1');
-      const spanElements = container.querySelectorAll('span');
+      const buttonElements = container.querySelectorAll('button');
 
       expect(h1Elements).toHaveLength(1);
-      expect(spanElements).toHaveLength(1); // Only the badge span
+      expect(buttonElements).toHaveLength(1); // Compact mode toggle button
+
+      // Should have location badge (containing location text)
+      expect(container).toHaveTextContent('📍 claude');
     });
 
     it('should NOT render any stat grids', () => {

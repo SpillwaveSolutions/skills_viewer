@@ -150,7 +150,8 @@ describe('OverviewTab', () => {
       render(<OverviewTab skill={mockSkill} />);
 
       expect(screen.getByText('📚 References')).toBeInTheDocument();
-      expect(screen.getByText('2')).toBeInTheDocument();
+      const referencesButton = screen.getByRole('button', { name: /View 2 references/i });
+      expect(referencesButton).toBeInTheDocument();
     });
 
     it('should display scripts count', () => {

@@ -47,7 +47,7 @@ export const TabBar = React.memo<TabBarProps>(({ activeTabIndex, onTabChange }) 
   return (
     <div
       role="tablist"
-      className="flex gap-1 border-b border-gray-700 bg-gray-800 px-4 transition-colors duration-150"
+      className="flex gap-1 border-b border-gray-200 bg-white px-4 transition-colors duration-150"
       aria-label="Skill content navigation"
     >
       {TABS.map((tab, index) => (

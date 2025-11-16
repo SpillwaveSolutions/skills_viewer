@@ -26,7 +26,7 @@ export interface SkillHeaderProps {
  * Skill header - title, badge, and optional inline stats (compact mode)
  */
 export const SkillHeader = React.memo<SkillHeaderProps>(({ skill }) => {
-  const { isCompact } = useLayoutMode();
+  const { isCompact, toggleMode } = useLayoutMode();
 
   // Calculate stats for compact mode
   const stats = useMemo(() => {
@@ -80,16 +80,29 @@ export const SkillHeader = React.memo<SkillHeaderProps>(({ skill }) => {
         )}
       </div>
 
-      {/* Location Badge */}
-      <span
-        className={`text-sm px-3 py-1 rounded font-medium flex-shrink-0 ${
-          skill.location === 'claude'
-            ? 'bg-purple-100 text-purple-700'
-            : 'bg-green-100 text-green-700'
-        }`}
-      >
-        📍 {skill.location}
-      </span>
+      <div className="flex items-center gap-3">
+        {/* Compact Mode Toggle Button */}
+        <button
+          onClick={toggleMode}
+          className="text-sm px-3 py-1.5 rounded font-medium flex items-center gap-2 transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+          aria-label={isCompact ? 'Hide skill details' : 'Show skill details'}
+          title={isCompact ? 'Hide Details' : 'Show Details'}
+        >
+          <span aria-hidden="true">{isCompact ? '➖' : '➕'}</span>
+          <span className="text-xs">{isCompact ? 'Hide Details' : 'Show Details'}</span>
+        </button>
+
+        {/* Location Badge */}
+        <span
+          className={`text-sm px-3 py-1 rounded font-medium flex-shrink-0 ${
+            skill.location === 'claude'
+              ? 'bg-purple-100 text-purple-700'
+              : 'bg-green-100 text-green-700'
+          }`}
+        >
+          📍 {skill.location}
+        </span>
+      </div>
     </div>
   );
 });

@@ -215,22 +215,20 @@ describe('SkillViewer', () => {
     });
   });
 
-  describe('Back Navigation', () => {
-    it('should call selectSkill(null) when back button clicked', () => {
+  describe('Breadcrumb Navigation', () => {
+    it('should render BreadcrumbNavigation component', () => {
       render(<SkillViewer />);
 
-      const backButton = screen.getByRole('button', { name: /return to skills list/i });
-      fireEvent.click(backButton);
-
-      expect(mockSelectSkill).toHaveBeenCalledWith(null);
+      // BreadcrumbNavigation should be rendered (has role="navigation")
+      const navigation = screen.getByRole('navigation');
+      expect(navigation).toBeInTheDocument();
     });
 
-    it('should have proper aria-label on back button', () => {
+    it('should have breadcrumb navigation with aria-label', () => {
       render(<SkillViewer />);
 
-      const backButton = screen.getByRole('button', { name: /return to skills list/i });
-      expect(backButton).toBeInTheDocument();
-      expect(backButton).toHaveTextContent('Back to Skills');
+      const navigation = screen.getByRole('navigation');
+      expect(navigation).toHaveAttribute('aria-label', 'Breadcrumb');
     });
   });
 

@@ -52,11 +52,11 @@ export const Tab = React.memo<TabProps>(({ tab, isActive, onClick }) => {
       className={`
         flex items-center gap-2 px-4 py-3
         border-b-2 transition-colors duration-150
-        focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800
+        focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-white
         ${
           isActive
-            ? 'border-purple-500 text-purple-400 bg-gray-800 shadow-sm'
-            : 'border-transparent text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+            ? 'border-purple-500 text-purple-600 bg-purple-50 shadow-sm'
+            : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
         }
         font-medium text-sm
       `}
@@ -73,7 +73,7 @@ export const Tab = React.memo<TabProps>(({ tab, isActive, onClick }) => {
       <span
         className={`
           ml-1 text-xs px-1.5 py-0.5 rounded
-          ${isActive ? 'bg-purple-900 text-purple-300' : 'bg-gray-700 text-gray-500'}
+          ${isActive ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-500'}
         `}
         aria-hidden="true"
       >

@@ -304,3 +304,23 @@ small {
   font-size: 24px !important;
   font-weight: 500 !important;
 }
+
+/* Fix for react-zoom-pan-pinch viewport sizing issue */
+/* Forces the transform containers to fill available space instead of using fit-content */
+/* See: https://github.com/prc5/react-zoom-pan-pinch/issues/112 */
+.react-transform-component {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.react-transform-element {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure SVG scales to fill the transform container */
+.react-transform-element svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
