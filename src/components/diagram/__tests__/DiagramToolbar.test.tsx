@@ -426,4 +426,64 @@ describe('DiagramToolbar', () => {
       expect(results.violations).toHaveLength(0);
     });
   });
+
+  describe('Responsive Layout (T090-T092)', () => {
+    it('T090: should render toolbar in single row on ≥800px viewports', () => {
+      // Set viewport to desktop size
+      global.innerWidth = 1024;
+
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const toolbar = screen.getByRole('toolbar');
+
+      // Verify flex layout is used (allows single-row rendering)
+      expect(toolbar).toHaveClass('flex');
+      expect(toolbar).toHaveClass('gap-2');
+
+      // Verify all buttons are visible
+      expect(screen.getByRole('combobox', { name: /diagram layout/i })).toBeVisible();
+      expect(screen.getByRole('button', { name: /zoom out/i })).toBeVisible();
+      expect(screen.getByRole('button', { name: /zoom in/i })).toBeVisible();
+      expect(screen.getByRole('button', { name: /fit diagram/i })).toBeVisible();
+      expect(screen.getByRole('button', { name: /download.*svg/i })).toBeVisible();
+      expect(screen.getByRole('button', { name: /download.*mermaid/i })).toBeVisible();
+      expect(screen.getByRole('button', { name: /force regenerate/i })).toBeVisible();
+    });
+
+    it('T091: should hide export buttons on <768px viewports (md: breakpoint)', () => {
+      // Set viewport to mobile size
+      global.innerWidth = 640;
+
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const svgButton = screen.getByRole('button', { name: /download.*svg/i });
+      const mermaidButton = screen.getByRole('button', { name: /download.*mermaid/i });
+
+      // Verify export buttons have responsive hiding classes
+      expect(svgButton).toHaveClass('hidden');
+      expect(svgButton).toHaveClass('md:block');
+      expect(mermaidButton).toHaveClass('hidden');
+      expect(mermaidButton).toHaveClass('md:block');
+    });
+
+    it('T100: should have zero accessibility violations on multiple viewport sizes', async () => {
+      // Test desktop viewport (1024px)
+      global.innerWidth = 1024;
+      const { container: desktopContainer } = render(<DiagramToolbar {...defaultProps} />);
+      let results = await axe(desktopContainer);
+      expect(results.violations).toHaveLength(0);
+
+      // Test tablet viewport (768px - md: breakpoint)
+      global.innerWidth = 768;
+      const { container: tabletContainer } = render(<DiagramToolbar {...defaultProps} />);
+      results = await axe(tabletContainer);
+      expect(results.violations).toHaveLength(0);
+
+      // Test mobile viewport (640px)
+      global.innerWidth = 640;
+      const { container: mobileContainer } = render(<DiagramToolbar {...defaultProps} />);
+      results = await axe(mobileContainer);
+      expect(results.violations).toHaveLength(0);
+    });
+  });
 });

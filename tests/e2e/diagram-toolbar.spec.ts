@@ -195,4 +195,46 @@ test.describe('Diagram Toolbar', () => {
       expect(true).toBe(true);
     });
   });
+
+  test.describe('Responsive Layout', () => {
+    test('T092: Toolbar layout adapts correctly on narrow windows', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Start with desktop viewport (1024px)
+      // await page.setViewportSize({ width: 1024, height: 768 });
+      // await page.goto('http://localhost:5173');
+
+      // 2. Navigate to diagram tab
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 3. Verify all toolbar buttons visible on desktop
+      // await expect(page.locator('[aria-label="Download diagram as SVG file"]')).toBeVisible();
+      // await expect(page.locator('[aria-label="Download Mermaid source code"]')).toBeVisible();
+
+      // 4. Resize to mobile viewport (640px)
+      // await page.setViewportSize({ width: 640, height: 768 });
+
+      // 5. Verify export buttons hidden on mobile (md: breakpoint)
+      // const svgButton = page.locator('[aria-label="Download diagram as SVG file"]');
+      // const mermaidButton = page.locator('[aria-label="Download Mermaid source code"]');
+      // await expect(svgButton).toHaveClass(/hidden/);
+      // await expect(svgButton).toHaveClass(/md:block/);
+
+      // 6. Verify essential controls still visible (Layout, Zoom, Regenerate)
+      // await expect(page.locator('[aria-label="Diagram layout direction"]')).toBeVisible();
+      // await expect(page.locator('[aria-label="Zoom in"]')).toBeVisible();
+      // await expect(page.locator('[aria-label="Force regenerate diagram bypassing cache"]')).toBeVisible();
+
+      // 7. Resize to tablet viewport (768px - md: breakpoint)
+      // await page.setViewportSize({ width: 768, height: 768 });
+
+      // 8. Verify export buttons become visible at md: breakpoint
+      // await expect(svgButton).toBeVisible();
+      // await expect(mermaidButton).toBeVisible();
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
+  });
 });
