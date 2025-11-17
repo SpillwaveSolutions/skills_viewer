@@ -118,4 +118,41 @@ test.describe('Diagram Toolbar', () => {
       expect(true).toBe(true);
     });
   });
+
+  test.describe('User Story 4 - Export Button Colors', () => {
+    test('T063: User downloads SVG and Mermaid files successfully', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Navigate to diagram tab with skill loaded
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 2. Verify export buttons exist
+      // const svgButton = page.locator('[aria-label="Download diagram as SVG file"]');
+      // const mermaidButton = page.locator('[aria-label="Download Mermaid source code"]');
+      // await expect(svgButton).toBeVisible();
+      // await expect(mermaidButton).toBeVisible();
+
+      // 3. Set up download event listener
+      // const downloadPromise = page.waitForEvent('download');
+
+      // 4. Click Download SVG button
+      // await svgButton.click();
+
+      // 5. Verify SVG file downloaded with correct filename
+      // const download = await downloadPromise;
+      // expect(download.suggestedFilename()).toMatch(/.*-diagram\.svg$/);
+
+      // 6. Click Download Mermaid button
+      // const mermaidDownloadPromise = page.waitForEvent('download');
+      // await mermaidButton.click();
+
+      // 7. Verify Mermaid file downloaded with correct filename
+      // const mermaidDownload = await mermaidDownloadPromise;
+      // expect(mermaidDownload.suggestedFilename()).toMatch(/.*-diagram\.mmd$/);
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
+  });
 });

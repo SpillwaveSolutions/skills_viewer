@@ -253,4 +253,102 @@ describe('DiagramToolbar', () => {
       expect(results.violations).toHaveLength(0);
     });
   });
+
+  describe('User Story 4 - Export Button Colors (T057-T063)', () => {
+    it('T057: should render Download SVG button with correct indigo styling', () => {
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const svgButton = screen.getByRole('button', { name: /download diagram as svg file/i });
+
+      // Verify button exists
+      expect(svgButton).toBeInTheDocument();
+
+      // Verify indigo tertiary styling
+      expect(svgButton).toHaveClass('bg-indigo-600');
+      expect(svgButton).toHaveClass('text-white');
+      expect(svgButton).toHaveClass('rounded-md');
+      expect(svgButton).toHaveClass('hover:bg-indigo-700');
+    });
+
+    it('T058: should render Download Mermaid button with correct gray styling', () => {
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const mermaidButton = screen.getByRole('button', { name: /download mermaid source code/i });
+
+      // Verify button exists
+      expect(mermaidButton).toBeInTheDocument();
+
+      // Verify gray tertiary styling
+      expect(mermaidButton).toHaveClass('bg-gray-600');
+      expect(mermaidButton).toHaveClass('text-white');
+      expect(mermaidButton).toHaveClass('rounded-md');
+      expect(mermaidButton).toHaveClass('hover:bg-gray-700');
+    });
+
+    it('T059: should call onDownloadSVG when Download SVG button clicked', () => {
+      const mockOnDownloadSVG = vi.fn();
+      render(<DiagramToolbar {...defaultProps} onDownloadSVG={mockOnDownloadSVG} />);
+
+      const svgButton = screen.getByRole('button', { name: /download diagram as svg file/i });
+      fireEvent.click(svgButton);
+
+      expect(mockOnDownloadSVG).toHaveBeenCalledTimes(1);
+    });
+
+    it('T060: should call onDownloadMermaid when Download Mermaid button clicked', () => {
+      const mockOnDownloadMermaid = vi.fn();
+      render(<DiagramToolbar {...defaultProps} onDownloadMermaid={mockOnDownloadMermaid} />);
+
+      const mermaidButton = screen.getByRole('button', { name: /download mermaid source code/i });
+      fireEvent.click(mermaidButton);
+
+      expect(mockOnDownloadMermaid).toHaveBeenCalledTimes(1);
+    });
+
+    it('T061: should disable export buttons when content not ready', () => {
+      render(<DiagramToolbar {...defaultProps} svgContent="" mermaidSource="" />);
+
+      const svgButton = screen.getByRole('button', { name: /download diagram as svg file/i });
+      const mermaidButton = screen.getByRole('button', { name: /download mermaid source code/i });
+
+      // Both buttons should be disabled when content empty
+      expect(svgButton).toBeDisabled();
+      expect(mermaidButton).toBeDisabled();
+
+      // Verify disabled styling
+      expect(svgButton).toHaveClass('disabled:bg-gray-300');
+      expect(mermaidButton).toHaveClass('disabled:bg-gray-300');
+    });
+
+    it('T062: should have proper ARIA labels and tooltips on export buttons', () => {
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const svgButton = screen.getByRole('button', { name: /download diagram as svg file/i });
+      const mermaidButton = screen.getByRole('button', { name: /download mermaid source code/i });
+
+      // Verify ARIA labels
+      expect(svgButton).toHaveAttribute('aria-label', 'Download diagram as SVG file');
+      expect(mermaidButton).toHaveAttribute('aria-label', 'Download Mermaid source code');
+
+      // Verify tooltips (T070)
+      expect(svgButton).toHaveAttribute(
+        'title',
+        'Download as scalable vector graphic (SVG) - editable in design tools'
+      );
+      expect(mermaidButton).toHaveAttribute(
+        'title',
+        'Download Mermaid source (.mmd) - editable diagram markup'
+      );
+    });
+
+    it('T072: should have zero accessibility violations (export buttons)', async () => {
+      const { container } = render(<DiagramToolbar {...defaultProps} />);
+
+      // Run axe scan on entire toolbar
+      const results = await axe(container);
+
+      // Verify zero violations
+      expect(results.violations).toHaveLength(0);
+    });
+  });
 });

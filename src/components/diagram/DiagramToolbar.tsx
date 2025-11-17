@@ -90,16 +90,18 @@ export const DiagramToolbar: React.FC<DiagramToolbarProps> = ({
       <button
         onClick={onDownloadSVG}
         disabled={!svgContent}
-        className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 disabled:bg-gray-300"
+        className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 disabled:bg-gray-300 transition-colors"
         aria-label="Download diagram as SVG file"
+        title="Download as scalable vector graphic (SVG) - editable in design tools"
       >
         Download SVG
       </button>
       <button
         onClick={onDownloadMermaid}
         disabled={!mermaidSource}
-        className="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+        className="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 disabled:bg-gray-300 transition-colors"
         aria-label="Download Mermaid source code"
+        title="Download Mermaid source (.mmd) - editable diagram markup"
       >
         Download Mermaid
       </button>
