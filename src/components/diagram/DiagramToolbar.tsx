@@ -110,8 +110,9 @@ export const DiagramToolbar: React.FC<DiagramToolbarProps> = ({
       <button
         onClick={onRegenerate}
         disabled={isLoading}
-        className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:bg-gray-300"
-        aria-label="Force regenerate diagram"
+        className="px-3 py-1 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 disabled:bg-gray-300 transition-colors"
+        aria-label="Force regenerate diagram bypassing cache"
+        title="Regenerate diagram from source (bypasses cache)"
       >
         {isLoading ? 'Rendering...' : '🔄 Regenerate'}
       </button>

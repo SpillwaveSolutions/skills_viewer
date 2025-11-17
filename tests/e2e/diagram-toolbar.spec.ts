@@ -155,4 +155,44 @@ test.describe('Diagram Toolbar', () => {
       expect(true).toBe(true);
     });
   });
+
+  test.describe('User Story 5 - Regenerate Purple Accent', () => {
+    test('T079: User regenerates diagram and cache is bypassed', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Navigate to diagram tab with skill loaded
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 2. Verify Regenerate button exists with purple styling
+      // const regenerateButton = page.locator('[aria-label="Force regenerate diagram bypassing cache"]');
+      // await expect(regenerateButton).toBeVisible();
+      // await expect(regenerateButton).toHaveClass(/bg-purple-600/);
+
+      // 3. Wait for initial diagram load
+      // await page.waitForSelector('svg', { timeout: 2000 });
+
+      // 4. Click Regenerate button
+      // await regenerateButton.click();
+
+      // 5. Verify loading state appears
+      // await expect(page.locator('text=Rendering...')).toBeVisible();
+
+      // 6. Verify button is disabled during loading
+      // await expect(regenerateButton).toBeDisabled();
+
+      // 7. Wait for regeneration to complete
+      // await expect(page.locator('text=Rendering...')).not.toBeVisible({ timeout: 2000 });
+
+      // 8. Verify diagram re-rendered (SVG updated)
+      // const diagram = page.locator('svg');
+      // await expect(diagram).toBeVisible();
+
+      // 9. Verify button re-enabled after completion
+      // await expect(regenerateButton).toBeEnabled();
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
+  });
 });

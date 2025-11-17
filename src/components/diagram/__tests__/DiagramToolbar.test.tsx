@@ -351,4 +351,79 @@ describe('DiagramToolbar', () => {
       expect(results.violations).toHaveLength(0);
     });
   });
+
+  describe('User Story 5 - Regenerate Purple Accent (T074-T079)', () => {
+    it('T074: should render Regenerate button with purple accent styling', () => {
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const regenerateButton = screen.getByRole('button', { name: /force regenerate diagram/i });
+
+      // Verify button exists
+      expect(regenerateButton).toBeInTheDocument();
+
+      // Verify purple primary action styling
+      expect(regenerateButton).toHaveClass('bg-purple-600');
+      expect(regenerateButton).toHaveClass('text-white');
+      expect(regenerateButton).toHaveClass('rounded-md');
+      expect(regenerateButton).toHaveClass('hover:bg-purple-700');
+    });
+
+    it('T075: should call onRegenerate when Regenerate button clicked', () => {
+      const mockOnRegenerate = vi.fn();
+      render(<DiagramToolbar {...defaultProps} onRegenerate={mockOnRegenerate} />);
+
+      const regenerateButton = screen.getByRole('button', { name: /force regenerate diagram/i });
+      fireEvent.click(regenerateButton);
+
+      expect(mockOnRegenerate).toHaveBeenCalledTimes(1);
+    });
+
+    it('T076: should show loading state when isLoading=true', () => {
+      render(<DiagramToolbar {...defaultProps} isLoading={true} />);
+
+      // Should display "Rendering..." text instead of "🔄 Regenerate"
+      expect(screen.getByText('Rendering...')).toBeInTheDocument();
+      expect(screen.queryByText('🔄 Regenerate')).not.toBeInTheDocument();
+    });
+
+    it('T077: should disable Regenerate button during loading', () => {
+      render(<DiagramToolbar {...defaultProps} isLoading={true} />);
+
+      const regenerateButton = screen.getByRole('button', { name: /force regenerate diagram/i });
+
+      // Button should be disabled
+      expect(regenerateButton).toBeDisabled();
+
+      // Verify disabled styling
+      expect(regenerateButton).toHaveClass('disabled:bg-gray-300');
+    });
+
+    it('T078: should have proper ARIA label for cache-busting', () => {
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const regenerateButton = screen.getByRole('button', { name: /force regenerate diagram/i });
+
+      // Verify enhanced ARIA label explaining cache bypass
+      expect(regenerateButton).toHaveAttribute(
+        'aria-label',
+        'Force regenerate diagram bypassing cache'
+      );
+
+      // Verify tooltip
+      expect(regenerateButton).toHaveAttribute(
+        'title',
+        'Regenerate diagram from source (bypasses cache)'
+      );
+    });
+
+    it('T088: should have zero accessibility violations (Regenerate button)', async () => {
+      const { container } = render(<DiagramToolbar {...defaultProps} />);
+
+      // Run axe scan on entire toolbar
+      const results = await axe(container);
+
+      // Verify zero violations
+      expect(results.violations).toHaveLength(0);
+    });
+  });
 });
