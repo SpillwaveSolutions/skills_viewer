@@ -1,88 +1,117 @@
 import React from 'react';
-import { ZoomControls } from './ZoomControls';
-import { FontSizeControls } from './FontSizeControls';
-import { ExportControls } from './ExportControls';
-import { LayoutSelector, DiagramLayout } from './LayoutSelector';
+import type { DiagramToolbarProps, DiagramLayout } from './DiagramToolbar.types';
+import { ZOOM_LIMITS } from './DiagramToolbar.types';
 
-interface DiagramToolbarProps {
-  zoom: number;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onZoomReset: () => void;
-  fontSize: number;
-  onFontSizeIncrease: () => void;
-  onFontSizeDecrease: () => void;
-  onFontSizeReset: () => void;
-  layout: DiagramLayout;
-  onLayoutChange: (layout: DiagramLayout) => void;
-  diagramRef: React.RefObject<HTMLDivElement | null>;
-  mermaidSource: string;
-  skillName: string;
-  onRegenerateDiagram?: () => void;
-}
-
+/**
+ * DiagramToolbar Component
+ * Feature: 018-diagram-toolbar-redesign
+ *
+ * Professional toolbar for diagram controls with clear visual grouping.
+ * Extracted from InteractiveDiagram.tsx to improve maintainability.
+ *
+ * Props are defined in DiagramToolbar.types.ts following strict interface contract.
+ */
 export const DiagramToolbar: React.FC<DiagramToolbarProps> = ({
+  layout,
+  onLayoutChange,
   zoom,
   onZoomIn,
   onZoomOut,
-  onZoomReset,
-  fontSize,
-  onFontSizeIncrease,
-  onFontSizeDecrease,
-  onFontSizeReset,
-  layout,
-  onLayoutChange,
-  diagramRef,
+  onResetZoom,
+  onFitToView,
+  svgContent,
   mermaidSource,
-  skillName,
-  onRegenerateDiagram,
+  onDownloadSVG,
+  onDownloadMermaid,
+  isLoading,
+  onRegenerate,
+  skillName: _skillName, // Unused but required by interface for download filenames
 }) => {
   return (
-    <div className="flex flex-wrap items-center gap-3 bg-gray-100 rounded-lg p-3">
-      <ZoomControls
-        zoom={zoom}
-        onZoomIn={onZoomIn}
-        onZoomOut={onZoomOut}
-        onZoomReset={onZoomReset}
-      />
+    <div
+      className="flex flex-wrap items-center gap-2 mb-4"
+      role="toolbar"
+      aria-label="Diagram toolbar"
+    >
+      {/* Layout Group */}
+      <select
+        value={layout}
+        onChange={(e) => onLayoutChange(e.target.value as DiagramLayout)}
+        className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+        aria-label="Diagram layout direction"
+      >
+        <option value="TD">Top to Bottom</option>
+        <option value="LR">Left to Right</option>
+      </select>
 
-      <div className="w-px h-6 bg-gray-300" aria-hidden="true" />
-
-      <FontSizeControls
-        fontSize={fontSize}
-        onIncrease={onFontSizeIncrease}
-        onDecrease={onFontSizeDecrease}
-        onReset={onFontSizeReset}
-      />
-
-      <div className="w-px h-6 bg-gray-300" aria-hidden="true" />
-
-      <LayoutSelector layout={layout} onLayoutChange={onLayoutChange} />
-
-      {onRegenerateDiagram && (
-        <>
-          <div className="w-px h-6 bg-gray-300" aria-hidden="true" />
-
-          <button
-            onClick={onRegenerateDiagram}
-            className="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors text-sm flex items-center gap-2"
-            title="Regenerate diagram using Claude AI (Feature 013)"
-            aria-label="Regenerate diagram with AI"
-          >
-            <span className="text-lg">✨</span>
-            <span>AI Regenerate</span>
-          </button>
-        </>
-      )}
-
-      <div className="w-px h-6 bg-gray-300" aria-hidden="true" />
-
-      <ExportControls diagramRef={diagramRef} mermaidSource={mermaidSource} skillName={skillName} />
-
-      <div className="ml-auto text-xs text-gray-600">
-        <kbd className="px-2 py-1 bg-white border border-gray-300 rounded">Cmd/Ctrl</kbd> +{' '}
-        <kbd className="px-2 py-1 bg-white border border-gray-300 rounded">+/-/0</kbd> to zoom
+      {/* Zoom Group - Integrated button group with disabled states */}
+      <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
+        <button
+          onClick={onZoomOut}
+          disabled={zoom <= ZOOM_LIMITS.MIN}
+          aria-disabled={zoom <= ZOOM_LIMITS.MIN}
+          className="px-3 py-1 text-sm hover:bg-gray-100 hover:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+          title={zoom <= ZOOM_LIMITS.MIN ? 'Minimum zoom reached' : 'Zoom Out'}
+          aria-label="Zoom out"
+        >
+          −
+        </button>
+        <button
+          onClick={onResetZoom}
+          className="px-3 py-1 text-sm bg-gray-50 hover:bg-gray-100 hover:z-10 border-x border-gray-300 transition-colors"
+          title="Reset Zoom"
+          aria-label="Reset zoom to 100%"
+        >
+          {(zoom * 100).toFixed(0)}%
+        </button>
+        <button
+          onClick={onZoomIn}
+          disabled={zoom >= ZOOM_LIMITS.MAX}
+          aria-disabled={zoom >= ZOOM_LIMITS.MAX}
+          className="px-3 py-1 text-sm hover:bg-gray-100 hover:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+          title={zoom >= ZOOM_LIMITS.MAX ? 'Maximum zoom reached' : 'Zoom In'}
+          aria-label="Zoom in"
+        >
+          +
+        </button>
       </div>
+
+      {/* View Group */}
+      <button
+        onClick={onFitToView}
+        className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+        aria-label="Fit diagram to viewport"
+      >
+        Fit to View
+      </button>
+
+      {/* Export Group */}
+      <button
+        onClick={onDownloadSVG}
+        disabled={!svgContent}
+        className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 disabled:bg-gray-300"
+        aria-label="Download diagram as SVG file"
+      >
+        Download SVG
+      </button>
+      <button
+        onClick={onDownloadMermaid}
+        disabled={!mermaidSource}
+        className="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+        aria-label="Download Mermaid source code"
+      >
+        Download Mermaid
+      </button>
+
+      {/* Regenerate Group */}
+      <button
+        onClick={onRegenerate}
+        disabled={isLoading}
+        className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:bg-gray-300"
+        aria-label="Force regenerate diagram"
+      >
+        {isLoading ? 'Rendering...' : '🔄 Regenerate'}
+      </button>
     </div>
   );
 };

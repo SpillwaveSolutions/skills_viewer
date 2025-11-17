@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { Skill } from '../../types';
 import { generateSkillDiagram, DiagramLayout } from '../../utils/diagramGenerator';
 import { useDiagramCacheStore } from '../../stores/diagramCacheStore';
+import { DiagramToolbar } from './DiagramToolbar';
 
 interface InteractiveDiagramProps {
   skill: Skill;
@@ -163,75 +164,23 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
           Visual representation of {skill.name} and its dependencies
         </p>
 
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          {/* Layout selector */}
-          <select
-            value={layout}
-            onChange={(e) => handleLayoutChange(e.target.value as DiagramLayout)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-          >
-            <option value="TD">Top to Bottom</option>
-            <option value="LR">Left to Right</option>
-          </select>
-
-          {/* Zoom controls */}
-          <div className="flex items-center gap-1 border border-gray-300 rounded-md">
-            <button
-              onClick={handleZoomOut}
-              className="px-3 py-1 text-sm hover:bg-gray-100"
-              title="Zoom Out"
-            >
-              −
-            </button>
-            <button
-              onClick={handleResetZoom}
-              className="px-3 py-1 text-sm hover:bg-gray-100 border-x border-gray-300"
-              title="Reset Zoom"
-            >
-              {(zoom * 100).toFixed(0)}%
-            </button>
-            <button
-              onClick={handleZoomIn}
-              className="px-3 py-1 text-sm hover:bg-gray-100"
-              title="Zoom In"
-            >
-              +
-            </button>
-          </div>
-
-          <button
-            onClick={handleFitToView}
-            className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
-          >
-            Fit to View
-          </button>
-
-          {/* Download buttons */}
-          <button
-            onClick={handleDownloadSVG}
-            disabled={!svgContent}
-            className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 disabled:bg-gray-300"
-          >
-            Download SVG
-          </button>
-          <button
-            onClick={handleDownloadMermaid}
-            disabled={!mermaidSource}
-            className="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 disabled:bg-gray-300"
-          >
-            Download Mermaid
-          </button>
-
-          {/* Regenerate button */}
-          <button
-            onClick={renderDiagram}
-            disabled={isLoading}
-            className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:bg-gray-300"
-          >
-            {isLoading ? 'Rendering...' : '🔄 Regenerate'}
-          </button>
-        </div>
+        {/* Toolbar - Feature 018 */}
+        <DiagramToolbar
+          layout={layout}
+          onLayoutChange={handleLayoutChange}
+          zoom={zoom}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onResetZoom={handleResetZoom}
+          onFitToView={handleFitToView}
+          svgContent={svgContent}
+          mermaidSource={mermaidSource}
+          onDownloadSVG={handleDownloadSVG}
+          onDownloadMermaid={handleDownloadMermaid}
+          isLoading={isLoading}
+          onRegenerate={renderDiagram}
+          skillName={skill.name}
+        />
       </div>
 
       {/* Diagram viewer */}
