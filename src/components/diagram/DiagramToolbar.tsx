@@ -1,5 +1,6 @@
 import React from 'react';
 import type { DiagramToolbarProps, DiagramLayout } from './DiagramToolbar.types';
+import { ZOOM_LIMITS } from './DiagramToolbar.types';
 
 /**
  * DiagramToolbar Component
@@ -43,19 +44,21 @@ export const DiagramToolbar: React.FC<DiagramToolbarProps> = ({
         <option value="LR">Left to Right</option>
       </select>
 
-      {/* Zoom Group */}
-      <div className="flex items-center gap-1 border border-gray-300 rounded-md">
+      {/* Zoom Group - Integrated button group with disabled states */}
+      <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
         <button
           onClick={onZoomOut}
-          className="px-3 py-1 text-sm hover:bg-gray-100"
-          title="Zoom Out"
+          disabled={zoom <= ZOOM_LIMITS.MIN}
+          aria-disabled={zoom <= ZOOM_LIMITS.MIN}
+          className="px-3 py-1 text-sm hover:bg-gray-100 hover:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+          title={zoom <= ZOOM_LIMITS.MIN ? 'Minimum zoom reached' : 'Zoom Out'}
           aria-label="Zoom out"
         >
           −
         </button>
         <button
           onClick={onResetZoom}
-          className="px-3 py-1 text-sm hover:bg-gray-100 border-x border-gray-300"
+          className="px-3 py-1 text-sm bg-gray-50 hover:bg-gray-100 hover:z-10 border-x border-gray-300 transition-colors"
           title="Reset Zoom"
           aria-label="Reset zoom to 100%"
         >
@@ -63,8 +66,10 @@ export const DiagramToolbar: React.FC<DiagramToolbarProps> = ({
         </button>
         <button
           onClick={onZoomIn}
-          className="px-3 py-1 text-sm hover:bg-gray-100"
-          title="Zoom In"
+          disabled={zoom >= ZOOM_LIMITS.MAX}
+          aria-disabled={zoom >= ZOOM_LIMITS.MAX}
+          className="px-3 py-1 text-sm hover:bg-gray-100 hover:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+          title={zoom >= ZOOM_LIMITS.MAX ? 'Maximum zoom reached' : 'Zoom In'}
           aria-label="Zoom in"
         >
           +

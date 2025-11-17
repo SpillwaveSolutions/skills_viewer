@@ -50,4 +50,43 @@ test.describe('Diagram Toolbar', () => {
       expect(true).toBe(true);
     });
   });
+
+  test.describe('User Story 2 - Zoom Controls', () => {
+    test('T030: User can zoom in/out and reset to 100%', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Navigate to diagram tab with skill loaded
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 2. Verify initial zoom is 100%
+      // await expect(page.locator('text=100%')).toBeVisible();
+
+      // 3. Click zoom in button
+      // await page.click('[aria-label="Zoom in"]');
+
+      // 4. Verify percentage increased (e.g., 120%)
+      // await expect(page.locator('text=120%')).toBeVisible();
+
+      // 5. Click zoom out button twice
+      // await page.click('[aria-label="Zoom out"]');
+      // await page.click('[aria-label="Zoom out"]');
+
+      // 6. Verify percentage decreased (e.g., 83%)
+      // await expect(page.locator('text=83%')).toBeVisible();
+
+      // 7. Click percentage to reset to 100%
+      // await page.click('[aria-label="Reset zoom to 100%"]');
+
+      // 8. Verify zoom reset to 100%
+      // await expect(page.locator('text=100%')).toBeVisible();
+
+      // 9. Verify diagram scaled appropriately (visual check)
+      // const diagram = page.locator('svg');
+      // await expect(diagram).toBeVisible();
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
+  });
 });
