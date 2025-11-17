@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { DiagramToolbar } from '../DiagramToolbar';
 import type { DiagramToolbarProps } from '../DiagramToolbar.types';
 
@@ -43,11 +44,55 @@ describe('DiagramToolbar', () => {
     });
   });
 
-  describe('Placeholder Tests', () => {
-    it('should be replaced with actual tests during implementation', () => {
-      // This file is created as a placeholder for Phase 1
-      // Actual test implementation will happen in Phases 3-4
-      expect(true).toBe(true);
+  describe('User Story 1 - Layout Selector (T011-T013)', () => {
+    it('T011: should render layout selector with current layout value', () => {
+      render(<DiagramToolbar {...defaultProps} layout="TD" />);
+
+      const selector = screen.getByRole('combobox', {
+        name: /diagram layout direction/i,
+      });
+      expect(selector).toBeInTheDocument();
+      expect(selector).toHaveValue('TD');
+
+      // Verify both options are present
+      expect(screen.getByRole('option', { name: /top to bottom/i })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: /left to right/i })).toBeInTheDocument();
+    });
+
+    it('T012: should call onLayoutChange when option selected', () => {
+      const mockOnLayoutChange = vi.fn();
+      render(<DiagramToolbar {...defaultProps} onLayoutChange={mockOnLayoutChange} />);
+
+      const selector = screen.getByRole('combobox', {
+        name: /diagram layout direction/i,
+      });
+
+      // Simulate user changing layout
+      fireEvent.change(selector, { target: { value: 'LR' } });
+
+      expect(mockOnLayoutChange).toHaveBeenCalledWith('LR');
+      expect(mockOnLayoutChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('T013: should have proper ARIA labels on layout selector', () => {
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const selector = screen.getByRole('combobox', {
+        name: /diagram layout direction/i,
+      });
+
+      // Verify aria-label attribute
+      expect(selector).toHaveAttribute('aria-label', 'Diagram layout direction');
+    });
+
+    it('T021: should have zero accessibility violations (layout selector)', async () => {
+      const { container } = render(<DiagramToolbar {...defaultProps} />);
+
+      // Run axe scan on the toolbar
+      const results = await axe(container);
+
+      // Verify zero violations
+      expect(results.violations).toHaveLength(0);
     });
   });
 });

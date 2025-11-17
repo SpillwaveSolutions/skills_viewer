@@ -36,7 +36,7 @@ export const DiagramToolbar: React.FC<DiagramToolbarProps> = ({
       <select
         value={layout}
         onChange={(e) => onLayoutChange(e.target.value as DiagramLayout)}
-        className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+        className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         aria-label="Diagram layout direction"
       >
         <option value="TD">Top to Bottom</option>

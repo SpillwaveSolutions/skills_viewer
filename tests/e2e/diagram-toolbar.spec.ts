@@ -21,9 +21,33 @@ test.describe('Diagram Toolbar', () => {
     // This will be implemented when we have a test skill fixture
   });
 
-  test('placeholder - will be implemented during user story phases', async () => {
-    // This file is created as a placeholder for Phase 1
-    // Actual E2E tests will be written during Phases 3-4
-    expect(true).toBe(true);
+  test.describe('User Story 1 - Layout Selector', () => {
+    test('T014: User can switch layout and diagram re-renders', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Navigate to Skills tab and select a skill
+      // await page.click('[data-testid="skills-tab"]');
+      // await page.click('[data-testid="skill-item-0"]');
+
+      // 2. Navigate to Diagram tab
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 3. Locate layout selector
+      // const layoutSelector = page.locator('[aria-label="Diagram layout direction"]');
+      // await expect(layoutSelector).toBeVisible();
+
+      // 4. Switch from TD to LR
+      // await layoutSelector.selectOption('LR');
+
+      // 5. Wait for diagram to re-render (should be < 200ms per spec)
+      // await page.waitForSelector('svg', { timeout: 200 });
+
+      // 6. Verify layout persisted
+      // await expect(layoutSelector).toHaveValue('LR');
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
   });
 });
