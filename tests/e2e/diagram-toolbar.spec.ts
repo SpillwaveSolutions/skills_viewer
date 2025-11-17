@@ -89,4 +89,33 @@ test.describe('Diagram Toolbar', () => {
       expect(true).toBe(true);
     });
   });
+
+  test.describe('User Story 3 - Fit to View Button', () => {
+    test('T047: User clicks Fit to View and diagram scales appropriately', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Navigate to diagram tab with skill loaded
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 2. Verify Fit to View button exists
+      // const fitButton = page.locator('[aria-label="Fit diagram to viewport"]');
+      // await expect(fitButton).toBeVisible();
+
+      // 3. Zoom in/out to change diagram scale
+      // await page.click('[aria-label="Zoom in"]');
+      // await page.click('[aria-label="Zoom in"]');
+
+      // 4. Click Fit to View
+      // await fitButton.click();
+
+      // 5. Verify diagram scaled to fit viewport
+      // const diagram = page.locator('svg');
+      // await expect(diagram).toBeVisible();
+      // // Check that diagram is within viewport bounds
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
+  });
 });

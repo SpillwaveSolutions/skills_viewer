@@ -79,8 +79,9 @@ export const DiagramToolbar: React.FC<DiagramToolbarProps> = ({
       {/* View Group */}
       <button
         onClick={onFitToView}
-        className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+        className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         aria-label="Fit diagram to viewport"
+        title="Automatically scale diagram to fit view"
       >
         Fit to View
       </button>

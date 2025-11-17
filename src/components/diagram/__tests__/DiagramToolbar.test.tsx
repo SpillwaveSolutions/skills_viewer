@@ -208,4 +208,49 @@ describe('DiagramToolbar', () => {
       expect(results.violations).toHaveLength(0);
     });
   });
+
+  describe('User Story 3 - Fit to View Button (T044-T047)', () => {
+    it('T044: should render Fit to View button with correct styling', () => {
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const fitButton = screen.getByRole('button', { name: /fit diagram to viewport/i });
+
+      // Verify button exists
+      expect(fitButton).toBeInTheDocument();
+
+      // Verify has blue secondary styling
+      expect(fitButton).toHaveClass('bg-blue-600');
+      expect(fitButton).toHaveClass('text-white');
+      expect(fitButton).toHaveClass('rounded-md');
+    });
+
+    it('T045: should call onFitToView when button clicked', () => {
+      const mockOnFitToView = vi.fn();
+      render(<DiagramToolbar {...defaultProps} onFitToView={mockOnFitToView} />);
+
+      const fitButton = screen.getByRole('button', { name: /fit diagram to viewport/i });
+      fireEvent.click(fitButton);
+
+      expect(mockOnFitToView).toHaveBeenCalledTimes(1);
+    });
+
+    it('T046: should have proper ARIA label', () => {
+      render(<DiagramToolbar {...defaultProps} />);
+
+      const fitButton = screen.getByRole('button', { name: /fit diagram to viewport/i });
+
+      // Verify aria-label
+      expect(fitButton).toHaveAttribute('aria-label', 'Fit diagram to viewport');
+    });
+
+    it('T055: should have zero accessibility violations (Fit to View)', async () => {
+      const { container } = render(<DiagramToolbar {...defaultProps} />);
+
+      // Run axe scan
+      const results = await axe(container);
+
+      // Verify zero violations
+      expect(results.violations).toHaveLength(0);
+    });
+  });
 });
