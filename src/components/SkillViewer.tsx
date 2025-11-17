@@ -7,27 +7,20 @@ import { useKeyboardStore } from '../stores/keyboardStore';
 import { useNavigationStore } from '../stores/navigationStore';
 import { TriggerAnalysis } from './TriggerAnalysis';
 import { DiagramView } from './DiagramView';
-import { OverviewPanel } from './OverviewPanel';
 import { ReferencesTab } from './ReferencesTab';
 import { ScriptsTab } from './ScriptsTab';
+import { TabBar } from './TabBar';
+import { TabAnnouncer } from './TabAnnouncer';
+import { SkillHeader } from './SkillHeader';
+import { OverviewTab } from './OverviewTab';
+import { TABS } from '../types/layout';
 import type { NavigationEntry } from '../types/navigation';
 import 'highlight.js/styles/github.css';
 
 type TabType = 'overview' | 'content' | 'references' | 'scripts' | 'triggers' | 'diagram';
 
-// Tab order matches spec (Cmd/Ctrl+1-6):
-// 1: Overview, 2: Content, 3: Triggers, 4: Diagram, 5: References, 6: Scripts
-const TABS: { id: TabType; label: string; icon: string }[] = [
-  { id: 'overview', label: 'Overview', icon: '📊' }, // Cmd/Ctrl+1
-  { id: 'content', label: 'Content', icon: '📄' }, // Cmd/Ctrl+2
-  { id: 'triggers', label: 'Triggers', icon: '🎯' }, // Cmd/Ctrl+3
-  { id: 'diagram', label: 'Diagram', icon: '🔀' }, // Cmd/Ctrl+4
-  { id: 'references', label: 'References', icon: '📚' }, // Cmd/Ctrl+5
-  { id: 'scripts', label: 'Scripts', icon: '🔧' }, // Cmd/Ctrl+6
-];
-
 export const SkillViewer: React.FC = () => {
-  const { selectedSkill, selectSkill } = useSkillStore();
+  const { selectedSkill } = useSkillStore();
   const activeTabIndex = useKeyboardStore((state) => state.activeTabIndex);
   const setActiveTabIndex = useKeyboardStore((state) => state.setActiveTabIndex);
   const navigateTo = useNavigationStore((state) => state.navigateTo);
@@ -37,7 +30,7 @@ export const SkillViewer: React.FC = () => {
   // CRITICAL: This hook MUST be called before any early returns (React rules)
   useEffect(() => {
     if (activeTabIndex !== null && activeTabIndex >= 0 && activeTabIndex < TABS.length) {
-      setActiveTab(TABS[activeTabIndex].id);
+      setActiveTab(TABS[activeTabIndex].id as TabType);
     }
   }, [activeTabIndex]);
 
@@ -54,10 +47,6 @@ export const SkillViewer: React.FC = () => {
       navigateTo(entry);
     }
   }, [selectedSkill, activeTab, navigateTo]);
-
-  const handleBackClick = () => {
-    selectSkill(null);
-  };
 
   const handleNavigateToTab = (tab: string) => {
     setActiveTab(tab as TabType);
@@ -76,50 +65,20 @@ export const SkillViewer: React.FC = () => {
 
   return (
     <div data-testid="skill-viewer" className="flex flex-col h-full">
-      {/* Back Navigation */}
-      <div className="px-6 py-3 bg-white border-b border-gray-200">
-        <button
-          onClick={handleBackClick}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-          aria-label="Return to skills list"
-        >
-          <span aria-hidden="true">←</span>
-          <span>Back to Skills</span>
-        </button>
-      </div>
+      {/* Skill Header - title, badge, inline stats (compact mode) */}
+      <SkillHeader skill={selectedSkill} />
 
-      {/* Overview Panel (top banner) - now includes description */}
-      <OverviewPanel skill={selectedSkill} onNavigateToTab={handleNavigateToTab} />
+      {/* Tab Navigation - positioned at top below header */}
+      <TabBar
+        activeTabIndex={activeTabIndex ?? 0}
+        onTabChange={(index) => {
+          setActiveTabIndex(index);
+          setActiveTab(TABS[index].id as TabType);
+        }}
+      />
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 bg-white">
-        <div className="flex gap-1 px-6" role="tablist" aria-label="Skill detail tabs">
-          {TABS.map((tab, index) => (
-            <button
-              key={tab.id}
-              id={`tab-${tab.id}`}
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              aria-controls={`tabpanel-${tab.id}`}
-              tabIndex={activeTab === tab.id ? 0 : -1}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setActiveTabIndex(index); // Update store for keyboard shortcuts
-              }}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
-              }`}
-            >
-              <span className="mr-2" aria-hidden="true">
-                {tab.icon}
-              </span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Screen Reader Announcements for Tab Changes */}
+      <TabAnnouncer activeTabIndex={activeTabIndex} />
 
       {/* Tab Content */}
       <div
@@ -130,32 +89,7 @@ export const SkillViewer: React.FC = () => {
         className="flex-1 overflow-y-auto bg-white"
       >
         {activeTab === 'overview' && (
-          <div className="p-6">
-            <div className="max-w-4xl mx-auto">
-              {/* Metadata Display */}
-              {selectedSkill.metadata && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">YAML Frontmatter</h2>
-
-                  {/* Display metadata fields as cards */}
-                  {Object.entries(selectedSkill.metadata).map(([key, value]) => (
-                    <div key={key} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-2 uppercase">{key}</h3>
-                      <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">
-                        {typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
-                      </pre>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {!selectedSkill.metadata && (
-                <div className="text-center text-gray-500 py-12">
-                  No YAML frontmatter found in this skill.
-                </div>
-              )}
-            </div>
-          </div>
+          <OverviewTab skill={selectedSkill} onNavigateToTab={handleNavigateToTab} />
         )}
 
         {activeTab === 'content' && (

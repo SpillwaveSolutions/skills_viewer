@@ -3,7 +3,7 @@ import { Download, Copy, FileImage, FileCode } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
 interface ExportControlsProps {
-  diagramRef: React.RefObject<HTMLDivElement>;
+  diagramRef: React.RefObject<HTMLDivElement | null>;
   mermaidSource: string;
   skillName: string;
   className?: string;

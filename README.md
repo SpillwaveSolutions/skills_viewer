@@ -495,6 +495,184 @@ See [docs/TESTING.md](/Users/richardhightower/src/skill-debugger/docs/TESTING.md
 
 ---
 
+## 📸 Visual Regression Testing
+
+### Overview
+
+Visual regression testing captures screenshots of UI components and validates them against expected visual criteria. This catches UI regressions that selector-based E2E tests miss (blank screens, broken rendering, CSS issues).
+
+### Quick Start
+
+```bash
+# 1. Start the development server
+npm run dev
+
+# 2. Run visual regression tests
+npm run test:visual
+
+# 3. Review captured screenshots
+open test-results/visual/
+```
+
+### Test Infrastructure
+
+**Location**: `tests/e2e/visual-regression.spec.ts`
+
+The visual tests capture screenshots of all 6 tabs for each skill:
+
+- Overview Panel
+- Content Tab
+- Diagram Tab
+- References Tab
+- Scripts Tab
+- Triggers Tab
+
+Each screenshot is paired with a JSON metadata file containing visual expectations.
+
+### Mock Skills for Testing
+
+Visual tests run in **web-only mode** using mock skill data, eliminating the need for Tauri runtime:
+
+**Implementation**: `src/hooks/useSkills.ts`
+
+```typescript
+// Tauri environment guard pattern
+const isTauriEnvironment = () => {
+  return typeof window !== 'undefined' && '__TAURI__' in window;
+};
+
+// Conditionally use Tauri API or mock data
+if (isTauriEnvironment()) {
+  const result = await invoke<Skill[]>('scan_skills');
+  setSkills(result);
+} else {
+  // Web-only mode - use mock skills
+  const mockSkills = getMockSkills();
+  setSkills(mockSkills);
+}
+```
+
+This pattern enables:
+
+- ✅ Playwright tests to run without Tauri desktop app
+- ✅ Fast test execution (<15 seconds for 6 tests)
+- ✅ CI/CD integration without desktop environment
+- ✅ Consistent test data across runs
+
+### Visual Expectations
+
+Each screenshot test defines what **should** and **should not** be visible:
+
+```typescript
+const expectation: VisualExpectation = {
+  should: ['Skill name displayed at top', 'Tab navigation visible', 'Content rendered correctly'],
+  shouldNot: ['Blank white screen', 'Error messages', 'Loading spinner'],
+  description: 'Overview panel showing skill metadata',
+};
+```
+
+### Screenshot Archive
+
+Previous screenshots are automatically archived before each test run to prevent data loss:
+
+```
+test-results/
+├── visual/                      # Current screenshots
+│   ├── puml-overview-*.png
+│   ├── puml-content-*.png
+│   └── ...
+└── visual-archive/              # Historical screenshots
+    └── 2025-11-14_11-41-24/
+        ├── puml-overview-*.png
+        └── ...
+```
+
+### Helper Functions
+
+**Location**: `tests/e2e/helpers/visual-verification.ts`
+
+```typescript
+// Capture screenshot with metadata
+await captureAndDescribe(page, 'skill-overview', expectation);
+
+// Archive previous screenshots
+await archiveScreenshots();
+```
+
+### Known Limitations
+
+**Claude Code CLI Analysis**: The automated analysis step using Claude Code CLI is currently disabled due to performance issues (>15min per screenshot). Visual verification is performed manually by reviewing captured screenshots.
+
+**Workaround**: Developers can manually inspect screenshots in `test-results/visual/` to verify visual correctness.
+
+**Future Improvement**: Replace Claude Code CLI with a lighter-weight vision API or image diff tool for automated verification.
+
+### Best Practices
+
+1. **Run Visual Tests Before Commits**: Catch visual regressions early
+
+   ```bash
+   npm run test:visual
+   ```
+
+2. **Review Screenshots After UI Changes**: Verify all tabs render correctly
+
+   ```bash
+   open test-results/visual/
+   ```
+
+3. **Update Expectations When UI Intentionally Changes**: Modify `VisualExpectation` objects in test file when designs change
+
+4. **Check Archived Screenshots**: Compare current vs. previous screenshots when debugging regressions
+   ```bash
+   open test-results/visual-archive/
+   ```
+
+### Integration with Development Workflow
+
+Visual regression tests complement existing E2E tests:
+
+| Test Type              | What It Catches                 | Example                   |
+| ---------------------- | ------------------------------- | ------------------------- |
+| **Selector-based E2E** | Element existence, interactions | "Click button works"      |
+| **Visual Regression**  | Visual correctness, rendering   | "Button actually visible" |
+
+**Example Regression Caught**:
+
+- E2E test: ✅ `page.locator('h1')` found element
+- Visual test: ❌ Screenshot shows blank white screen
+- **Root Cause**: Missing mock data fields caused render failure
+
+### Troubleshooting
+
+**Test Failure**: "Cannot connect to localhost:1420"
+
+```bash
+# Solution: Start dev server first
+npm run dev
+# Then in another terminal:
+npm run test:visual
+```
+
+**No Screenshots Captured**
+
+```bash
+# Check Playwright is installed
+npx playwright install chromium
+```
+
+**Mock Skills Not Loading**
+
+```bash
+# Verify mock data in src/hooks/useSkills.ts
+# Ensure all required Skill fields are present:
+# - name, description, location, path
+# - content, content_clean
+# - references, scripts, metadata
+```
+
+---
+
 ## ♿ Accessibility
 
 ### WCAG 2.1 AA Compliance

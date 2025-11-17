@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Skill } from '../types';
 
 interface DescriptionSectionProps {
@@ -16,7 +16,9 @@ export const DescriptionSection: React.FC<DescriptionSectionProps> = ({ skill })
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4">
       <h2 className="text-sm font-semibold text-gray-700 mb-2">📝 Description</h2>
-      <p className="text-base text-gray-800 leading-relaxed px-2">{description}</p>
+      <p className="text-base text-gray-800 leading-relaxed px-2">
+        {(description as ReactNode) || null}
+      </p>
     </div>
   );
 };

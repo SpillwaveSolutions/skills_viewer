@@ -32,26 +32,30 @@ export const useListNavigation = ({
       switch (event.key) {
         case 'ArrowDown':
           event.preventDefault();
-          setHighlightedIndex((current) => {
+          {
+            const current = highlightedIndex;
             if (current === null) {
               // No selection - highlight first
-              return 0;
+              setHighlightedIndex(0);
+            } else {
+              // Move to next, wrap to first if at end
+              setHighlightedIndex((current + 1) % skillCount);
             }
-            // Move to next, wrap to first if at end
-            return (current + 1) % skillCount;
-          });
+          }
           break;
 
         case 'ArrowUp':
           event.preventDefault();
-          setHighlightedIndex((current) => {
+          {
+            const current = highlightedIndex;
             if (current === null) {
               // No selection - highlight last
-              return skillCount - 1;
+              setHighlightedIndex(skillCount - 1);
+            } else {
+              // Move to previous, wrap to last if at beginning
+              setHighlightedIndex(current === 0 ? skillCount - 1 : current - 1);
             }
-            // Move to previous, wrap to last if at beginning
-            return current === 0 ? skillCount - 1 : current - 1;
-          });
+          }
           break;
 
         case 'Enter':
@@ -78,7 +82,7 @@ export const useListNavigation = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [skillCount, onSelectSkill, setHighlightedIndex]);
+  }, [skillCount, onSelectSkill, setHighlightedIndex, highlightedIndex]);
 
   return {
     highlightedIndex,

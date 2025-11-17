@@ -47,3 +47,5 @@ src-tauri/Cargo.lock
 tests/e2e/test-results/
 tests/e2e/playwright-report/
 playwright/.cache/
+test-results/visual/
+test-results/visual-archive/

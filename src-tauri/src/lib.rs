@@ -5,6 +5,7 @@ mod utils;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
+    println!("Greeting user: {}", name);
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
@@ -15,8 +16,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             commands::scan_skills,
-            commands::read_file_content
+            commands::read_file_content,
+            commands::render_mermaid_to_svg
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    println!("✅ Tauri application started successfully");
 }

@@ -8,7 +8,7 @@ import {
 } from '../../../src/stores/useSkillStore';
 import { Skill } from '../../../src/types';
 
-describe('useSkillStore - Search Filters', () => {
+describe('useSkillStore', () => {
   const mockSkills: Skill[] = [
     {
       name: 'PDF Skill',
@@ -51,10 +51,97 @@ describe('useSkillStore - Search Filters', () => {
     act(() => {
       result.current.resetSearchFilters();
       result.current.setSkills([]);
+      result.current.selectSkill(null);
+      result.current.clearError();
+      result.current.setLoading(false);
     });
   });
 
-  describe('setSearchFilters', () => {
+  describe('T017: Initial State', () => {
+    it('should have correct initial state', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      expect(result.current.skills).toEqual([]);
+      expect(result.current.selectedSkill).toBeNull();
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBeNull();
+      expect(result.current.searchFilters.query).toBe('');
+      expect(result.current.searchFilters.locations).toEqual(['claude', 'opencode']);
+    });
+  });
+
+  describe('T018: setSkills action', () => {
+    it('should update skills array', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.setSkills(mockSkills);
+      });
+
+      expect(result.current.skills).toEqual(mockSkills);
+      expect(result.current.skills.length).toBe(3);
+    });
+
+    it('should replace existing skills', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.setSkills(mockSkills);
+        result.current.setSkills([mockSkills[0]]);
+      });
+
+      expect(result.current.skills.length).toBe(1);
+      expect(result.current.skills[0].name).toBe('PDF Skill');
+    });
+
+    it('should handle empty array', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.setSkills(mockSkills);
+        result.current.setSkills([]);
+      });
+
+      expect(result.current.skills).toEqual([]);
+    });
+  });
+
+  describe('T019: selectSkill action', () => {
+    it('should set selected skill', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.selectSkill(mockSkills[0]);
+      });
+
+      expect(result.current.selectedSkill).toEqual(mockSkills[0]);
+      expect(result.current.selectedSkill?.name).toBe('PDF Skill');
+    });
+
+    it('should allow changing selected skill', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.selectSkill(mockSkills[0]);
+        result.current.selectSkill(mockSkills[1]);
+      });
+
+      expect(result.current.selectedSkill?.name).toBe('Excel Skill');
+    });
+
+    it('should handle null selection (deselect)', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.selectSkill(mockSkills[0]);
+        result.current.selectSkill(null);
+      });
+
+      expect(result.current.selectedSkill).toBeNull();
+    });
+  });
+
+  describe('T020: setSearchQuery (via setSearchFilters)', () => {
     it('should update search query', () => {
       const { result } = renderHook(() => useSkillStore());
 
@@ -65,6 +152,20 @@ describe('useSkillStore - Search Filters', () => {
       expect(result.current.searchFilters.query).toBe('test query');
     });
 
+    it('should preserve other filters when updating query', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.setSearchFilters({ locations: ['claude'] });
+        result.current.setSearchFilters({ query: 'test' });
+      });
+
+      expect(result.current.searchFilters.query).toBe('test');
+      expect(result.current.searchFilters.locations).toEqual(['claude']);
+    });
+  });
+
+  describe('Additional Search Filter Tests', () => {
     it('should update locations filter', () => {
       const { result } = renderHook(() => useSkillStore());
 
@@ -117,7 +218,7 @@ describe('useSkillStore - Search Filters', () => {
     });
   });
 
-  describe('filteredSkills', () => {
+  describe('T021: getFilteredSkills selector', () => {
     it('should return all skills when no filters applied', () => {
       const { result } = renderHook(() => useSkillStore());
 
@@ -197,7 +298,7 @@ describe('useSkillStore - Search Filters', () => {
     });
   });
 
-  describe('availableTags', () => {
+  describe('T022: getAvailableTags selector', () => {
     it('should extract all unique tags', () => {
       const { result } = renderHook(() => useSkillStore());
 
@@ -244,7 +345,7 @@ describe('useSkillStore - Search Filters', () => {
     });
   });
 
-  describe('locationCounts', () => {
+  describe('T023: getLocationCounts selector', () => {
     it('should count skills by location', () => {
       const { result } = renderHook(() => useSkillStore());
 
@@ -263,6 +364,78 @@ describe('useSkillStore - Search Filters', () => {
       const counts = getLocationCounts(result.current);
       expect(counts.claude).toBe(0);
       expect(counts.opencode).toBe(0);
+    });
+  });
+
+  describe('T024: Edge Cases', () => {
+    it('should handle setLoading', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.setLoading(true);
+      });
+
+      expect(result.current.isLoading).toBe(true);
+
+      act(() => {
+        result.current.setLoading(false);
+      });
+
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('should handle setError and clearError', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.setError('Test error message');
+      });
+
+      expect(result.current.error).toBe('Test error message');
+
+      act(() => {
+        result.current.clearError();
+      });
+
+      expect(result.current.error).toBeNull();
+    });
+
+    it('should handle skills with undefined metadata', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      const skillsWithoutMetadata: Skill[] = [{ ...mockSkills[0], metadata: undefined }];
+
+      act(() => {
+        result.current.setSkills(skillsWithoutMetadata);
+      });
+
+      const tags = getAvailableTags(result.current);
+      expect(tags).toEqual([]);
+    });
+
+    it('should handle empty array in all selectors', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      const filtered = getFilteredSkills(result.current);
+      const tags = getAvailableTags(result.current);
+      const counts = getLocationCounts(result.current);
+
+      expect(filtered).toEqual([]);
+      expect(tags).toEqual([]);
+      expect(counts.claude).toBe(0);
+      expect(counts.opencode).toBe(0);
+    });
+
+    it('should handle null values gracefully', () => {
+      const { result } = renderHook(() => useSkillStore());
+
+      act(() => {
+        result.current.selectSkill(null);
+        result.current.setError(null);
+      });
+
+      expect(result.current.selectedSkill).toBeNull();
+      expect(result.current.error).toBeNull();
     });
   });
 });
