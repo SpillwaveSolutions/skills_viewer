@@ -79,26 +79,29 @@ export const DiagramToolbar: React.FC<DiagramToolbarProps> = ({
       {/* View Group */}
       <button
         onClick={onFitToView}
-        className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+        className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         aria-label="Fit diagram to viewport"
+        title="Automatically scale diagram to fit view"
       >
         Fit to View
       </button>
 
-      {/* Export Group */}
+      {/* Export Group - Hidden on mobile (<768px), visible on md+ screens (T095) */}
       <button
         onClick={onDownloadSVG}
         disabled={!svgContent}
-        className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 disabled:bg-gray-300"
+        className="hidden md:block px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 disabled:bg-gray-300 transition-colors"
         aria-label="Download diagram as SVG file"
+        title="Download as scalable vector graphic (SVG) - editable in design tools"
       >
         Download SVG
       </button>
       <button
         onClick={onDownloadMermaid}
         disabled={!mermaidSource}
-        className="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+        className="hidden md:block px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 disabled:bg-gray-300 transition-colors"
         aria-label="Download Mermaid source code"
+        title="Download Mermaid source (.mmd) - editable diagram markup"
       >
         Download Mermaid
       </button>
@@ -107,8 +110,9 @@ export const DiagramToolbar: React.FC<DiagramToolbarProps> = ({
       <button
         onClick={onRegenerate}
         disabled={isLoading}
-        className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:bg-gray-300"
-        aria-label="Force regenerate diagram"
+        className="px-3 py-1 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 disabled:bg-gray-300 transition-colors"
+        aria-label="Force regenerate diagram bypassing cache"
+        title="Regenerate diagram from source (bypasses cache)"
       >
         {isLoading ? 'Rendering...' : '🔄 Regenerate'}
       </button>

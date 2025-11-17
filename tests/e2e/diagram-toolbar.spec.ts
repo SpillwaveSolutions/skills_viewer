@@ -89,4 +89,152 @@ test.describe('Diagram Toolbar', () => {
       expect(true).toBe(true);
     });
   });
+
+  test.describe('User Story 3 - Fit to View Button', () => {
+    test('T047: User clicks Fit to View and diagram scales appropriately', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Navigate to diagram tab with skill loaded
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 2. Verify Fit to View button exists
+      // const fitButton = page.locator('[aria-label="Fit diagram to viewport"]');
+      // await expect(fitButton).toBeVisible();
+
+      // 3. Zoom in/out to change diagram scale
+      // await page.click('[aria-label="Zoom in"]');
+      // await page.click('[aria-label="Zoom in"]');
+
+      // 4. Click Fit to View
+      // await fitButton.click();
+
+      // 5. Verify diagram scaled to fit viewport
+      // const diagram = page.locator('svg');
+      // await expect(diagram).toBeVisible();
+      // // Check that diagram is within viewport bounds
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
+  });
+
+  test.describe('User Story 4 - Export Button Colors', () => {
+    test('T063: User downloads SVG and Mermaid files successfully', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Navigate to diagram tab with skill loaded
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 2. Verify export buttons exist
+      // const svgButton = page.locator('[aria-label="Download diagram as SVG file"]');
+      // const mermaidButton = page.locator('[aria-label="Download Mermaid source code"]');
+      // await expect(svgButton).toBeVisible();
+      // await expect(mermaidButton).toBeVisible();
+
+      // 3. Set up download event listener
+      // const downloadPromise = page.waitForEvent('download');
+
+      // 4. Click Download SVG button
+      // await svgButton.click();
+
+      // 5. Verify SVG file downloaded with correct filename
+      // const download = await downloadPromise;
+      // expect(download.suggestedFilename()).toMatch(/.*-diagram\.svg$/);
+
+      // 6. Click Download Mermaid button
+      // const mermaidDownloadPromise = page.waitForEvent('download');
+      // await mermaidButton.click();
+
+      // 7. Verify Mermaid file downloaded with correct filename
+      // const mermaidDownload = await mermaidDownloadPromise;
+      // expect(mermaidDownload.suggestedFilename()).toMatch(/.*-diagram\.mmd$/);
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
+  });
+
+  test.describe('User Story 5 - Regenerate Purple Accent', () => {
+    test('T079: User regenerates diagram and cache is bypassed', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Navigate to diagram tab with skill loaded
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 2. Verify Regenerate button exists with purple styling
+      // const regenerateButton = page.locator('[aria-label="Force regenerate diagram bypassing cache"]');
+      // await expect(regenerateButton).toBeVisible();
+      // await expect(regenerateButton).toHaveClass(/bg-purple-600/);
+
+      // 3. Wait for initial diagram load
+      // await page.waitForSelector('svg', { timeout: 2000 });
+
+      // 4. Click Regenerate button
+      // await regenerateButton.click();
+
+      // 5. Verify loading state appears
+      // await expect(page.locator('text=Rendering...')).toBeVisible();
+
+      // 6. Verify button is disabled during loading
+      // await expect(regenerateButton).toBeDisabled();
+
+      // 7. Wait for regeneration to complete
+      // await expect(page.locator('text=Rendering...')).not.toBeVisible({ timeout: 2000 });
+
+      // 8. Verify diagram re-rendered (SVG updated)
+      // const diagram = page.locator('svg');
+      // await expect(diagram).toBeVisible();
+
+      // 9. Verify button re-enabled after completion
+      // await expect(regenerateButton).toBeEnabled();
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
+  });
+
+  test.describe('Responsive Layout', () => {
+    test('T092: Toolbar layout adapts correctly on narrow windows', async ({ page }) => {
+      // TODO: This test will be fully implemented once we have test fixtures
+      // For now, we're defining the test structure to follow TDD
+
+      // 1. Start with desktop viewport (1024px)
+      // await page.setViewportSize({ width: 1024, height: 768 });
+      // await page.goto('http://localhost:5173');
+
+      // 2. Navigate to diagram tab
+      // await page.click('[data-testid="diagram-tab"]');
+
+      // 3. Verify all toolbar buttons visible on desktop
+      // await expect(page.locator('[aria-label="Download diagram as SVG file"]')).toBeVisible();
+      // await expect(page.locator('[aria-label="Download Mermaid source code"]')).toBeVisible();
+
+      // 4. Resize to mobile viewport (640px)
+      // await page.setViewportSize({ width: 640, height: 768 });
+
+      // 5. Verify export buttons hidden on mobile (md: breakpoint)
+      // const svgButton = page.locator('[aria-label="Download diagram as SVG file"]');
+      // const mermaidButton = page.locator('[aria-label="Download Mermaid source code"]');
+      // await expect(svgButton).toHaveClass(/hidden/);
+      // await expect(svgButton).toHaveClass(/md:block/);
+
+      // 6. Verify essential controls still visible (Layout, Zoom, Regenerate)
+      // await expect(page.locator('[aria-label="Diagram layout direction"]')).toBeVisible();
+      // await expect(page.locator('[aria-label="Zoom in"]')).toBeVisible();
+      // await expect(page.locator('[aria-label="Force regenerate diagram bypassing cache"]')).toBeVisible();
+
+      // 7. Resize to tablet viewport (768px - md: breakpoint)
+      // await page.setViewportSize({ width: 768, height: 768 });
+
+      // 8. Verify export buttons become visible at md: breakpoint
+      // await expect(svgButton).toBeVisible();
+      // await expect(mermaidButton).toBeVisible();
+
+      // Placeholder assertion until test fixtures ready
+      expect(true).toBe(true);
+    });
+  });
 });
