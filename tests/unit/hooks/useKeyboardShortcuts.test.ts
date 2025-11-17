@@ -11,6 +11,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useKeyboardStore } from '@/stores/keyboardStore';
+import { useSkillStore } from '@/stores/useSkillStore';
+import type { Skill } from '@/types/skill';
 
 describe('useKeyboardShortcuts', () => {
   beforeEach(() => {
@@ -126,10 +128,7 @@ describe('useKeyboardShortcuts', () => {
 
       unmount();
 
-      expect(removeEventListenerSpy).toHaveBeenCalledWith(
-        'keydown',
-        expect.any(Function)
-      );
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
     });
   });
 
@@ -271,6 +270,18 @@ describe('useKeyboardShortcuts', () => {
 
       renderHook(() => useKeyboardShortcuts());
 
+      // FR-003: Select a skill first (required for tabs 2-6)
+      const mockSkill: Skill = {
+        name: 'test-skill',
+        location: 'user',
+        description: 'A test skill',
+        skill_id: 'test-1',
+        triggers: [],
+        references: [],
+        scripts: [],
+      };
+      useSkillStore.setState({ selectedSkill: mockSkill });
+
       const event = new KeyboardEvent('keydown', {
         key: '2',
         metaKey: isMac,
@@ -288,6 +299,18 @@ describe('useKeyboardShortcuts', () => {
       const isMac = platform === 'mac';
 
       renderHook(() => useKeyboardShortcuts());
+
+      // FR-003: Select a skill first
+      const mockSkill: Skill = {
+        name: 'test',
+        location: 'user',
+        description: 'test',
+        skill_id: 'test',
+        triggers: [],
+        references: [],
+        scripts: [],
+      };
+      useSkillStore.setState({ selectedSkill: mockSkill });
 
       const event = new KeyboardEvent('keydown', {
         key: '3',
@@ -307,6 +330,18 @@ describe('useKeyboardShortcuts', () => {
 
       renderHook(() => useKeyboardShortcuts());
 
+      // FR-003: Select a skill first
+      const mockSkill: Skill = {
+        name: 'test',
+        location: 'user',
+        description: 'test',
+        skill_id: 'test',
+        triggers: [],
+        references: [],
+        scripts: [],
+      };
+      useSkillStore.setState({ selectedSkill: mockSkill });
+
       const event = new KeyboardEvent('keydown', {
         key: '4',
         metaKey: isMac,
@@ -325,6 +360,18 @@ describe('useKeyboardShortcuts', () => {
 
       renderHook(() => useKeyboardShortcuts());
 
+      // FR-003: Select a skill first
+      const mockSkill: Skill = {
+        name: 'test',
+        location: 'user',
+        description: 'test',
+        skill_id: 'test',
+        triggers: [],
+        references: [],
+        scripts: [],
+      };
+      useSkillStore.setState({ selectedSkill: mockSkill });
+
       const event = new KeyboardEvent('keydown', {
         key: '5',
         metaKey: isMac,
@@ -342,6 +389,18 @@ describe('useKeyboardShortcuts', () => {
       const isMac = platform === 'mac';
 
       renderHook(() => useKeyboardShortcuts());
+
+      // FR-003: Select a skill first
+      const mockSkill: Skill = {
+        name: 'test',
+        location: 'user',
+        description: 'test',
+        skill_id: 'test',
+        triggers: [],
+        references: [],
+        scripts: [],
+      };
+      useSkillStore.setState({ selectedSkill: mockSkill });
 
       const event = new KeyboardEvent('keydown', {
         key: '6',
@@ -391,6 +450,143 @@ describe('useKeyboardShortcuts', () => {
       const state = useKeyboardStore.getState();
       // Should remain at default (0)
       expect(state.activeTabIndex).toBe(0);
+    });
+  });
+
+  describe('FR-003: Skill Selection Condition for Tabs 2-6 (Feature 019 Enhancement)', () => {
+    const mockSkill: Skill = {
+      name: 'test-skill',
+      location: 'user',
+      description: 'A test skill',
+      skill_id: 'test-skill-1',
+      triggers: [],
+      references: [],
+      scripts: [],
+    };
+
+    beforeEach(() => {
+      useKeyboardStore.getState().reset();
+      useSkillStore.setState({ selectedSkill: null });
+    });
+
+    it('should allow Cmd/Ctrl+1 (Skills tab) without skill selected', () => {
+      const { platform } = useKeyboardStore.getState();
+      const isMac = platform === 'mac';
+
+      renderHook(() => useKeyboardShortcuts());
+
+      // Ensure no skill selected
+      expect(useSkillStore.getState().selectedSkill).toBeNull();
+
+      const event = new KeyboardEvent('keydown', {
+        key: '1',
+        metaKey: isMac,
+        ctrlKey: !isMac,
+      });
+
+      window.dispatchEvent(event);
+
+      const state = useKeyboardStore.getState();
+      expect(state.activeTabIndex).toBe(0); // Should work
+    });
+
+    it('should block Cmd/Ctrl+2 when no skill selected', () => {
+      const { platform } = useKeyboardStore.getState();
+      const isMac = platform === 'mac';
+
+      renderHook(() => useKeyboardShortcuts());
+
+      // Ensure no skill selected
+      useSkillStore.setState({ selectedSkill: null });
+
+      // Set initial tab to 0
+      useKeyboardStore.getState().setActiveTabIndex(0);
+
+      const event = new KeyboardEvent('keydown', {
+        key: '2',
+        metaKey: isMac,
+        ctrlKey: !isMac,
+      });
+
+      window.dispatchEvent(event);
+
+      const state = useKeyboardStore.getState();
+      // Should remain at tab 0 (blocked)
+      expect(state.activeTabIndex).toBe(0);
+    });
+
+    it('should allow Cmd/Ctrl+2 when skill is selected', () => {
+      const { platform } = useKeyboardStore.getState();
+      const isMac = platform === 'mac';
+
+      renderHook(() => useKeyboardShortcuts());
+
+      // Select a skill
+      useSkillStore.setState({ selectedSkill: mockSkill });
+
+      const event = new KeyboardEvent('keydown', {
+        key: '2',
+        metaKey: isMac,
+        ctrlKey: !isMac,
+      });
+
+      window.dispatchEvent(event);
+
+      const state = useKeyboardStore.getState();
+      // Should switch to tab 1 (Details)
+      expect(state.activeTabIndex).toBe(1);
+    });
+
+    it('should block Cmd/Ctrl+3-6 when no skill selected', () => {
+      const { platform } = useKeyboardStore.getState();
+      const isMac = platform === 'mac';
+
+      renderHook(() => useKeyboardShortcuts());
+
+      // Ensure no skill selected
+      useSkillStore.setState({ selectedSkill: null });
+
+      // Test keys 3-6
+      for (let key = 3; key <= 6; key++) {
+        useKeyboardStore.getState().setActiveTabIndex(0);
+
+        const event = new KeyboardEvent('keydown', {
+          key: key.toString(),
+          metaKey: isMac,
+          ctrlKey: !isMac,
+        });
+
+        window.dispatchEvent(event);
+
+        const state = useKeyboardStore.getState();
+        // Should remain at tab 0 (blocked)
+        expect(state.activeTabIndex).toBe(0);
+      }
+    });
+
+    it('should allow Cmd/Ctrl+3-6 when skill is selected', () => {
+      const { platform } = useKeyboardStore.getState();
+      const isMac = platform === 'mac';
+
+      renderHook(() => useKeyboardShortcuts());
+
+      // Select a skill
+      useSkillStore.setState({ selectedSkill: mockSkill });
+
+      // Test keys 3-6
+      for (let key = 3; key <= 6; key++) {
+        const event = new KeyboardEvent('keydown', {
+          key: key.toString(),
+          metaKey: isMac,
+          ctrlKey: !isMac,
+        });
+
+        window.dispatchEvent(event);
+
+        const state = useKeyboardStore.getState();
+        // Should switch to corresponding tab (key - 1)
+        expect(state.activeTabIndex).toBe(key - 1);
+      }
     });
   });
 

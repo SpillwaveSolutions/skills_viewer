@@ -33,13 +33,7 @@ describe('SearchBar', () => {
     });
 
     it('should render with custom placeholder', () => {
-      render(
-        <SearchBar
-          value=""
-          onChange={mockOnChange}
-          placeholder="Custom placeholder"
-        />
-      );
+      render(<SearchBar value="" onChange={mockOnChange} placeholder="Custom placeholder" />);
 
       const input = screen.getByPlaceholderText('Custom placeholder');
       expect(input).toBeInTheDocument();
@@ -209,6 +203,52 @@ describe('SearchBar', () => {
       // Tab to focus
       await user.tab();
       expect(input).toHaveFocus();
+    });
+  });
+
+  describe('ARIA Live Announcements (Feature 019 Enhancement)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should announce when search is focused via keyboard shortcut', async () => {
+      render(<SearchBar value="" onChange={mockOnChange} />);
+
+      // Trigger keyboard shortcut focus
+      act(() => {
+        useKeyboardStore.getState().setSearchFocusRequested(true);
+      });
+
+      // Wait for announcement delay (100ms)
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+
+      // Check for ARIA live announcer
+      const announcer = screen.getByTestId('aria-live-announcer');
+      expect(announcer).toHaveTextContent(
+        'Search field focused. Type to search skills or press Escape to clear.'
+      );
+    });
+
+    it('should have aria-live region for screen readers', () => {
+      render(<SearchBar value="" onChange={mockOnChange} />);
+
+      const announcer = screen.getByTestId('aria-live-announcer');
+      expect(announcer).toHaveAttribute('role', 'status');
+      expect(announcer).toHaveAttribute('aria-live', 'polite');
+      expect(announcer).toHaveAttribute('aria-atomic', 'true');
+    });
+
+    it('should be visually hidden but accessible to screen readers', () => {
+      render(<SearchBar value="" onChange={mockOnChange} />);
+
+      const announcer = screen.getByTestId('aria-live-announcer');
+      expect(announcer).toHaveClass('sr-only');
     });
   });
 });

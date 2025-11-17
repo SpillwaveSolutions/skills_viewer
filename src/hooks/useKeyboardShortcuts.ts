@@ -13,6 +13,7 @@
 
 import { useEffect } from 'react';
 import { useKeyboardStore } from '../stores/keyboardStore';
+import { useSkillStore } from '../stores/useSkillStore';
 import { usePlatformModifier } from './usePlatformModifier';
 
 /**
@@ -70,7 +71,12 @@ export function useKeyboardShortcuts(): void {
         event.preventDefault();
         // Convert key to 0-based tab index (1->0, 2->1, etc.)
         const tabIndex = parseInt(key, 10) - 1;
-        setActiveTabIndex(tabIndex);
+
+        // FR-003: Cmd/Ctrl+1 always works, but Cmd/Ctrl+2-6 require a skill to be selected
+        const selectedSkill = useSkillStore.getState().selectedSkill;
+        if (tabIndex === 0 || selectedSkill !== null) {
+          setActiveTabIndex(tabIndex);
+        }
         return;
       }
 

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useKeyboardStore } from '../stores/keyboardStore';
 import { Search, HelpCircle } from 'lucide-react';
+import { AriaLiveAnnouncer } from './AriaLiveAnnouncer';
 
 interface SearchBarProps {
   value: string;
@@ -15,6 +16,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
 
   // Watch for search focus requests from keyboard shortcuts
   const searchFocusRequested = useKeyboardStore((state) => state.searchFocusRequested);
@@ -30,6 +32,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       if (value) {
         inputRef.current.select();
       }
+
+      // Announce to screen readers
+      setAnnouncement('Search field focused. Type to search skills or press Escape to clear.');
 
       // Reset the focus request flag
       setSearchFocusRequested(false);
@@ -113,6 +118,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         Press Escape to clear search. Use operators like AND, OR, NOT for advanced search. Use
         field: syntax for field-specific search.
       </span>
+
+      <AriaLiveAnnouncer message={announcement} />
     </div>
   );
 };
