@@ -1,0 +1,182 @@
+# API Contract: Skill Analysis Commands
+
+version: "1.0.0"
+description: Tauri commands for skill analysis operations
+
+commands:
+  start_skill_analysis:
+    description: |
+      Start asynchronous analysis of a skill. Returns analysis ID immediately,
+      analysis runs in background tokio task. User polls with get_analysis_status.
+
+    input:
+      skill_name:
+        type: string
+        description: Skill directory name (e.g., "my-skill")
+        example: "pdf-processor"
+        required: true
+
+    output:
+      analysis_id:
+        type: string
+        description: UUID v4 identifier for polling
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+    errors:
+      - code: "SkillNotFound"
+        message: "Skill directory does not exist"
+        http_status: 404
+
+      - code: "AnalysisInProgress"
+        message: "Analysis already running for this skill"
+        http_status: 409
+
+      - code: "MaxConcurrentReached"
+        message: "Cannot start analysis (5 concurrent limit reached)"
+        http_status: 429
+
+    rust_signature: |
+      #[tauri::command]
+      pub async fn start_skill_analysis(skill_name: String) -> Result<String, String>
+
+  get_analysis_status:
+    description: |
+      Poll for analysis progress and results. Call every 2 seconds until
+      status is 'completed' or 'failed'.
+
+    input:
+      analysis_id:
+        type: string
+        description: UUID from start_skill_analysis
+        example: "550e8400-e29b-41d4-a716-446655440000"
+        required: true
+
+    output:
+      result:
+        type: SkillAnalysisResult
+        description: Complete analysis result object (see types.yaml)
+
+    errors:
+      - code: "AnalysisNotFound"
+        message: "Invalid or expired analysis_id"
+        http_status: 404
+
+    rust_signature: |
+      #[tauri::command]
+      pub async fn get_analysis_status(analysis_id: String) -> Result<SkillAnalysisResult, String>
+
+  cancel_analysis:
+    description: |
+      Cancel a running analysis. Analysis task is terminated immediately.
+      Cannot cancel completed or failed analyses.
+
+    input:
+      analysis_id:
+        type: string
+        description: UUID of analysis to cancel
+        example: "550e8400-e29b-41d4-a716-446655440000"
+        required: true
+
+    output:
+      success:
+        type: boolean
+        description: true if cancelled, false if already finished
+
+    errors:
+      - code: "AnalysisNotFound"
+        message: "Invalid analysis_id"
+        http_status: 404
+
+      - code: "AnalysisCompleted"
+        message: "Cannot cancel completed/failed analysis"
+        http_status: 400
+
+    rust_signature: |
+      #[tauri::command]
+      pub async fn cancel_analysis(analysis_id: String) -> Result<bool, String>
+
+  detect_cli:
+    description: |
+      Detect available CLI tools (claude, opencode). Call once on app startup
+      to determine which features are available.
+
+    input: null
+
+    output:
+      claude_available:
+        type: boolean
+        description: true if claude CLI is in PATH
+
+      opencode_available:
+        type: boolean
+        description: true if opencode CLI is in PATH
+
+      claude_path:
+        type: string | null
+        description: Absolute path to claude binary (if available)
+
+      opencode_path:
+        type: string | null
+        description: Absolute path to opencode binary (if available)
+
+    errors: null
+
+    rust_signature: |
+      #[tauri::command]
+      pub async fn detect_cli() -> Result<CLIDetectionResult, String>
+
+workflows:
+  typical_analysis:
+    description: "Typical user workflow for analyzing a skill"
+    steps:
+      - action: detect_cli
+        purpose: "Check CLI availability on app startup"
+
+      - action: start_skill_analysis
+        input: { skill_name: "my-skill" }
+        result: { analysis_id: "xxx" }
+
+      - action: get_analysis_status (poll every 2s)
+        input: { analysis_id: "xxx" }
+        until: "status === 'completed' or 'failed'"
+
+      - action: display results
+        source: "SkillAnalysisResult from get_analysis_status"
+
+  concurrent_analysis:
+    description: "User analyzing multiple skills simultaneously"
+    steps:
+      - action: start_skill_analysis (skill A)
+        result: { analysis_id: "aaa" }
+
+      - action: start_skill_analysis (skill B)
+        result: { analysis_id: "bbb" }
+
+      - action: poll both analyses
+        details: "Frontend polls 'aaa' and 'bbb' independently every 2s"
+
+      - action: display results
+        details: "Show both analyses in UI, each updating independently"
+
+rate_limits:
+  start_skill_analysis: "5 concurrent per user (enforced by backend)"
+  get_analysis_status: "No limit (polling expected)"
+  cancel_analysis: "No limit"
+  detect_cli: "1 call per app session (cache result)"
+
+cache_behavior:
+  analysis_results:
+    ttl: "24 hours"
+    eviction: "LRU (max 50 results)"
+    key: "analysis_id"
+
+security:
+  - "All commands require user consent (no automatic analysis)"
+  - "Read-only file access (no skill modifications)"
+  - "CLI execution sandboxed (no arbitrary commands)"
+  - "Rate limiting prevents DoS (5 concurrent max)"
+
+see_also:
+  - types.yaml: "Complete type definitions"
+  - ../data-model.md: "Detailed data model documentation"
+  - ../plan.md: "Implementation plan and architecture"
