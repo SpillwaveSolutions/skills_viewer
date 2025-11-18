@@ -25,6 +25,7 @@ interface SkillStore {
   clearError: () => void;
   setSearchFilters: (filters: Partial<SearchFilters>) => void;
   resetSearchFilters: () => void;
+  reset: () => void;
 }
 
 // Selector functions (to be used outside the store)
@@ -112,4 +113,12 @@ export const useSkillStore = create<SkillStore>((set) => ({
       searchFilters: { ...state.searchFilters, ...filters },
     })),
   resetSearchFilters: () => set({ searchFilters: defaultSearchFilters }),
+  reset: () =>
+    set({
+      skills: [],
+      selectedSkill: null,
+      isLoading: false,
+      error: null,
+      searchFilters: defaultSearchFilters,
+    }),
 }));
