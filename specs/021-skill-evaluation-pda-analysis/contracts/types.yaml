@@ -1,0 +1,299 @@
+# Type Definitions: Skill Analysis
+
+version: "1.0.0"
+description: Shared types for skill analysis feature
+
+types:
+  SkillAnalysisResult:
+    description: "Main analysis result container"
+    fields:
+      analysis_id:
+        type: string
+        format: uuid_v4
+        description: "Unique identifier"
+        required: true
+
+      skill_name:
+        type: string
+        description: "Skill directory name"
+        required: true
+
+      skill_path:
+        type: string
+        format: absolute_path
+        description: "Path to SKILL.md"
+        required: true
+
+      timestamp:
+        type: datetime
+        format: iso8601
+        description: "Analysis start time"
+        required: true
+
+      status:
+        type: enum<AnalysisStatus>
+        description: "Execution status"
+        required: true
+
+      progress:
+        type: integer
+        range: [0, 100]
+        description: "Progress percentage"
+        required: true
+
+      spec_compliance:
+        type: SpecCompliance | null
+        description: "Spec validation results (FR-001)"
+        required: false
+
+      pda_analysis:
+        type: PDAAnalysis | null
+        description: "PDA scoring results (FR-002/003)"
+        required: false
+
+      security_review:
+        type: SecurityReview | null
+        description: "Security analysis (FR-004)"
+        required: false
+
+      trigger_suggestions:
+        type: TriggerSuggestion[] | null
+        description: "Keyword suggestions (FR-005)"
+        required: false
+
+      link_validation:
+        type: LinkValidation | null
+        description: "Link check results (FR-006)"
+        required: false
+
+      error:
+        type: string | null
+        description: "Error message if failed"
+        required: false
+
+  AnalysisStatus:
+    type: enum
+    values:
+      - running: "Analysis in progress"
+      - completed: "Analysis finished successfully"
+      - failed: "Analysis failed with error"
+
+  SpecCompliance:
+    description: "Anthropic spec validation results"
+    fields:
+      score:
+        type: integer
+        range: [0, 100]
+        description: "Compliance score"
+
+      violations:
+        type: Violation[]
+        description: "List of violations"
+
+      warnings:
+        type: Warning[]
+        description: "List of warnings"
+
+  Violation:
+    description: "Specification violation"
+    fields:
+      rule:
+        type: string
+        description: "Machine-readable rule ID"
+        example: "missing_required_field"
+
+      message:
+        type: string
+        description: "Human-readable error"
+
+      fix_suggestion:
+        type: string | null
+        description: "How to fix"
+
+      line_number:
+        type: integer | null
+        description: "Line in SKILL.md"
+
+  Warning:
+    description: "Specification warning"
+    fields:
+      rule:
+        type: string
+        description: "Rule identifier"
+
+      message:
+        type: string
+        description: "Warning message"
+
+      recommendation:
+        type: string | null
+        description: "Improvement suggestion"
+
+  PDAAnalysis:
+    description: "Progressive Disclosure Architecture results"
+    fields:
+      score:
+        type: integer
+        range: [0, 100]
+        description: "PDA compliance score"
+
+      token_estimate:
+        type: integer
+        description: "Total token count"
+
+      tier_breakdown:
+        type: TierBreakdown
+        description: "Token distribution"
+
+      recommendations:
+        type: string[]
+        description: "Improvement suggestions"
+
+      suggested_structure:
+        type: string[]
+        description: "Structural changes"
+
+  TierBreakdown:
+    description: "PDA tier token distribution"
+    fields:
+      metadata_tokens:
+        type: integer
+        description: "Frontmatter tokens"
+
+      orchestrator_tokens:
+        type: integer
+        description: "Main content tokens"
+
+      resource_tokens:
+        type: integer
+        description: "references/ tokens"
+
+  SecurityReview:
+    description: "Permissions security analysis"
+    fields:
+      score:
+        type: integer
+        range: [0, 100]
+        description: "Security score (100=most secure)"
+
+      unused_permissions:
+        type: string[]
+        description: "Declared but unused"
+
+      high_risk_permissions:
+        type: RiskFlag[]
+        description: "Risky combinations"
+
+      minimum_required:
+        type: string[]
+        description: "Minimum needed permissions"
+
+  RiskFlag:
+    description: "Security risk indicator"
+    fields:
+      permission:
+        type: string
+        description: "Permission name"
+        example: "Bash"
+
+      risk_level:
+        type: enum<RiskLevel>
+        description: "Severity"
+
+      explanation:
+        type: string
+        description: "Why risky"
+
+      mitigation:
+        type: string | null
+        description: "How to mitigate"
+
+  RiskLevel:
+    type: enum
+    values:
+      - critical: "Severe security issue"
+      - high: "High risk"
+      - medium: "Medium risk"
+      - low: "Low risk"
+
+  TriggerSuggestion:
+    description: "Suggested trigger keyword"
+    fields:
+      keyword:
+        type: string
+        description: "Suggested keyword"
+        example: "pdf"
+
+      relevance_score:
+        type: integer
+        range: [0, 100]
+        description: "How relevant"
+
+      explanation:
+        type: string
+        description: "Why suggested"
+
+  LinkValidation:
+    description: "Link check results"
+    fields:
+      total_links:
+        type: integer
+        description: "Total links found"
+
+      valid_links:
+        type: integer
+        description: "Reachable links"
+
+      broken_links:
+        type: BrokenLink[]
+        description: "Broken links"
+
+  BrokenLink:
+    description: "A broken link"
+    fields:
+      url:
+        type: string
+        description: "Broken URL/path"
+
+      line_number:
+        type: integer
+        description: "Line in SKILL.md"
+
+      error:
+        type: string
+        description: "Error message"
+        example: "404 Not Found"
+
+  CLIDetectionResult:
+    description: "CLI availability check"
+    fields:
+      claude_available:
+        type: boolean
+        description: "Claude CLI in PATH"
+
+      opencode_available:
+        type: boolean
+        description: "OpenCode CLI in PATH"
+
+      claude_path:
+        type: string | null
+        description: "Path to claude"
+
+      opencode_path:
+        type: string | null
+        description: "Path to opencode"
+
+mappings:
+  rust_to_typescript:
+    String: "string"
+    u8: "number"
+    usize: "number"
+    bool: "boolean"
+    DateTime<Utc>: "string (ISO 8601)"
+    Vec<T>: "T[]"
+    Option<T>: "T | null | undefined"
+
+  serialization:
+    rust_enums: "lowercase strings (e.g., Running -> 'running')"
+    optional_fields: "omitted if None (not serialized as null)"
+    datetime: "ISO 8601 string via chrono serde feature"

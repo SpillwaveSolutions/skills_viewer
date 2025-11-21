@@ -25,4 +25,11 @@ serde_json = "1"
 serde_yaml = "0.9"
 dirs = "5.0"
 tempfile = "3.20"
+# Feature 021 dependencies
+tokio = { version = "1.35", features = ["full"] }
+dashmap = "6.1"
+which = "6.0"
+reqwest = { version = "0.11", features = ["blocking"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
 
