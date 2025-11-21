@@ -18,7 +18,8 @@ pub fn run() {
             greet,
             commands::scan_skills,
             commands::read_file_content,
-            commands::render_mermaid_to_svg
+            commands::render_mermaid_to_svg,
+            commands::detect_cli
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
