@@ -60,7 +60,7 @@ export interface HeaderState {
 }
 
 /**
- * Tab definitions constant - all 6 tabs in fixed order
+ * Tab definitions constant - all 7 tabs in fixed order
  */
 export const TABS: readonly TabConfig[] = [
   {
@@ -92,17 +92,24 @@ export const TABS: readonly TabConfig[] = [
     ariaLabel: 'Diagram tab',
   },
   {
+    id: 'evaluation',
+    label: 'Evaluation',
+    icon: '🎯',
+    shortcutIndex: 5,
+    ariaLabel: 'Evaluation tab - Spec compliance and PDA analysis',
+  },
+  {
     id: 'references',
     label: 'References',
     icon: '📚',
-    shortcutIndex: 5,
+    shortcutIndex: 6,
     ariaLabel: 'References tab',
   },
   {
     id: 'scripts',
     label: 'Scripts',
     icon: '📜',
-    shortcutIndex: 6,
+    shortcutIndex: 7,
     ariaLabel: 'Scripts tab',
   },
 ] as const;

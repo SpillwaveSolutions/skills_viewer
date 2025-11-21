@@ -2,7 +2,9 @@
 // Provides async commands for skill evaluation and PDA analysis
 
 use crate::utils::cli_executor;
-use crate::models::analysis::CLIDetectionResult as ModelCLIDetectionResult;
+use crate::utils::yaml_parser;
+use crate::analyzers::{spec_validator, pda_scorer};
+use crate::models::analysis::{CLIDetectionResult as ModelCLIDetectionResult, SpecCompliance, PDAAnalysis};
 
 /// Detect available CLI tools (Claude/OpenCode)
 /// Returns detection status with paths if available
@@ -16,6 +18,35 @@ pub fn detect_cli() -> Result<ModelCLIDetectionResult, String> {
         claude_path: detection.claude_path.map(|p| p.to_string_lossy().to_string()),
         opencode_path: detection.opencode_path.map(|p| p.to_string_lossy().to_string()),
     })
+}
+
+/// Validate skill against Anthropic Skills Specification
+#[tauri::command]
+pub async fn validate_skill(
+    skill_content: String,
+) -> Result<SpecCompliance, String> {
+    // Parse frontmatter from skill content
+    let (frontmatter_opt, _rest) = yaml_parser::extract_frontmatter(&skill_content);
+
+    let frontmatter = match frontmatter_opt {
+        Some(fm) => fm,
+        None => serde_json::json!({}),
+    };
+
+    // Convert JSON Value to YAML Value
+    let frontmatter_yaml: serde_yaml::Value = serde_json::from_value(frontmatter)
+        .map_err(|e| format!("Failed to convert frontmatter: {}", e))?;
+
+    let compliance = spec_validator::validate_skill(&skill_content, &frontmatter_yaml);
+    Ok(compliance)
+}
+
+/// Analyze skill for PDA compliance
+#[tauri::command]
+pub async fn analyze_pda(
+    skill_content: String,
+) -> Result<PDAAnalysis, String> {
+    pda_scorer::analyze_pda(&skill_content).await
 }
 
 #[cfg(test)]

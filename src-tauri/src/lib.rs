@@ -19,7 +19,9 @@ pub fn run() {
             commands::scan_skills,
             commands::read_file_content,
             commands::render_mermaid_to_svg,
-            commands::detect_cli
+            commands::detect_cli,
+            commands::validate_skill,
+            commands::analyze_pda
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
