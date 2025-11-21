@@ -16,7 +16,7 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
   onNavigateToReference: _onNavigateToReference,
   onNavigateToScript: _onNavigateToScript,
 }) => {
-  const { getCachedSVG, setCachedSVG } = useDiagramCacheStore();
+  const { getCachedSVG, setCachedSVG, addToPriorityQueue } = useDiagramCacheStore();
   const [svgContent, setSvgContent] = useState<string>('');
   const [mermaidSource, setMermaidSource] = useState<string>('');
   const [layout, setLayout] = useState<DiagramLayout>('TD');
@@ -29,6 +29,7 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mouse wheel zoom handler
   const handleWheel = (e: React.WheelEvent) => {
@@ -78,13 +79,19 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
     setPan({ x: 0, y: 0 });
   };
 
-  // Render diagram using cache or Rust backend
+  // Render diagram using cache or Rust backend (non-blocking with polling)
   const renderDiagram = async () => {
+    // Clear any existing poll interval
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      // Check cache first
+      // Check cache first (ALWAYS)
       const cachedSVG = getCachedSVG(skill.name, layout);
       if (cachedSVG) {
         console.log(`✅ Using cached diagram for ${skill.name} (${layout})`);
@@ -94,25 +101,51 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
         return;
       }
 
-      // Generate fresh diagram
+      // NOT cached - trigger background render and poll
+      console.log(`⏳ Diagram not cached, queuing for ${skill.name}`);
+      addToPriorityQueue([skill.name]); // Add to high-priority background queue
+
+      // Generate the Mermaid source immediately for display
       const diagram = generateSkillDiagram(skill, layout);
       setMermaidSource(diagram);
 
-      console.log(`🎨 Rendering diagram for ${skill.name} (${layout})...`);
-      const svg = await invoke<string>('render_mermaid_to_svg', {
-        mermaidCode: diagram,
-      });
+      // Start background rendering
+      invoke<string>('render_mermaid_to_svg', { mermaidCode: diagram })
+        .then((svg) => {
+          console.log(`✅ Background render complete for ${skill.name}, caching...`);
+          setCachedSVG(skill.name, layout, svg, diagram);
+        })
+        .catch((err) => {
+          console.error('❌ Background render failed:', err);
+        });
 
-      console.log(`✅ Received SVG from backend, length: ${svg.length}`);
-
-      // Cache the result
-      setCachedSVG(skill.name, layout, svg, diagram);
-      setSvgContent(svg);
+      // Poll cache every 500ms until available (max 10 seconds)
+      let attempts = 0;
+      pollIntervalRef.current = setInterval(() => {
+        const cached = getCachedSVG(skill.name, layout);
+        if (cached) {
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          setSvgContent(cached);
+          setMermaidSource(generateSkillDiagram(skill, layout));
+          setIsLoading(false);
+          console.log(`✅ Diagram ready for ${skill.name} after ${attempts * 500}ms`);
+        } else if (attempts++ > 20) {
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          setError('Diagram generation timed out. Please try regenerating.');
+          setIsLoading(false);
+          console.warn(`⏱️ Timeout waiting for ${skill.name} diagram after 10s`);
+        }
+      }, 500);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error('❌ Failed to render diagram:', errorMsg);
       setError(errorMsg);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -120,6 +153,14 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
   // Trigger render on skill or layout change
   useEffect(() => {
     renderDiagram();
+
+    // Cleanup: clear interval on unmount or when skill/layout changes
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skill.name, layout]);
 
