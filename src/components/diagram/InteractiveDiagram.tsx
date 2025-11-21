@@ -87,7 +87,6 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
       pollIntervalRef.current = null;
     }
 
-    setIsLoading(true);
     setError(null);
 
     try {
@@ -101,15 +100,16 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
         return;
       }
 
-      // NOT cached - trigger background render and poll
+      // NOT cached - show generating message (non-blocking)
       console.log(`⏳ Diagram not cached, queuing for ${skill.name}`);
+      setIsLoading(true); // Just a flag, not blocking UI
       addToPriorityQueue([skill.name]); // Add to high-priority background queue
 
       // Generate the Mermaid source immediately for display
       const diagram = generateSkillDiagram(skill, layout);
       setMermaidSource(diagram);
 
-      // Start background rendering
+      // Start background rendering (fire and forget)
       invoke<string>('render_mermaid_to_svg', { mermaidCode: diagram })
         .then((svg) => {
           console.log(`✅ Background render complete for ${skill.name}, caching...`);
@@ -119,7 +119,7 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
           console.error('❌ Background render failed:', err);
         });
 
-      // Poll cache every 500ms until available (max 10 seconds)
+      // Poll cache every 5 seconds until available (max 60 seconds)
       let attempts = 0;
       pollIntervalRef.current = setInterval(() => {
         const cached = getCachedSVG(skill.name, layout);
@@ -131,17 +131,17 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
           setSvgContent(cached);
           setMermaidSource(generateSkillDiagram(skill, layout));
           setIsLoading(false);
-          console.log(`✅ Diagram ready for ${skill.name} after ${attempts * 500}ms`);
-        } else if (attempts++ > 20) {
+          console.log(`✅ Diagram ready for ${skill.name} after ${attempts * 5}s`);
+        } else if (attempts++ > 12) {
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
           }
           setError('Diagram generation timed out. Please try regenerating.');
           setIsLoading(false);
-          console.warn(`⏱️ Timeout waiting for ${skill.name} diagram after 10s`);
+          console.warn(`⏱️ Timeout waiting for ${skill.name} diagram after 60s`);
         }
-      }, 500);
+      }, 5000); // Check every 5 seconds
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error('❌ Failed to render diagram:', errorMsg);
@@ -229,12 +229,22 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
         className="flex-1 min-h-0 bg-gray-50 rounded-lg border border-gray-200 relative"
         ref={containerRef}
       >
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
-            <div className="text-center">
-              <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-3" />
-              <p className="text-gray-700 font-medium">Rendering diagram...</p>
-              <p className="text-gray-500 text-sm mt-1">Calling Rust backend</p>
+        {isLoading && !svgContent && (
+          <div className="absolute inset-0 flex items-center justify-center p-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md text-center">
+              <div className="text-blue-600 text-5xl mb-3">⏳</div>
+              <h3 className="text-blue-900 font-semibold text-lg mb-2">Diagram Generating</h3>
+              <p className="text-blue-700 mb-4">
+                Your diagram is being generated in the background. Check back in a moment or click
+                refresh.
+              </p>
+              <p className="text-blue-600 text-sm mb-4">Auto-checking every 5 seconds...</p>
+              <button
+                onClick={renderDiagram}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                🔄 Refresh Now
+              </button>
             </div>
           </div>
         )}
