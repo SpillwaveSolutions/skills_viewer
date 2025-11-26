@@ -8,6 +8,8 @@ import { invoke } from '@tauri-apps/api/core';
 
 export type AnalyzerStatus = 'pending' | 'running' | 'complete' | 'error';
 export type OverallStatus = 'idle' | 'running' | 'complete' | 'error';
+// Backward compatibility alias (note: 'completed' maps to 'complete')
+export type AnalysisTaskStatus = OverallStatus;
 
 export interface AnalyzerReport {
   analyzer_name: string;
@@ -104,7 +106,7 @@ interface AnalysisState {
   resetAnalysis: () => void;
 
   // =============================================================================
-  // Existing Cache Operations (backward compatibility)
+  // Cache Operations
   // =============================================================================
   getCachedAnalysis: (skillName: string) => CachedAnalysis | null;
 
@@ -120,6 +122,12 @@ interface AnalysisState {
 
   hasCached: (skillName: string) => boolean;
   clearCache: (skillName?: string) => void;
+
+  // Analysis status operations (for LED indicator)
+  setAnalysisRunning: (skillName: string) => void;
+  setAnalysisCompleted: () => void;
+  setAnalysisError: (error: string) => void;
+  clearAnalysisStatus: () => void;
 }
 
 export const useAnalysisStore = create<AnalysisState>()(
@@ -279,7 +287,7 @@ export const useAnalysisStore = create<AnalysisState>()(
       },
 
       // =============================================================================
-      // Existing Cache Operations (backward compatibility)
+      // Cache Operations
       // =============================================================================
       getCachedAnalysis: (skillName: string) => {
         const cached = get().cache[skillName];
@@ -358,10 +366,48 @@ export const useAnalysisStore = create<AnalysisState>()(
           set({ cache: {} });
         }
       },
+
+      // Analysis status operations (for LED indicator)
+      setAnalysisRunning: (skillName: string) => {
+        set({
+          analysisStatus: 'running',
+          currentSkillName: skillName,
+          analysisError: null,
+        });
+      },
+
+      setAnalysisCompleted: () => {
+        set({
+          analysisStatus: 'complete',
+          analysisError: null,
+        });
+        // Auto-clear after 3 seconds
+        setTimeout(() => {
+          const state = get();
+          if (state.analysisStatus === 'complete') {
+            set({ analysisStatus: 'idle', currentSkillName: null });
+          }
+        }, 3000);
+      },
+
+      setAnalysisError: (error: string) => {
+        set({
+          analysisStatus: 'error',
+          analysisError: error,
+        });
+      },
+
+      clearAnalysisStatus: () => {
+        set({
+          analysisStatus: 'idle',
+          currentSkillName: null,
+          analysisError: null,
+        });
+      },
     }),
     {
       name: 'analysis-cache-storage',
-      partialize: (state) => ({ cache: state.cache }),
+      partialize: (state) => ({ cache: state.cache }), // Don't persist status, only cache
     }
   )
 );

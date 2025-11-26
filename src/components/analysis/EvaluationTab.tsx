@@ -198,6 +198,9 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     setCachedAnalysis,
     setDetailedPdaAnalysis: cacheDetailedPdaAnalysis,
     clearCache,
+    setAnalysisRunning,
+    setAnalysisCompleted,
+    setAnalysisError: setStoreAnalysisError,
   } = useAnalysisStore();
 
   // Load cached analysis on mount
@@ -265,6 +268,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
 
       setLoading(true);
       setError(null);
+      setAnalysisRunning(skill.name);
 
       try {
         // Run all analyses in parallel
@@ -277,6 +281,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
         setQuickPdaAnalysis(quickPdaResult);
         setCachedAnalysis(skill.name, specResult, quickPdaResult);
         setLoading(false);
+        setAnalysisCompleted();
 
         // Start background LLM analysis
         try {
@@ -292,11 +297,22 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
         // Start full markdown report analysis
         await startFullAnalysis(skill.name, skill.location, skill.content);
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(errorMsg);
+        setStoreAnalysisError(errorMsg);
         setLoading(false);
       }
     },
-    [skill, clearCache, resetAnalysis, setCachedAnalysis, startFullAnalysis]
+    [
+      skill,
+      clearCache,
+      resetAnalysis,
+      setCachedAnalysis,
+      startFullAnalysis,
+      setAnalysisRunning,
+      setAnalysisCompleted,
+      setStoreAnalysisError,
+    ]
   );
 
   const handleCopyComposite = useCallback(async () => {

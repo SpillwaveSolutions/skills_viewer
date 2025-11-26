@@ -1,12 +1,5 @@
 import React, { useMemo } from 'react';
-import { useDiagramCacheStore, BackgroundTaskStatus } from '../stores/diagramCacheStore';
-import { useShallow } from 'zustand/react/shallow';
-
-interface IndicatorState {
-  backgroundStatus: BackgroundTaskStatus;
-  currentlyRendering: string | null;
-  lastError: string | null;
-}
+import { useDiagramCacheStore } from '../stores/diagramCacheStore';
 
 /**
  * BackgroundTaskIndicator - LED-style status indicator for background tasks
@@ -16,20 +9,16 @@ interface IndicatorState {
  * - Red: Background task encountered an error
  * - Off/Gray: No background tasks running (idle)
  *
- * OPTIMIZED: Uses useShallow for shallow equality to minimize re-renders.
+ * OPTIMIZED: Uses individual primitive selectors to prevent infinite re-renders.
+ * Object selectors with custom equality can cause issues in React 19.
  * Only re-renders when status, error, or skill name actually changes.
  */
 export const BackgroundTaskIndicator: React.FC = () => {
-  // Single optimized selector - only re-renders when these specific values change
-  const { backgroundStatus, currentlyRendering, lastError } = useDiagramCacheStore(
-    useShallow(
-      (state): IndicatorState => ({
-        backgroundStatus: state.backgroundStatus,
-        currentlyRendering: state.currentlyRendering,
-        lastError: state.lastError,
-      })
-    )
-  );
+  // Use individual primitive selectors to prevent infinite re-render loops
+  // This is the safest pattern for Zustand with React 19
+  const backgroundStatus = useDiagramCacheStore((state) => state.backgroundStatus);
+  const currentlyRendering = useDiagramCacheStore((state) => state.currentlyRendering);
+  const lastError = useDiagramCacheStore((state) => state.lastError);
 
   // Memoize config to avoid recalculating on every render
   const config = useMemo(() => {

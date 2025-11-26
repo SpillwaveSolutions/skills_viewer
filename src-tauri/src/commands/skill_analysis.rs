@@ -1,15 +1,16 @@
 // Feature 021: Skill Analysis Tauri Commands
 // Provides async commands for skill evaluation and PDA analysis
 
-use crate::utils::cli_executor;
-use crate::utils::yaml_parser;
-use crate::analyzers::{spec_validator, pda_scorer, permissions_analyzer, trigger_analyzer, link_validator};
+use crate::analyzers::{link_validator, pda_scorer, permissions_analyzer, spec_validator, trigger_analyzer};
 use crate::analyzers::{MarkdownReportGenerator, generate_triggers_report, generate_composite_report};
 use crate::models::analysis::{
-    CLIDetectionResult as ModelCLIDetectionResult, SpecCompliance, PDAAnalysis,
-    AnalyzerReport, AnalyzerStatus, AnalysisProgressStatus, AnalysisStatus,
+    CLIDetectionResult as ModelCLIDetectionResult, LinkValidation, PDAAnalysis, SecurityReview,
+    SpecCompliance, TriggerSuggestion, AnalyzerReport, AnalyzerStatus, AnalysisProgressStatus, AnalysisStatus,
 };
+use crate::utils::cli_executor;
+use crate::utils::yaml_parser;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Instant;
 use once_cell::sync::Lazy;
@@ -115,6 +116,42 @@ pub fn get_pda_analysis_status(
     }
 }
 
+/// Validate links in skill content
+/// Checks that referenced files exist relative to the skill directory
+#[tauri::command]
+pub async fn validate_skill_links(
+    skill_content: String,
+    skill_dir: String,
+) -> Result<LinkValidation, String> {
+    let skill_path = PathBuf::from(&skill_dir);
+
+    if !skill_path.exists() {
+        return Err(format!("Skill directory does not exist: {}", skill_dir));
+    }
+
+    link_validator::validate_links(&skill_content, &skill_path).await
+}
+
+/// Analyze skill permissions for security risks
+/// Checks for high-risk tools, dangerous combinations, and unused permissions
+#[tauri::command]
+pub fn analyze_permissions(
+    allowed_tools: Vec<String>,
+    skill_content: String,
+) -> Result<SecurityReview, String> {
+    Ok(permissions_analyzer::analyze_permissions(&allowed_tools, &skill_content))
+}
+
+/// Suggest trigger keywords based on skill content analysis
+/// Returns suggestions with relevance scores and explanations
+#[tauri::command]
+pub fn suggest_triggers(
+    skill_content: String,
+    current_triggers: Vec<String>,
+) -> Result<Vec<TriggerSuggestion>, String> {
+    trigger_analyzer::suggest_triggers(&skill_content, &current_triggers)
+}
+
 // =============================================================================
 // FR-009, FR-010, FR-011: Markdown Report Commands
 // =============================================================================
@@ -176,8 +213,8 @@ pub async fn start_full_analysis(
 /// Run all analyzers and update the store progressively
 async fn run_all_analyzers(
     analysis_id: String,
-    skill_name: String,
-    skill_path: String,
+    _skill_name: String,
+    _skill_path: String,
     skill_content: String,
 ) {
     // Parse frontmatter once
@@ -239,7 +276,7 @@ async fn run_all_analyzers(
     // Run Trigger Analyzer
     update_analyzer_status(&analysis_id, "triggers", AnalyzerStatus::Running);
     let start = Instant::now();
-    match trigger_analyzer::suggest_triggers(&skill_content, &current_triggers).await {
+    match trigger_analyzer::suggest_triggers(&skill_content, &current_triggers) {
         Ok(suggestions) => {
             let triggers_report = generate_triggers_report(&suggestions, start.elapsed().as_millis() as u64);
             update_analyzer_report(&analysis_id, "triggers", triggers_report);
@@ -249,10 +286,10 @@ async fn run_all_analyzers(
         }
     }
 
-    // Run Link Validator
+    // Run Link Validator (simple version without path for now)
     update_analyzer_status(&analysis_id, "links", AnalyzerStatus::Running);
     let start = Instant::now();
-    match link_validator::validate_links(&skill_content).await {
+    match link_validator::validate_links_simple(&skill_content).await {
         Ok(links_result) => {
             let links_report = links_result.generate_markdown_report(start.elapsed().as_millis() as u64);
             update_analyzer_report(&analysis_id, "links", links_report);

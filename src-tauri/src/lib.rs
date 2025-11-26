@@ -25,6 +25,9 @@ pub fn run() {
             commands::analyze_pda,
             commands::start_detailed_pda_analysis,
             commands::get_pda_analysis_status,
+            commands::validate_skill_links,
+            commands::analyze_permissions,
+            commands::suggest_triggers,
             // FR-009, FR-010, FR-011: Markdown Report Commands
             commands::start_full_analysis,
             commands::get_analysis_progress,
