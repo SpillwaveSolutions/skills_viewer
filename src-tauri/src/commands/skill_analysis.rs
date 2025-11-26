@@ -266,7 +266,7 @@ async fn run_all_analyzers(
     {
         let mut reports = ANALYSIS_REPORTS.lock().unwrap();
         if let Some(store) = reports.get_mut(&analysis_id) {
-            store.status.overall_status = AnalysisStatus::Completed;
+            store.status.overall_status = AnalysisStatus::Complete;
         }
     }
 }

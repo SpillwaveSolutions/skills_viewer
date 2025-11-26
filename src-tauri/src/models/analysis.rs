@@ -31,8 +31,8 @@ pub struct SkillAnalysisResult {
 #[serde(rename_all = "lowercase")]
 pub enum AnalysisStatus {
     Running,
-    Completed,
-    Failed,
+    Complete,
+    Error,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -220,7 +220,7 @@ mod tests {
             skill_name: "test-skill".to_string(),
             skill_path: "/path/to/skill".to_string(),
             timestamp: Utc::now(),
-            status: AnalysisStatus::Completed,
+            status: AnalysisStatus::Complete,
             progress: 100,
             spec_compliance: None,
             pda_analysis: None,
@@ -235,7 +235,7 @@ mod tests {
 
         assert_eq!(deserialized.analysis_id, "test-123");
         assert_eq!(deserialized.skill_name, "test-skill");
-        assert_eq!(deserialized.status, AnalysisStatus::Completed);
+        assert_eq!(deserialized.status, AnalysisStatus::Complete);
         assert_eq!(deserialized.progress, 100);
     }
 
@@ -353,7 +353,7 @@ mod tests {
                 skill_name: "cached-skill".to_string(),
                 skill_path: "/path".to_string(),
                 timestamp: now,
-                status: AnalysisStatus::Completed,
+                status: AnalysisStatus::Complete,
                 progress: 100,
                 spec_compliance: None,
                 pda_analysis: None,

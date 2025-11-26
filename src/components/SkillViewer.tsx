@@ -10,7 +10,6 @@ import { DiagramView } from './DiagramView';
 import { ReferencesTab } from './ReferencesTab';
 import { ScriptsTab } from './ScriptsTab';
 import { EvaluationTab } from './analysis/EvaluationTab';
-import { ReportsTab } from './analysis/ReportsTab';
 import { TabBar } from './TabBar';
 import { TabAnnouncer } from './TabAnnouncer';
 import { SkillHeader } from './SkillHeader';
@@ -26,8 +25,7 @@ type TabType =
   | 'scripts'
   | 'triggers'
   | 'diagram'
-  | 'evaluation'
-  | 'reports';
+  | 'evaluation';
 
 export const SkillViewer: React.FC = () => {
   const { selectedSkill } = useSkillStore();
@@ -123,8 +121,6 @@ export const SkillViewer: React.FC = () => {
         {activeTab === 'diagram' && <DiagramView skill={selectedSkill} />}
 
         {activeTab === 'evaluation' && <EvaluationTab skill={selectedSkill} />}
-
-        {activeTab === 'reports' && <ReportsTab skill={selectedSkill} />}
       </div>
     </div>
   );
