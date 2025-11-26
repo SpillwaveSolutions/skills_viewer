@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useDiagramCacheStore, BackgroundTaskStatus } from '../stores/diagramCacheStore';
 
 /**
@@ -13,8 +13,13 @@ export const BackgroundTaskIndicator: React.FC = () => {
   const backgroundStatus = useDiagramCacheStore((state) => state.backgroundStatus);
   const currentlyRendering = useDiagramCacheStore((state) => state.currentlyRendering);
   const lastError = useDiagramCacheStore((state) => state.lastError);
-  const queueLength = useDiagramCacheStore(
-    (state) => state.renderQueue.length + state.priorityQueue.length
+  const renderQueueLength = useDiagramCacheStore((state) => state.renderQueue.length);
+  const priorityQueueLength = useDiagramCacheStore((state) => state.priorityQueue.length);
+
+  // Memoize the computed queue length to avoid re-render loops
+  const queueLength = useMemo(
+    () => renderQueueLength + priorityQueueLength,
+    [renderQueueLength, priorityQueueLength]
   );
 
   const getStatusConfig = (status: BackgroundTaskStatus) => {
