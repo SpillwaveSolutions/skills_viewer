@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Layout, SkillViewer, KeyboardShortcutHelp } from './components';
+import { Layout, SkillViewer, KeyboardShortcutHelp, BackgroundTaskIndicator } from './components';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 import { useBackgroundDiagramRenderer } from './hooks/useBackgroundDiagramRenderer';
@@ -15,7 +15,7 @@ function App() {
   const skills = useSkillStore((state) => state.skills);
 
   // Start background diagram rendering/caching
-  const { queueLength, currentlyRendering } = useBackgroundDiagramRenderer(skills);
+  useBackgroundDiagramRenderer(skills);
 
   // Get help modal state from store
   const isHelpModalOpen = useKeyboardStore((state) => state.isHelpModalOpen);
@@ -26,18 +26,14 @@ function App() {
     useKeyboardStore.getState().detectPlatform();
   }, []);
 
-  // Log background rendering progress
-  useEffect(() => {
-    if (currentlyRendering) {
-      console.log(`📊 Background rendering: ${currentlyRendering} (${queueLength} remaining)`);
-    }
-  }, [currentlyRendering, queueLength]);
-
   return (
     <>
       <Layout>
         <SkillViewer />
       </Layout>
+
+      {/* Background task status indicator (LED) */}
+      <BackgroundTaskIndicator />
 
       {/* Global keyboard shortcut help modal */}
       <KeyboardShortcutHelp isOpen={isHelpModalOpen} onClose={() => setHelpModalOpen(false)} />

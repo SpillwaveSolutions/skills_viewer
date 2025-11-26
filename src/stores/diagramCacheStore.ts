@@ -15,11 +15,15 @@ interface DiagramCache {
   };
 }
 
+export type BackgroundTaskStatus = 'idle' | 'running' | 'error';
+
 interface DiagramCacheState {
   cache: DiagramCache;
   renderQueue: string[]; // Queue of skill names to pre-render
   priorityQueue: string[]; // High-priority queue for user-selected skills
   currentlyRendering: string | null;
+  lastError: string | null; // Track last error for LED indicator
+  backgroundStatus: BackgroundTaskStatus; // Overall background task status
 
   // Cache operations
   getCachedSVG: (skillName: string, layout: DiagramLayout) => string | null;
@@ -38,6 +42,10 @@ interface DiagramCacheState {
   removeFromQueue: (skillName: string) => void;
   getNextInQueue: () => string | null;
 
+  // Status operations
+  setBackgroundError: (error: string | null) => void;
+  clearBackgroundError: () => void;
+
   // Clear cache
   clearCache: () => void;
 }
@@ -49,6 +57,8 @@ export const useDiagramCacheStore = create<DiagramCacheState>()(
       renderQueue: [],
       priorityQueue: [],
       currentlyRendering: null,
+      lastError: null,
+      backgroundStatus: 'idle' as BackgroundTaskStatus,
 
       getCachedSVG: (skillName: string, layout: DiagramLayout) => {
         const cached = get().cache[skillName]?.[layout];
@@ -106,7 +116,12 @@ export const useDiagramCacheStore = create<DiagramCacheState>()(
       },
 
       setCurrentlyRendering: (skillName: string | null) => {
-        set({ currentlyRendering: skillName });
+        set({
+          currentlyRendering: skillName,
+          backgroundStatus: skillName ? 'running' : 'idle',
+          // Clear error when starting new work
+          ...(skillName ? { lastError: null } : {}),
+        });
       },
 
       removeFromQueue: (skillName: string) => {
@@ -132,8 +147,29 @@ export const useDiagramCacheStore = create<DiagramCacheState>()(
         return null;
       },
 
+      setBackgroundError: (error: string | null) => {
+        set({
+          lastError: error,
+          backgroundStatus: error ? 'error' : 'idle',
+        });
+      },
+
+      clearBackgroundError: () => {
+        set({
+          lastError: null,
+          backgroundStatus: 'idle',
+        });
+      },
+
       clearCache: () => {
-        set({ cache: {}, renderQueue: [], priorityQueue: [], currentlyRendering: null });
+        set({
+          cache: {},
+          renderQueue: [],
+          priorityQueue: [],
+          currentlyRendering: null,
+          lastError: null,
+          backgroundStatus: 'idle',
+        });
       },
     }),
     {

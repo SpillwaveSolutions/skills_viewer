@@ -4,6 +4,7 @@ import { Skill } from '../../types';
 import { generateSkillDiagram, DiagramLayout } from '../../utils/diagramGenerator';
 import { useDiagramCacheStore } from '../../stores/diagramCacheStore';
 import { DiagramToolbar } from './DiagramToolbar';
+import { diagramLogger as logger } from '../../utils/logger';
 
 interface InteractiveDiagramProps {
   skill: Skill;
@@ -93,7 +94,7 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
       // Check cache first (ALWAYS)
       const cachedSVG = getCachedSVG(skill.name, layout);
       if (cachedSVG) {
-        console.log(`✅ Using cached diagram for ${skill.name} (${layout})`);
+        logger.debug(`Using cached diagram for ${skill.name} (${layout})`);
         setSvgContent(cachedSVG);
         setMermaidSource(generateSkillDiagram(skill, layout));
         setIsLoading(false);
@@ -101,7 +102,7 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
       }
 
       // NOT cached - show generating message (non-blocking)
-      console.log(`⏳ Diagram not cached, queuing for ${skill.name}`);
+      logger.info(`Diagram not cached, queuing for ${skill.name}`);
       setIsLoading(true); // Just a flag, not blocking UI
       addToPriorityQueue([skill.name]); // Add to high-priority background queue
 
@@ -112,11 +113,11 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
       // Start background rendering (fire and forget)
       invoke<string>('render_mermaid_to_svg', { mermaidCode: diagram })
         .then((svg) => {
-          console.log(`✅ Background render complete for ${skill.name}, caching...`);
+          logger.debug(`Background render complete for ${skill.name}, caching...`);
           setCachedSVG(skill.name, layout, svg, diagram);
         })
         .catch((err) => {
-          console.error('❌ Background render failed:', err);
+          logger.error('Background render failed', err);
         });
 
       // Poll cache every 5 seconds until available (max 60 seconds)
@@ -131,7 +132,7 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
           setSvgContent(cached);
           setMermaidSource(generateSkillDiagram(skill, layout));
           setIsLoading(false);
-          console.log(`✅ Diagram ready for ${skill.name} after ${attempts * 5}s`);
+          logger.info(`Diagram ready for ${skill.name} after ${attempts * 5}s`);
         } else if (attempts++ > 12) {
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
@@ -139,12 +140,12 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({
           }
           setError('Diagram generation timed out. Please try regenerating.');
           setIsLoading(false);
-          console.warn(`⏱️ Timeout waiting for ${skill.name} diagram after 60s`);
+          logger.warn(`Timeout waiting for ${skill.name} diagram after 60s`);
         }
       }, 5000); // Check every 5 seconds
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error('❌ Failed to render diagram:', errorMsg);
+      logger.error('Failed to render diagram', errorMsg);
       setError(errorMsg);
       setIsLoading(false);
     }

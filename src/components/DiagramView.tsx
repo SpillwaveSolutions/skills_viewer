@@ -11,18 +11,14 @@ interface DiagramViewProps {
  * Provides backward compatibility with existing code
  */
 export const DiagramView: React.FC<DiagramViewProps> = ({ skill }) => {
-  // Handler for navigating to references
-  const handleNavigateToReference = (path: string) => {
-    console.log('Navigate to reference:', path);
-    // TODO: Implement navigation to reference file
-    // This could open the reference in a modal or switch to references tab
+  // Handler for navigating to references (placeholder for future feature)
+  const handleNavigateToReference = (_path: string) => {
+    // Future: Navigate to reference file or switch to references tab
   };
 
-  // Handler for navigating to scripts
-  const handleNavigateToScript = (name: string) => {
-    console.log('Navigate to script:', name);
-    // TODO: Implement navigation to script
-    // This could scroll to the script in the scripts tab
+  // Handler for navigating to scripts (placeholder for future feature)
+  const handleNavigateToScript = (_name: string) => {
+    // Future: Navigate to script in scripts tab
   };
 
   return (

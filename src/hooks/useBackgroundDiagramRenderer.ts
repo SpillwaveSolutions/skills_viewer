@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { Skill } from '../types';
 import { generateSkillDiagram, DiagramLayout } from '../utils/diagramGenerator';
 import { useDiagramCacheStore } from '../stores/diagramCacheStore';
+import { backgroundLogger as logger } from '../utils/logger';
 
 const LAYOUTS_TO_CACHE: DiagramLayout[] = ['TD', 'LR']; // Cache both common layouts
 const RENDER_DELAY_MS = 500; // Delay between renders to avoid overwhelming the backend
@@ -21,6 +22,7 @@ export const useBackgroundDiagramRenderer = (skills: Skill[]) => {
     setCurrentlyRendering,
     removeFromQueue,
     getNextInQueue,
+    setBackgroundError,
   } = useDiagramCacheStore();
 
   const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -31,7 +33,7 @@ export const useBackgroundDiagramRenderer = (skills: Skill[]) => {
     if (skills.length > 0) {
       const skillNames = skills.map((skill) => skill.name);
       addToQueue(skillNames);
-      console.log(`📋 Added ${skillNames.length} skills to background render queue`);
+      logger.info(`Added ${skillNames.length} skills to background render queue`);
     }
   }, [skills, addToQueue]);
 
@@ -45,7 +47,7 @@ export const useBackgroundDiagramRenderer = (skills: Skill[]) => {
 
       const nextSkillName = getNextInQueue();
       if (!nextSkillName) {
-        console.log('✅ Background diagram rendering complete');
+        logger.info('Background diagram rendering complete');
         return;
       }
 
@@ -60,7 +62,7 @@ export const useBackgroundDiagramRenderer = (skills: Skill[]) => {
         (layout) => getCachedSVG(skill.name, layout) !== null
       );
       if (allCached) {
-        console.log(`⏭️  Skipping ${skill.name} - all layouts already cached`);
+        logger.debug(`Skipping ${skill.name} - all layouts already cached`);
         removeFromQueue(nextSkillName);
         // Schedule next render
         renderTimeoutRef.current = setTimeout(renderNext, 100);
@@ -71,13 +73,13 @@ export const useBackgroundDiagramRenderer = (skills: Skill[]) => {
       isRenderingRef.current = true;
       setCurrentlyRendering(nextSkillName);
 
-      console.log(`🎨 Background rendering diagrams for: ${skill.name}`);
+      logger.debug(`Rendering diagrams for: ${skill.name}`);
 
       // Render all layouts for this skill
       for (const layout of LAYOUTS_TO_CACHE) {
         // Skip if already cached
         if (getCachedSVG(skill.name, layout)) {
-          console.log(`  ⏭️  ${layout} already cached`);
+          logger.debug(`  ${layout} already cached`);
           continue;
         }
 
@@ -88,9 +90,11 @@ export const useBackgroundDiagramRenderer = (skills: Skill[]) => {
           });
 
           setCachedSVG(skill.name, layout, svg, mermaidSource);
-          console.log(`  ✅ ${layout} layout cached (${(svg.length / 1024).toFixed(1)}KB)`);
+          logger.debug(`  ${layout} layout cached (${(svg.length / 1024).toFixed(1)}KB)`);
         } catch (error) {
-          console.error(`  ❌ Failed to render ${layout} for ${skill.name}:`, error);
+          const errorMsg = `Failed to render ${layout} for ${skill.name}`;
+          logger.error(errorMsg, error);
+          setBackgroundError(errorMsg);
         }
       }
 
@@ -122,6 +126,7 @@ export const useBackgroundDiagramRenderer = (skills: Skill[]) => {
     setCurrentlyRendering,
     removeFromQueue,
     getNextInQueue,
+    setBackgroundError,
   ]);
 
   return {
