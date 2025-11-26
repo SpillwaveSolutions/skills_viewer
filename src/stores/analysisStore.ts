@@ -1,5 +1,38 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { invoke } from '@tauri-apps/api/core';
+
+// =============================================================================
+// Types for FR-009, FR-010, FR-011: Markdown Report System
+// =============================================================================
+
+export type AnalyzerStatus = 'pending' | 'running' | 'complete' | 'error';
+export type OverallStatus = 'idle' | 'running' | 'complete' | 'error';
+
+export interface AnalyzerReport {
+  analyzer_name: string;
+  markdown: string;
+  json_data: unknown;
+  status: AnalyzerStatus;
+  duration_ms: number;
+  score?: number;
+}
+
+export interface AnalysisProgressStatus {
+  analysis_id: string;
+  skill_name: string;
+  overall_status: OverallStatus;
+  spec: AnalyzerStatus;
+  pda: AnalyzerStatus;
+  permissions: AnalyzerStatus;
+  triggers: AnalyzerStatus;
+  links: AnalyzerStatus;
+  error?: string;
+}
+
+// =============================================================================
+// Existing Types (backward compatibility)
+// =============================================================================
 
 interface SpecCompliance {
   score: number;
@@ -44,7 +77,35 @@ interface AnalysisCache {
 interface AnalysisState {
   cache: AnalysisCache;
 
-  // Cache operations
+  // =============================================================================
+  // FR-009, FR-010, FR-011: Markdown Report State
+  // =============================================================================
+  currentAnalysisId: string | null;
+  currentSkillName: string | null;
+  analysisStatus: OverallStatus;
+  analyzerProgress: AnalysisProgressStatus | null;
+  analyzerReports: {
+    spec: AnalyzerReport | null;
+    pda: AnalyzerReport | null;
+    permissions: AnalyzerReport | null;
+    triggers: AnalyzerReport | null;
+    links: AnalyzerReport | null;
+  };
+  compositeReport: string | null;
+  analysisError: string | null;
+
+  // Markdown Report Actions
+  startFullAnalysis: (skillName: string, skillPath: string, skillContent: string) => Promise<void>;
+  pollAnalysisProgress: () => Promise<void>;
+  fetchAnalyzerReport: (
+    analyzer: 'spec' | 'pda' | 'permissions' | 'triggers' | 'links'
+  ) => Promise<void>;
+  fetchCompositeReport: () => Promise<void>;
+  resetAnalysis: () => void;
+
+  // =============================================================================
+  // Existing Cache Operations (backward compatibility)
+  // =============================================================================
   getCachedAnalysis: (skillName: string) => CachedAnalysis | null;
 
   // Set quick analysis (spec + quick PDA)
@@ -66,6 +127,160 @@ export const useAnalysisStore = create<AnalysisState>()(
     (set, get) => ({
       cache: {},
 
+      // =============================================================================
+      // FR-009, FR-010, FR-011: Markdown Report State
+      // =============================================================================
+      currentAnalysisId: null,
+      currentSkillName: null,
+      analysisStatus: 'idle' as OverallStatus,
+      analyzerProgress: null,
+      analyzerReports: {
+        spec: null,
+        pda: null,
+        permissions: null,
+        triggers: null,
+        links: null,
+      },
+      compositeReport: null,
+      analysisError: null,
+
+      // Start full analysis with all analyzers
+      startFullAnalysis: async (skillName: string, skillPath: string, skillContent: string) => {
+        try {
+          // Reset state
+          set({
+            currentSkillName: skillName,
+            analysisStatus: 'running',
+            analyzerProgress: null,
+            analyzerReports: {
+              spec: null,
+              pda: null,
+              permissions: null,
+              triggers: null,
+              links: null,
+            },
+            compositeReport: null,
+            analysisError: null,
+          });
+
+          // Start analysis on backend
+          const analysisId = await invoke<string>('start_full_analysis', {
+            skillName,
+            skillPath,
+            skillContent,
+          });
+
+          set({ currentAnalysisId: analysisId });
+        } catch (error) {
+          set({
+            analysisStatus: 'error',
+            analysisError: error instanceof Error ? error.message : String(error),
+          });
+        }
+      },
+
+      // Poll for analysis progress
+      pollAnalysisProgress: async () => {
+        const { currentAnalysisId } = get();
+        if (!currentAnalysisId) return;
+
+        try {
+          const progress = await invoke<AnalysisProgressStatus>('get_analysis_progress', {
+            analysisId: currentAnalysisId,
+          });
+
+          set({
+            analyzerProgress: progress,
+            analysisStatus: progress.overall_status as OverallStatus,
+          });
+
+          // Fetch completed reports
+          const analyzers = ['spec', 'pda', 'permissions', 'triggers', 'links'] as const;
+          for (const analyzer of analyzers) {
+            const status = progress[analyzer];
+            const currentReport = get().analyzerReports[analyzer];
+
+            // Fetch report if complete and not already fetched
+            if ((status === 'complete' || status === 'error') && !currentReport) {
+              await get().fetchAnalyzerReport(analyzer);
+            }
+          }
+
+          // Fetch composite if all complete
+          if (progress.overall_status === 'complete' && !get().compositeReport) {
+            await get().fetchCompositeReport();
+          }
+        } catch (error) {
+          console.error('Failed to poll analysis progress:', error);
+        }
+      },
+
+      // Fetch a specific analyzer's report
+      fetchAnalyzerReport: async (
+        analyzer: 'spec' | 'pda' | 'permissions' | 'triggers' | 'links'
+      ) => {
+        const { currentAnalysisId } = get();
+        if (!currentAnalysisId) return;
+
+        try {
+          const report = await invoke<AnalyzerReport | null>('get_analyzer_report', {
+            analysisId: currentAnalysisId,
+            analyzer,
+          });
+
+          if (report) {
+            set((state) => ({
+              analyzerReports: {
+                ...state.analyzerReports,
+                [analyzer]: report,
+              },
+            }));
+          }
+        } catch (error) {
+          console.error(`Failed to fetch ${analyzer} report:`, error);
+        }
+      },
+
+      // Fetch composite report
+      fetchCompositeReport: async () => {
+        const { currentAnalysisId } = get();
+        if (!currentAnalysisId) return;
+
+        try {
+          const composite = await invoke<string | null>('get_composite_report', {
+            analysisId: currentAnalysisId,
+          });
+
+          if (composite) {
+            set({ compositeReport: composite });
+          }
+        } catch (error) {
+          console.error('Failed to fetch composite report:', error);
+        }
+      },
+
+      // Reset analysis state
+      resetAnalysis: () => {
+        set({
+          currentAnalysisId: null,
+          currentSkillName: null,
+          analysisStatus: 'idle',
+          analyzerProgress: null,
+          analyzerReports: {
+            spec: null,
+            pda: null,
+            permissions: null,
+            triggers: null,
+            links: null,
+          },
+          compositeReport: null,
+          analysisError: null,
+        });
+      },
+
+      // =============================================================================
+      // Existing Cache Operations (backward compatibility)
+      // =============================================================================
       getCachedAnalysis: (skillName: string) => {
         const cached = get().cache[skillName];
         if (!cached) return null;
