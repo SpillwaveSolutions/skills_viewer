@@ -121,6 +121,24 @@ pub fn validate_file_links(links: &[ExtractedLink], base_dir: &Path) -> Vec<Brok
     broken
 }
 
+/// Validate links in skill content without file path validation
+/// This is a simplified version that extracts and counts links but cannot validate
+/// file paths since no base directory is provided.
+/// - skill_content: The markdown content of the skill
+pub async fn validate_links_simple(skill_content: &str) -> Result<LinkValidation, String> {
+    let links = extract_links(skill_content);
+    let total_links = links.len();
+
+    // Without a base directory, we cannot validate file paths
+    // We report all links as valid (no broken links detected)
+    // File path validation requires the skill directory context
+    Ok(LinkValidation {
+        total_links,
+        valid_links: total_links,
+        broken_links: vec![],
+    })
+}
+
 /// Validate all links in skill content
 /// - skill_content: The markdown content of the skill
 /// - skill_dir: The directory containing the skill (for relative path resolution)
