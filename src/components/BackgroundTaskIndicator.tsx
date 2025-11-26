@@ -9,23 +9,16 @@ import { useDiagramCacheStore } from '../stores/diagramCacheStore';
  * - Red: Background task encountered an error
  * - Off/Gray: No background tasks running (idle)
  *
- * OPTIMIZED: Uses a single shallow selector to minimize re-renders.
+ * OPTIMIZED: Uses individual primitive selectors to prevent infinite re-renders.
+ * Object selectors with custom equality can cause issues in React 19.
  * Only re-renders when status, error, or skill name actually changes.
  */
 export const BackgroundTaskIndicator: React.FC = () => {
-  // Single optimized selector - only re-renders when these specific values change
-  const { backgroundStatus, currentlyRendering, lastError } = useDiagramCacheStore(
-    (state) => ({
-      backgroundStatus: state.backgroundStatus,
-      currentlyRendering: state.currentlyRendering,
-      lastError: state.lastError,
-    }),
-    // Shallow equality check to prevent unnecessary re-renders
-    (a, b) =>
-      a.backgroundStatus === b.backgroundStatus &&
-      a.currentlyRendering === b.currentlyRendering &&
-      a.lastError === b.lastError
-  );
+  // Use individual primitive selectors to prevent infinite re-render loops
+  // This is the safest pattern for Zustand with React 19
+  const backgroundStatus = useDiagramCacheStore((state) => state.backgroundStatus);
+  const currentlyRendering = useDiagramCacheStore((state) => state.currentlyRendering);
+  const lastError = useDiagramCacheStore((state) => state.lastError);
 
   // Memoize config to avoid recalculating on every render
   const config = useMemo(() => {
