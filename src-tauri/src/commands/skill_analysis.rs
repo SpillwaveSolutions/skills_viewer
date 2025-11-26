@@ -7,7 +7,7 @@ use crate::analyzers::{spec_validator, pda_scorer, permissions_analyzer, trigger
 use crate::analyzers::{MarkdownReportGenerator, generate_triggers_report, generate_composite_report};
 use crate::models::analysis::{
     CLIDetectionResult as ModelCLIDetectionResult, SpecCompliance, PDAAnalysis,
-    AnalyzerReport, AnalyzerStatus, AnalysisProgressStatus,
+    AnalyzerReport, AnalyzerStatus, AnalysisProgressStatus, AnalysisStatus,
 };
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -133,7 +133,7 @@ pub async fn start_full_analysis(
     let status = AnalysisProgressStatus {
         analysis_id: analysis_id.clone(),
         skill_name: skill_name.clone(),
-        overall_status: AnalyzerStatus::Running,
+        overall_status: AnalysisStatus::Running,
         spec: AnalyzerStatus::Pending,
         pda: AnalyzerStatus::Pending,
         permissions: AnalyzerStatus::Pending,
@@ -252,7 +252,7 @@ async fn run_all_analyzers(
     // Run Link Validator
     update_analyzer_status(&analysis_id, "links", AnalyzerStatus::Running);
     let start = Instant::now();
-    match link_validator::validate_links(&skill_content, &skill_path).await {
+    match link_validator::validate_links(&skill_content).await {
         Ok(links_result) => {
             let links_report = links_result.generate_markdown_report(start.elapsed().as_millis() as u64);
             update_analyzer_report(&analysis_id, "links", links_report);
@@ -266,7 +266,7 @@ async fn run_all_analyzers(
     {
         let mut reports = ANALYSIS_REPORTS.lock().unwrap();
         if let Some(store) = reports.get_mut(&analysis_id) {
-            store.status.overall_status = AnalyzerStatus::Complete;
+            store.status.overall_status = AnalysisStatus::Completed;
         }
     }
 }
