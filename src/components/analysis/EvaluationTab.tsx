@@ -1,15 +1,21 @@
 /**
  * EvaluationTab Component (Feature 021: Phase 5)
- * Two-tier PDA analysis: Quick (script-based) + Detailed (LLM-based)
- * Shows quick results immediately while LLM runs in background
+ * Unified skill evaluation with three sub-tabs:
+ * - Quick Analysis (script-based, instant)
+ * - Detailed Analysis (LLM-powered)
+ * - Reports (markdown reports from all analyzers)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import type { Skill } from '../../types/skill';
 import { useAnalysisStore } from '../../stores/analysisStore';
-import { AnalysisTaskIndicator } from './AnalysisTaskIndicator';
+import { useShallow } from 'zustand/react/shallow';
 
+// Types
 interface SpecCompliance {
   score: number;
   violations: Violation[];
@@ -35,7 +41,7 @@ interface PDAAnalysis {
   tier_breakdown: TierBreakdown;
   recommendations: string[];
   suggested_structure: string[];
-  ai_insights?: string[]; // Only present in LLM-based analysis
+  ai_insights?: string[];
 }
 
 interface TierBreakdown {
@@ -44,39 +50,6 @@ interface TierBreakdown {
   resource_tokens: number;
 }
 
-interface LinkValidation {
-  total_links: number;
-  valid_links: number;
-  broken_links: BrokenLink[];
-}
-
-interface BrokenLink {
-  url: string;
-  line_number: number;
-  error: string;
-}
-
-interface SecurityReview {
-  score: number;
-  unused_permissions: string[];
-  high_risk_permissions: RiskFlag[];
-  minimum_required: string[];
-}
-
-interface RiskFlag {
-  permission: string;
-  risk_level: 'critical' | 'high' | 'medium' | 'low';
-  explanation: string;
-  mitigation?: string;
-}
-
-interface TriggerSuggestion {
-  keyword: string;
-  relevance_score: number;
-  explanation: string;
-}
-
-// Background analysis job status
 type AnalysisJobStatus = 'running' | 'completed' | 'failed';
 
 interface AnalysisJobState {
@@ -86,31 +59,140 @@ interface AnalysisJobState {
   error?: string;
 }
 
+type MainTab = 'quick' | 'detailed' | 'reports';
+type AnalyzerType = 'spec' | 'pda' | 'permissions' | 'triggers' | 'links';
+type ReportTab = 'composite' | AnalyzerType;
+type ReportSubTab = 'results' | 'description';
+
 interface EvaluationTabProps {
   skill: Skill;
 }
 
+// Report descriptions for each analyzer
+const REPORT_DESCRIPTIONS: Record<
+  ReportTab,
+  { title: string; description: string; checks: string[] }
+> = {
+  composite: {
+    title: 'Composite Report',
+    description:
+      'A combined report from all analyzers, formatted for easy copy/paste to Claude Code for automated fixes.',
+    checks: [
+      'Concatenates all individual analyzer reports',
+      'Includes JSON data blocks for structured processing',
+      'Formatted for Claude Code consumption',
+      'Single-click copy to clipboard',
+    ],
+  },
+  spec: {
+    title: 'Spec Compliance',
+    description:
+      'Validates the skill against the Anthropic Skills Specification to ensure proper structure and required fields.',
+    checks: [
+      'Required frontmatter fields (name, description, allowed-tools)',
+      'Valid YAML syntax in frontmatter',
+      'Proper markdown structure',
+      'Section headings and organization',
+      'Trigger definitions and format',
+    ],
+  },
+  pda: {
+    title: 'PDA Analysis',
+    description:
+      'Analyzes the skill for Progressive Disclosure of Authority compliance - ensuring minimal context loading.',
+    checks: [
+      'Token count estimation',
+      'Tier breakdown (metadata, orchestrator, resources)',
+      'Context efficiency score',
+      'Recommendations for reducing token usage',
+      'Suggested file structure for large skills',
+    ],
+  },
+  permissions: {
+    title: 'Security & Permissions',
+    description:
+      'Reviews the allowed-tools configuration for security risks and unused permissions.',
+    checks: [
+      'Identifies unused permissions',
+      'Flags high-risk permission combinations',
+      'Suggests minimum required permissions',
+      'Security risk assessment',
+      'Mitigation recommendations',
+    ],
+  },
+  triggers: {
+    title: 'Trigger Suggestions',
+    description: 'Analyzes skill content to suggest optimal trigger keywords for skill activation.',
+    checks: [
+      'Extracts key concepts from skill content',
+      'Suggests relevant trigger keywords',
+      'Evaluates existing triggers',
+      'Relevance scoring for suggestions',
+      'Coverage analysis',
+    ],
+  },
+  links: {
+    title: 'Link Validation',
+    description:
+      'Validates all links referenced in the skill content to ensure they are accessible.',
+    checks: [
+      'Extracts markdown links from content',
+      'Validates file path references',
+      'Checks HTTP/HTTPS URLs (HEAD requests)',
+      'Reports broken or inaccessible links',
+      'Suggests fixes for common issues',
+    ],
+  },
+};
+
+const ANALYZER_ORDER: AnalyzerType[] = ['spec', 'pda', 'permissions', 'triggers', 'links'];
+
 export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
+  // Main tab state
+  const [mainTab, setMainTab] = useState<MainTab>('quick');
+  const [reportTab, setReportTab] = useState<ReportTab>('composite');
+  const [reportSubTab, setReportSubTab] = useState<ReportSubTab>('results');
+
+  // Quick/Detailed analysis state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Two-tier analysis state
   const [quickPdaAnalysis, setQuickPdaAnalysis] = useState<PDAAnalysis | null>(null);
   const [detailedPdaAnalysis, setDetailedPdaAnalysis] = useState<PDAAnalysis | null>(null);
   const [specCompliance, setSpecCompliance] = useState<SpecCompliance | null>(null);
-  const [linkValidation, setLinkValidation] = useState<LinkValidation | null>(null);
-  const [securityReview, setSecurityReview] = useState<SecurityReview | null>(null);
-  const [triggerSuggestions, setTriggerSuggestions] = useState<TriggerSuggestion[] | null>(null);
-
-  // Background job tracking
   const [backgroundJob, setBackgroundJob] = useState<{
     analysisId: string;
     state: AnalysisJobState;
   } | null>(null);
 
-  // UI state
-  const [activeView, setActiveView] = useState<'quick' | 'detailed'>('quick');
+  // Copy state
+  const [copySuccess, setCopySuccess] = useState(false);
 
+  // Analysis store for markdown reports
+  const {
+    analysisStatus,
+    currentAnalysisId,
+    analyzerProgress,
+    analyzerReports,
+    compositeReport,
+    analysisError,
+    startFullAnalysis,
+    pollAnalysisProgress,
+    resetAnalysis,
+  } = useAnalysisStore(
+    useShallow((state) => ({
+      analysisStatus: state.analysisStatus,
+      currentAnalysisId: state.currentAnalysisId,
+      analyzerProgress: state.analyzerProgress,
+      analyzerReports: state.analyzerReports,
+      compositeReport: state.compositeReport,
+      analysisError: state.analysisError,
+      startFullAnalysis: state.startFullAnalysis,
+      pollAnalysisProgress: state.pollAnalysisProgress,
+      resetAnalysis: state.resetAnalysis,
+    }))
+  );
+
+  // Legacy cache store
   const {
     getCachedAnalysis,
     setCachedAnalysis,
@@ -118,10 +200,10 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     clearCache,
     setAnalysisRunning,
     setAnalysisCompleted,
-    setAnalysisError,
+    setAnalysisError: setStoreAnalysisError,
   } = useAnalysisStore();
 
-  // Load cached analysis on mount or skill change
+  // Load cached analysis on mount
   useEffect(() => {
     const cached = getCachedAnalysis(skill.name);
     if (cached) {
@@ -133,17 +215,12 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
       setQuickPdaAnalysis(null);
       setDetailedPdaAnalysis(null);
     }
-    setLinkValidation(null); // Reset link validation on skill change
-    setSecurityReview(null); // Reset security review on skill change
-    setTriggerSuggestions(null); // Reset trigger suggestions on skill change
     setError(null);
   }, [skill.name, getCachedAnalysis]);
 
-  // Polling effect for background LLM analysis
+  // Polling for background LLM analysis
   useEffect(() => {
-    if (!backgroundJob || backgroundJob.state.status !== 'running') {
-      return;
-    }
+    if (!backgroundJob || backgroundJob.state.status !== 'running') return;
 
     const pollInterval = setInterval(async () => {
       try {
@@ -154,144 +231,138 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
         if (statusResponse.status === 'completed' && statusResponse.result) {
           setDetailedPdaAnalysis(statusResponse.result);
           cacheDetailedPdaAnalysis(skill.name, statusResponse.result);
-          setBackgroundJob({
-            analysisId: backgroundJob.analysisId,
-            state: statusResponse,
-          });
-        } else if (statusResponse.status === 'failed') {
-          setBackgroundJob({
-            analysisId: backgroundJob.analysisId,
-            state: statusResponse,
-          });
-        } else {
-          // Still running - update progress
-          setBackgroundJob({
-            analysisId: backgroundJob.analysisId,
-            state: statusResponse,
-          });
         }
+        setBackgroundJob({ analysisId: backgroundJob.analysisId, state: statusResponse });
       } catch (err) {
-        console.error('Polling error:', err);
         setBackgroundJob({
           analysisId: backgroundJob.analysisId,
-          state: {
-            status: 'failed',
-            error: err instanceof Error ? err.message : String(err),
-          },
+          state: { status: 'failed', error: err instanceof Error ? err.message : String(err) },
         });
       }
-    }, 5000); // Poll every 5 seconds
+    }, 5000);
 
     return () => clearInterval(pollInterval);
-  }, [backgroundJob]);
+  }, [backgroundJob, skill.name, cacheDetailedPdaAnalysis]);
 
-  const handleAnalyzeSkill = async (forceRefresh = false) => {
-    if (forceRefresh) {
-      clearCache(skill.name); // Clears both quick and detailed analyses
-      setQuickPdaAnalysis(null);
-      setDetailedPdaAnalysis(null);
-      setLinkValidation(null);
-      setSecurityReview(null);
-      setTriggerSuggestions(null);
-      setBackgroundJob(null);
-    }
+  // Polling for markdown reports
+  useEffect(() => {
+    if (analysisStatus !== 'running' || !currentAnalysisId) return;
 
-    setLoading(true);
-    setError(null);
-    setAnalysisRunning(skill.name); // Update LED indicator
+    const interval = setInterval(() => {
+      pollAnalysisProgress();
+    }, 2000);
 
-    try {
-      // Extract skill directory from path (parent of skill.md)
-      const skillDir = skill.path.substring(0, skill.path.lastIndexOf('/'));
+    return () => clearInterval(interval);
+  }, [analysisStatus, currentAnalysisId, pollAnalysisProgress]);
 
-      // Extract allowed_tools from metadata (if available)
-      const allowedTools: string[] = (skill.metadata?.['allowed-tools'] as string[]) ?? [];
-      const currentTriggers: string[] = (skill.metadata?.triggers as string[]) ?? [];
-
-      // Step 1: Run quick analyses in parallel with individual error handling
-      // Each analyzer runs independently - failures don't block others
-      const results = await Promise.allSettled([
-        invoke<SpecCompliance>('validate_skill', { skillContent: skill.content }),
-        invoke<PDAAnalysis>('analyze_pda', { skillContent: skill.content }),
-        invoke<LinkValidation>('validate_skill_links', {
-          skillContent: skill.content,
-          skillDir: skillDir,
-        }),
-        invoke<SecurityReview>('analyze_permissions', {
-          allowedTools: allowedTools,
-          skillContent: skill.content,
-        }),
-        invoke<TriggerSuggestion[]>('suggest_triggers', {
-          skillContent: skill.content,
-          currentTriggers: currentTriggers,
-        }),
-      ]);
-
-      // Step 2: Extract results, handling partial failures gracefully
-      const [specResult, pdaResult, linkResult, securityResult, triggerResult] = results;
-
-      // Process each result independently
-      if (specResult.status === 'fulfilled') {
-        setSpecCompliance(specResult.value);
-      } else {
-        console.error('Spec validation failed:', specResult.reason);
+  // Single unified analysis handler
+  const handleAnalyzeSkill = useCallback(
+    async (forceRefresh = false) => {
+      if (forceRefresh) {
+        clearCache(skill.name);
+        resetAnalysis();
+        setQuickPdaAnalysis(null);
+        setDetailedPdaAnalysis(null);
+        setBackgroundJob(null);
       }
 
-      if (pdaResult.status === 'fulfilled') {
-        setQuickPdaAnalysis(pdaResult.value);
-      } else {
-        console.error('PDA analysis failed:', pdaResult.reason);
-      }
+      setLoading(true);
+      setError(null);
+      setAnalysisRunning(skill.name);
 
-      if (linkResult.status === 'fulfilled') {
-        setLinkValidation(linkResult.value);
-      } else {
-        console.error('Link validation failed:', linkResult.reason);
-      }
-
-      if (securityResult.status === 'fulfilled') {
-        setSecurityReview(securityResult.value);
-      } else {
-        console.error('Security review failed:', securityResult.reason);
-      }
-
-      if (triggerResult.status === 'fulfilled') {
-        setTriggerSuggestions(triggerResult.value);
-      } else {
-        console.error('Trigger suggestions failed:', triggerResult.reason);
-      }
-
-      // Cache successful results
-      if (specResult.status === 'fulfilled' && pdaResult.status === 'fulfilled') {
-        setCachedAnalysis(skill.name, specResult.value, pdaResult.value);
-      }
-
-      setLoading(false);
-      setAnalysisCompleted(); // Update LED indicator
-
-      // Step 3: Start background LLM analysis (fire-and-forget)
       try {
-        const analysisId = await invoke<string>('start_detailed_pda_analysis', {
-          skillName: skill.name,
-          skillContent: skill.content,
-        });
+        // Run all analyses in parallel
+        const [specResult, quickPdaResult] = await Promise.all([
+          invoke<SpecCompliance>('validate_skill', { skillContent: skill.content }),
+          invoke<PDAAnalysis>('analyze_pda', { skillContent: skill.content }),
+        ]);
 
-        setBackgroundJob({
-          analysisId,
-          state: { status: 'running', progress: 0 },
-        });
-      } catch (backgroundErr) {
-        console.error('Failed to start background analysis:', backgroundErr);
-        // Don't fail the whole operation if background analysis fails
+        setSpecCompliance(specResult);
+        setQuickPdaAnalysis(quickPdaResult);
+        setCachedAnalysis(skill.name, specResult, quickPdaResult);
+        setLoading(false);
+        setAnalysisCompleted();
+
+        // Start background LLM analysis
+        try {
+          const analysisId = await invoke<string>('start_detailed_pda_analysis', {
+            skillName: skill.name,
+            skillContent: skill.content,
+          });
+          setBackgroundJob({ analysisId, state: { status: 'running', progress: 0 } });
+        } catch (bgErr) {
+          console.error('Background analysis failed:', bgErr);
+        }
+
+        // Start full markdown report analysis
+        await startFullAnalysis(skill.name, skill.location, skill.content);
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(errorMsg);
+        setStoreAnalysisError(errorMsg);
+        setLoading(false);
       }
+    },
+    [
+      skill,
+      clearCache,
+      resetAnalysis,
+      setCachedAnalysis,
+      startFullAnalysis,
+      setAnalysisRunning,
+      setAnalysisCompleted,
+      setStoreAnalysisError,
+    ]
+  );
+
+  const handleCopyComposite = useCallback(async () => {
+    if (!compositeReport) return;
+    try {
+      await navigator.clipboard.writeText(compositeReport);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(errorMsg);
-      setAnalysisError(errorMsg); // Update LED indicator
-      setLoading(false);
+      console.error('Copy failed:', err);
+    }
+  }, [compositeReport]);
+
+  const getStatusIcon = (status: string | undefined) => {
+    switch (status) {
+      case 'pending':
+        return '⏳';
+      case 'running':
+        return '🔄';
+      case 'complete':
+        return '✅';
+      case 'error':
+        return '❌';
+      default:
+        return '○';
     }
   };
 
+  const getStatusColor = (status: string | undefined) => {
+    switch (status) {
+      case 'running':
+        return 'text-purple-600';
+      case 'complete':
+        return 'text-green-600';
+      case 'error':
+        return 'text-red-600';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
+  const getCurrentReportContent = () => {
+    if (reportTab === 'composite') return compositeReport;
+    return analyzerReports[reportTab]?.markdown;
+  };
+
+  const hasAnalysisResults = specCompliance || quickPdaAnalysis;
+  const isAnalyzing = loading || analysisStatus === 'running';
+
+  // Render spec compliance results
   const renderSpecCompliance = (compliance: SpecCompliance) => (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
@@ -303,58 +374,42 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
         </div>
       </div>
 
-      {/* Violations */}
       {compliance.violations.length > 0 && (
         <div className="mb-4">
           <h4 className="text-sm font-semibold text-red-700 mb-2">
             Violations ({compliance.violations.length})
           </h4>
           <div className="space-y-2">
-            {compliance.violations.map((violation, idx) => (
-              <div key={idx} className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
-                <div className="flex items-start">
-                  <span className="text-red-600 font-bold mr-2">•</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-red-800">{violation.message}</p>
-                    {violation.fix_suggestion && (
-                      <p className="text-xs text-red-600 mt-1">💡 {violation.fix_suggestion}</p>
-                    )}
-                    {violation.line_number && (
-                      <p className="text-xs text-gray-500 mt-1">Line {violation.line_number}</p>
-                    )}
-                  </div>
-                </div>
+            {compliance.violations.map((v, i) => (
+              <div key={i} className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                <p className="text-sm font-medium text-red-800">{v.message}</p>
+                {v.fix_suggestion && (
+                  <p className="text-xs text-red-600 mt-1">💡 {v.fix_suggestion}</p>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Warnings */}
       {compliance.warnings.length > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-yellow-700 mb-2">
             Warnings ({compliance.warnings.length})
           </h4>
           <div className="space-y-2">
-            {compliance.warnings.map((warning, idx) => (
-              <div key={idx} className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded">
-                <div className="flex items-start">
-                  <span className="text-yellow-600 font-bold mr-2">⚠</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-yellow-800">{warning.message}</p>
-                    {warning.recommendation && (
-                      <p className="text-xs text-yellow-600 mt-1">💡 {warning.recommendation}</p>
-                    )}
-                  </div>
-                </div>
+            {compliance.warnings.map((w, i) => (
+              <div key={i} className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded">
+                <p className="text-sm font-medium text-yellow-800">{w.message}</p>
+                {w.recommendation && (
+                  <p className="text-xs text-yellow-600 mt-1">💡 {w.recommendation}</p>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* No Issues */}
       {compliance.violations.length === 0 && compliance.warnings.length === 0 && (
         <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
           <p className="text-sm text-green-700">✓ No compliance issues found</p>
@@ -363,15 +418,14 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     </div>
   );
 
-  const renderPDAAnalysis = (pda: PDAAnalysis, analysisType: 'quick' | 'detailed') => (
+  // Render PDA analysis results
+  const renderPDAAnalysis = (pda: PDAAnalysis, type: 'quick' | 'detailed') => (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-800">PDA Analysis</h3>
           <p className="text-xs text-gray-500 mt-1">
-            {analysisType === 'quick'
-              ? '⚡ Script-based (instant)'
-              : '🤖 AI-powered (LLM-enhanced)'}
+            {type === 'quick' ? '⚡ Script-based (instant)' : '🤖 AI-powered (LLM-enhanced)'}
           </p>
         </div>
         <div
@@ -381,44 +435,36 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
         </div>
       </div>
 
-      {/* Token Breakdown */}
       <div className="mb-4 p-4 bg-gray-50 rounded-lg">
         <h4 className="text-sm font-semibold text-gray-700 mb-3">Token Breakdown</h4>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600">Total Tokens:</span>
-            <span className="font-mono font-semibold text-gray-800">
-              {pda.token_estimate.toLocaleString()}
-            </span>
+            <span className="text-gray-600">Total:</span>
+            <span className="font-mono font-semibold">{pda.token_estimate.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Metadata:</span>
-            <span className="font-mono text-gray-700">
-              {pda.tier_breakdown.metadata_tokens.toLocaleString()}
-            </span>
+            <span className="font-mono">{pda.tier_breakdown.metadata_tokens.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Orchestrator:</span>
-            <span className="font-mono text-gray-700">
+            <span className="font-mono">
               {pda.tier_breakdown.orchestrator_tokens.toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Resources:</span>
-            <span className="font-mono text-gray-700">
-              {pda.tier_breakdown.resource_tokens.toLocaleString()}
-            </span>
+            <span className="font-mono">{pda.tier_breakdown.resource_tokens.toLocaleString()}</span>
           </div>
         </div>
       </div>
 
-      {/* AI Insights (detailed analysis only) */}
       {pda.ai_insights && pda.ai_insights.length > 0 && (
         <div className="mb-4">
           <h4 className="text-sm font-semibold text-indigo-700 mb-2">🤖 AI Insights</h4>
           <div className="space-y-2">
-            {pda.ai_insights.map((insight, idx) => (
-              <div key={idx} className="bg-indigo-50 border-l-4 border-indigo-500 p-3 rounded">
+            {pda.ai_insights.map((insight, i) => (
+              <div key={i} className="bg-indigo-50 border-l-4 border-indigo-500 p-3 rounded">
                 <p className="text-sm text-indigo-800">{insight}</p>
               </div>
             ))}
@@ -426,597 +472,310 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
         </div>
       )}
 
-      {/* Recommendations */}
       {pda.recommendations.length > 0 && (
         <div className="mb-4">
           <h4 className="text-sm font-semibold text-blue-700 mb-2">Recommendations</h4>
           <div className="space-y-2">
-            {pda.recommendations.map((rec, idx) => (
-              <div key={idx} className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
+            {pda.recommendations.map((rec, i) => (
+              <div key={i} className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
                 <p className="text-sm text-blue-800">{rec}</p>
               </div>
             ))}
           </div>
         </div>
       )}
-
-      {/* Suggested Structure */}
-      {pda.suggested_structure.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold text-purple-700 mb-2">Suggested Structure</h4>
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <ul className="space-y-1 text-sm text-purple-800 font-mono">
-              {pda.suggested_structure.map((item, idx) => (
-                <li key={idx}>• {item}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
     </div>
   );
-
-  const renderLinkValidation = (validation: LinkValidation) => (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">🔗 Link Validation</h3>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">
-            {validation.valid_links}/{validation.total_links} valid
-          </span>
-          {validation.broken_links.length === 0 ? (
-            <span className="text-green-600 font-bold text-lg">✓</span>
-          ) : (
-            <span className="text-red-600 font-bold text-lg">
-              {validation.broken_links.length} broken
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* All Links Valid */}
-      {validation.broken_links.length === 0 && validation.total_links > 0 && (
-        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-          <p className="text-sm text-green-700">
-            ✓ All {validation.total_links} link{validation.total_links !== 1 ? 's' : ''} are valid
-          </p>
-        </div>
-      )}
-
-      {/* No Links Found */}
-      {validation.total_links === 0 && (
-        <div className="bg-gray-50 border-l-4 border-gray-300 p-4 rounded">
-          <p className="text-sm text-gray-600">No links found in skill content</p>
-        </div>
-      )}
-
-      {/* Broken Links */}
-      {validation.broken_links.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold text-red-700 mb-2">
-            Broken Links ({validation.broken_links.length})
-          </h4>
-          <div className="space-y-2">
-            {validation.broken_links.map((link, idx) => (
-              <div key={idx} className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
-                <div className="flex items-start">
-                  <span className="text-red-600 font-bold mr-2">✗</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-mono text-red-800">{link.url}</p>
-                    <p className="text-xs text-red-600 mt-1">{link.error}</p>
-                    <p className="text-xs text-gray-500 mt-1">Line {link.line_number}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderSecurityReview = (review: SecurityReview) => {
-    const getRiskColor = (level: string) => {
-      switch (level) {
-        case 'critical':
-          return 'bg-red-100 border-red-500 text-red-800';
-        case 'high':
-          return 'bg-orange-100 border-orange-500 text-orange-800';
-        case 'medium':
-          return 'bg-yellow-100 border-yellow-500 text-yellow-800';
-        case 'low':
-          return 'bg-blue-100 border-blue-500 text-blue-800';
-        default:
-          return 'bg-gray-100 border-gray-500 text-gray-800';
-      }
-    };
-
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Security Review</h3>
-          <div
-            className={`text-2xl font-bold ${review.score >= 80 ? 'text-green-600' : review.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}
-          >
-            {review.score}/100
-          </div>
-        </div>
-
-        {/* High Risk Permissions */}
-        {review.high_risk_permissions.length > 0 && (
-          <div className="mb-4">
-            <h4 className="text-sm font-semibold text-red-700 mb-2">
-              Security Risks ({review.high_risk_permissions.length})
-            </h4>
-            <div className="space-y-2">
-              {review.high_risk_permissions.map((risk, idx) => (
-                <div
-                  key={idx}
-                  className={`border-l-4 p-3 rounded ${getRiskColor(risk.risk_level)}`}
-                >
-                  <div className="flex items-start">
-                    <span className="font-bold mr-2">
-                      {risk.risk_level === 'critical' ? '!!' : '!'}
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        <span className="font-mono">{risk.permission}</span> -{' '}
-                        <span className="uppercase text-xs">{risk.risk_level}</span>
-                      </p>
-                      <p className="text-xs mt-1">{risk.explanation}</p>
-                      {risk.mitigation && (
-                        <p className="text-xs mt-1 opacity-80">Mitigation: {risk.mitigation}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Unused Permissions */}
-        {review.unused_permissions.length > 0 && (
-          <div className="mb-4">
-            <h4 className="text-sm font-semibold text-yellow-700 mb-2">
-              Unused Permissions ({review.unused_permissions.length})
-            </h4>
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded">
-              <p className="text-sm text-yellow-800">
-                These permissions are declared but not referenced in the skill content:
-              </p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {review.unused_permissions.map((perm, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded font-mono text-xs"
-                  >
-                    {perm}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Minimum Required */}
-        {review.minimum_required.length > 0 && (
-          <div className="mb-4">
-            <h4 className="text-sm font-semibold text-blue-700 mb-2">
-              Suggested Minimum Permissions
-            </h4>
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
-              <div className="flex flex-wrap gap-2">
-                {review.minimum_required.map((perm, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-1 bg-blue-200 text-blue-800 rounded font-mono text-xs"
-                  >
-                    {perm}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* All Clear */}
-        {review.high_risk_permissions.length === 0 && review.unused_permissions.length === 0 && (
-          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-            <p className="text-sm text-green-700">No security issues found</p>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderTriggerSuggestions = (suggestions: TriggerSuggestion[]) => (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Trigger Suggestions</h3>
-        <span className="text-sm text-gray-500">{suggestions.length} suggestions</span>
-      </div>
-
-      {suggestions.length === 0 ? (
-        <div className="bg-gray-50 border-l-4 border-gray-300 p-4 rounded">
-          <p className="text-sm text-gray-600">No trigger suggestions available for this skill</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {suggestions.map((suggestion, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-semibold text-purple-700">
-                    {suggestion.keyword}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      suggestion.relevance_score >= 90
-                        ? 'bg-green-100 text-green-700'
-                        : suggestion.relevance_score >= 75
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {suggestion.relevance_score}%
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">{suggestion.explanation}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  // Generate markdown report for copying
-  const generateMarkdownReport = (): string => {
-    const lines: string[] = [];
-    lines.push(`# Skill Evaluation Report: ${skill.name}`);
-    lines.push(`\n**Generated**: ${new Date().toISOString()}`);
-    lines.push(`\n---\n`);
-
-    // Spec Compliance
-    if (specCompliance) {
-      lines.push(`## Spec Compliance: ${specCompliance.score}/100\n`);
-      if (specCompliance.violations.length > 0) {
-        lines.push(`### Violations (${specCompliance.violations.length})\n`);
-        specCompliance.violations.forEach((v) => {
-          lines.push(`- **${v.rule}**: ${v.message}`);
-          if (v.fix_suggestion) lines.push(`  - 💡 Fix: ${v.fix_suggestion}`);
-          if (v.line_number) lines.push(`  - Line: ${v.line_number}`);
-        });
-        lines.push('');
-      }
-      if (specCompliance.warnings.length > 0) {
-        lines.push(`### Warnings (${specCompliance.warnings.length})\n`);
-        specCompliance.warnings.forEach((w) => {
-          lines.push(`- **${w.rule}**: ${w.message}`);
-          if (w.recommendation) lines.push(`  - 💡 ${w.recommendation}`);
-        });
-        lines.push('');
-      }
-    }
-
-    // PDA Analysis
-    const pda = detailedPdaAnalysis || quickPdaAnalysis;
-    if (pda) {
-      lines.push(`## PDA Analysis: ${pda.score}/100\n`);
-      lines.push(`**Token Estimate**: ${pda.token_estimate.toLocaleString()} tokens\n`);
-      lines.push(`| Tier | Tokens |`);
-      lines.push(`|------|--------|`);
-      lines.push(`| Metadata | ${pda.tier_breakdown.metadata_tokens} |`);
-      lines.push(`| Orchestrator | ${pda.tier_breakdown.orchestrator_tokens} |`);
-      lines.push(`| Resources | ${pda.tier_breakdown.resource_tokens} |`);
-      lines.push('');
-      if (pda.recommendations.length > 0) {
-        lines.push(`### Recommendations\n`);
-        pda.recommendations.forEach((r) => lines.push(`- ${r}`));
-        lines.push('');
-      }
-      if (pda.ai_insights && pda.ai_insights.length > 0) {
-        lines.push(`### AI Insights\n`);
-        pda.ai_insights.forEach((i) => lines.push(`- ${i}`));
-        lines.push('');
-      }
-    }
-
-    // Security Review
-    if (securityReview) {
-      lines.push(`## Security Review: ${securityReview.score}/100\n`);
-      if (securityReview.high_risk_permissions.length > 0) {
-        lines.push(`### Security Risks\n`);
-        securityReview.high_risk_permissions.forEach((r) => {
-          lines.push(`- **${r.permission}** (${r.risk_level.toUpperCase()}): ${r.explanation}`);
-          if (r.mitigation) lines.push(`  - Mitigation: ${r.mitigation}`);
-        });
-        lines.push('');
-      }
-      if (securityReview.unused_permissions.length > 0) {
-        lines.push(`### Unused Permissions\n`);
-        lines.push(`\`${securityReview.unused_permissions.join('`, `')}\`\n`);
-      }
-      if (securityReview.minimum_required.length > 0) {
-        lines.push(`### Minimum Required\n`);
-        lines.push(`\`${securityReview.minimum_required.join('`, `')}\`\n`);
-      }
-    }
-
-    // Link Validation
-    if (linkValidation) {
-      lines.push(
-        `## Link Validation: ${linkValidation.valid_links}/${linkValidation.total_links} valid\n`
-      );
-      if (linkValidation.broken_links.length > 0) {
-        lines.push(`### Broken Links\n`);
-        linkValidation.broken_links.forEach((l) => {
-          lines.push(`- \`${l.url}\` (line ${l.line_number}): ${l.error}`);
-        });
-        lines.push('');
-      }
-    }
-
-    // Trigger Suggestions
-    if (triggerSuggestions && triggerSuggestions.length > 0) {
-      lines.push(`## Trigger Suggestions\n`);
-      lines.push(`| Keyword | Relevance | Explanation |`);
-      lines.push(`|---------|-----------|-------------|`);
-      triggerSuggestions.forEach((t) => {
-        lines.push(`| \`${t.keyword}\` | ${t.relevance_score}% | ${t.explanation} |`);
-      });
-      lines.push('');
-    }
-
-    return lines.join('\n');
-  };
-
-  const [copySuccess, setCopySuccess] = useState(false);
-
-  const handleCopyReport = async () => {
-    const markdown = generateMarkdownReport();
-    try {
-      await navigator.clipboard.writeText(markdown);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
 
   return (
-    <div className="p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Skill Evaluation</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Two-tier analysis: Quick (script) + Detailed (AI-powered)
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Analyzing: <span className="font-mono font-semibold text-gray-700">{skill.name}</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* LED Indicator */}
-            <AnalysisTaskIndicator />
-            {/* Copy Report Button */}
-            {(specCompliance || quickPdaAnalysis) && (
-              <button
-                onClick={handleCopyReport}
-                className={`px-4 py-3 rounded-lg font-semibold transition-all border-2 shadow-sm ${
-                  copySuccess
-                    ? 'bg-green-100 text-green-700 border-green-300'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                }`}
-                title="Copy markdown report to clipboard"
-              >
-                {copySuccess ? '✓ Copied!' : '📋 Copy Report'}
-              </button>
-            )}
-            {(specCompliance || quickPdaAnalysis) && (
-              <button
-                onClick={() => handleAnalyzeSkill(true)}
-                disabled={loading}
-                className={`px-4 py-3 rounded-lg font-semibold transition-all border-2 shadow-sm ${
-                  loading
-                    ? 'bg-gray-300 text-gray-600 border-gray-400 cursor-not-allowed'
-                    : 'bg-gray-600 text-white border-gray-700 hover:bg-gray-700 hover:border-gray-800 hover:shadow-md'
-                }`}
-                title="Clear cache and re-analyze"
-              >
-                🔄 Refresh
-              </button>
-            )}
-            <button
-              onClick={() => handleAnalyzeSkill(false)}
-              disabled={loading}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all border-2 shadow-md ${
-                loading
-                  ? 'bg-gray-400 text-gray-700 border-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-700 hover:from-purple-700 hover:to-indigo-700 hover:border-purple-800 hover:shadow-lg'
-              }`}
-            >
-              {loading ? '⏳ Analyzing...' : '🎯 Analyze Skill'}
-            </button>
-          </div>
+    <div className="p-6 h-full flex flex-col">
+      {/* Header with single Analyze button */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Skill Evaluation</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Analyzing: <span className="font-mono font-semibold">{skill.name}</span>
+          </p>
         </div>
 
-        {/* Background Analysis Status Banner */}
-        {backgroundJob && backgroundJob.state.status === 'running' && (
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-500 p-4 rounded-lg shadow-sm">
-            <div className="flex items-center">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600 mr-3"></div>
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-indigo-900">
-                  🤖 Running detailed AI-powered analysis...
-                </h4>
-                <p className="text-xs text-indigo-700 mt-1">
-                  Using Claude/OpenCode/Gemini CLI for deep PDA insights (updates every 5s)
-                </p>
-              </div>
-              {backgroundJob.state.progress !== undefined && (
-                <div className="text-xs font-mono text-indigo-600">
-                  {backgroundJob.state.progress}%
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <div className="flex gap-3">
+          {hasAnalysisResults && (
+            <button
+              onClick={() => handleAnalyzeSkill(true)}
+              disabled={isAnalyzing}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                isAnalyzing
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              🔄 Refresh
+            </button>
+          )}
+          <button
+            onClick={() => handleAnalyzeSkill(false)}
+            disabled={isAnalyzing}
+            className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${
+              isAnalyzing
+                ? 'bg-purple-200 text-purple-700 cursor-not-allowed'
+                : 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg'
+            }`}
+          >
+            {isAnalyzing ? '⏳ Analyzing...' : '🎯 Analyze Skill'}
+          </button>
+        </div>
+      </div>
 
-        {/* Background Analysis Success Banner */}
-        {backgroundJob && backgroundJob.state.status === 'completed' && (
-          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
-            <div className="flex items-center">
-              <span className="text-green-600 font-bold text-lg mr-2">✓</span>
-              <div>
-                <h4 className="text-sm font-semibold text-green-800">
-                  Detailed AI analysis complete!
-                </h4>
-                <p className="text-xs text-green-700 mt-1">
-                  Switch to "Detailed Analysis" tab to view AI insights
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Error display */}
+      {(error || analysisError) && (
+        <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+          <p className="text-sm text-red-700">{error || analysisError}</p>
+        </div>
+      )}
 
-        {/* Background Analysis Error Banner */}
-        {backgroundJob && backgroundJob.state.status === 'failed' && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
-            <div className="flex items-start">
-              <span className="text-yellow-600 font-bold text-lg mr-2">⚠</span>
-              <div>
-                <h4 className="text-sm font-semibold text-yellow-800">Detailed analysis failed</h4>
-                <p className="text-xs text-yellow-700 mt-1">
-                  {backgroundJob.state.error || 'Unknown error'} - Quick analysis still available
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Main tab navigation */}
+      <div className="border-b border-gray-200 mb-4">
+        <div className="flex gap-1">
+          <button
+            onClick={() => setMainTab('quick')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-all ${
+              mainTab === 'quick'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            ⚡ Quick Analysis
+          </button>
+          <button
+            onClick={() => setMainTab('detailed')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-all ${
+              mainTab === 'detailed'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            🤖 Detailed Analysis
+            {backgroundJob?.state.status === 'running' && (
+              <span className="ml-2 inline-block w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+            )}
+          </button>
+          <button
+            onClick={() => setMainTab('reports')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-all ${
+              mainTab === 'reports'
+                ? 'border-purple-600 text-purple-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            📊 Reports
+            {analysisStatus === 'running' && (
+              <span className="ml-2 inline-block w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+            )}
+          </button>
+        </div>
+      </div>
 
-        {/* Error Display */}
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-            <div className="flex items-start">
-              <span className="text-red-600 font-bold text-lg mr-2">✗</span>
-              <div>
-                <h4 className="text-sm font-semibold text-red-800">Analysis Failed</h4>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Running quick analysis for {skill.name}...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Tab Switcher (shown when at least quick analysis is available) */}
-        {!loading && quickPdaAnalysis && (
-          <div className="border-b border-gray-200">
-            <div className="flex space-x-1">
-              <button
-                onClick={() => setActiveView('quick')}
-                className={`px-6 py-3 text-sm font-semibold border-b-2 transition-all ${
-                  activeView === 'quick'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
-                }`}
-              >
-                ⚡ Quick Analysis
-              </button>
-              <button
-                onClick={() => setActiveView('detailed')}
-                className={`px-6 py-3 text-sm font-semibold border-b-2 transition-all ${
-                  activeView === 'detailed'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
-                } ${!detailedPdaAnalysis && backgroundJob?.state.status !== 'running' ? 'opacity-60' : ''}`}
-              >
-                🤖 Detailed Analysis
-                {backgroundJob?.state.status === 'running' && (
-                  <span className="ml-2 text-xs text-indigo-500">(running...)</span>
-                )}
-                {!detailedPdaAnalysis && backgroundJob?.state.status !== 'running' && (
-                  <span className="ml-2 text-xs text-gray-400">(click Analyze first)</span>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Results */}
-        {!loading && specCompliance && (
+      {/* Tab content */}
+      <div className="flex-1 overflow-auto">
+        {/* Quick Analysis Tab */}
+        {mainTab === 'quick' && (
           <div className="space-y-6">
-            {renderSpecCompliance(specCompliance)}
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+                  <p className="mt-4 text-gray-600">Running quick analysis...</p>
+                </div>
+              </div>
+            )}
 
-            {/* Link Validation (always shown when available) */}
-            {linkValidation && renderLinkValidation(linkValidation)}
+            {!loading && !hasAnalysisResults && (
+              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+                <div className="text-6xl mb-4">⚡</div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">Quick Analysis</h3>
+                <p className="text-sm text-gray-600">
+                  Click "Analyze Skill" to run instant script-based analysis
+                </p>
+              </div>
+            )}
 
-            {/* Security Review (always shown when available) */}
-            {securityReview && renderSecurityReview(securityReview)}
+            {!loading && specCompliance && renderSpecCompliance(specCompliance)}
+            {!loading && quickPdaAnalysis && renderPDAAnalysis(quickPdaAnalysis, 'quick')}
+          </div>
+        )}
 
-            {/* Trigger Suggestions (always shown when available) */}
-            {triggerSuggestions && renderTriggerSuggestions(triggerSuggestions)}
+        {/* Detailed Analysis Tab */}
+        {mainTab === 'detailed' && (
+          <div className="space-y-6">
+            {backgroundJob?.state.status === 'running' && (
+              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-500 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600 mr-3" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-indigo-900">
+                      Running AI-powered analysis...
+                    </h4>
+                    <p className="text-xs text-indigo-700">Using CLI for deep insights</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-            {/* Quick Analysis View */}
-            {activeView === 'quick' &&
-              quickPdaAnalysis &&
-              renderPDAAnalysis(quickPdaAnalysis, 'quick')}
-
-            {/* Detailed Analysis View */}
-            {activeView === 'detailed' &&
-              detailedPdaAnalysis &&
-              renderPDAAnalysis(detailedPdaAnalysis, 'detailed')}
-
-            {/* Detailed Analysis Not Yet Available */}
-            {activeView === 'detailed' && !detailedPdaAnalysis && (
+            {detailedPdaAnalysis ? (
+              renderPDAAnalysis(detailedPdaAnalysis, 'detailed')
+            ) : (
               <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
                 <div className="text-6xl mb-4">🤖</div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">Detailed Analysis</h3>
-                {backgroundJob?.state.status === 'running' ? (
-                  <p className="text-sm text-gray-600">
-                    AI analysis in progress... Check back in a moment
-                  </p>
-                ) : backgroundJob?.state.status === 'failed' ? (
-                  <p className="text-sm text-red-600">
-                    AI analysis failed. Quick analysis is still available.
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-600">
-                    Click "Analyze Skill" to start both quick and detailed analysis
-                  </p>
-                )}
+                <p className="text-sm text-gray-600">
+                  {backgroundJob?.state.status === 'running'
+                    ? 'AI analysis in progress...'
+                    : backgroundJob?.state.status === 'failed'
+                      ? 'AI analysis failed - quick analysis still available'
+                      : 'Click "Analyze Skill" to start AI-powered analysis'}
+                </p>
               </div>
             )}
           </div>
         )}
 
-        {/* Empty State */}
-        {!loading && !error && !specCompliance && !quickPdaAnalysis && (
-          <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-            <div className="text-6xl mb-4">🎯</div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">Ready to Analyze</h3>
-            <p className="text-sm text-gray-600 mb-1">
-              Click "Analyze Skill" to run two-tier analysis:
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              ⚡ Quick (script-based, instant) + 🤖 Detailed (AI-powered, ~30s)
-            </p>
-            <p className="text-xs text-gray-500 mt-1">Results cached for 24 hours per skill</p>
+        {/* Reports Tab */}
+        {mainTab === 'reports' && (
+          <div className="flex flex-col h-full">
+            {/* Report type tabs */}
+            <div className="flex gap-1 mb-4 border-b border-gray-200 overflow-x-auto pb-px">
+              <button
+                onClick={() => {
+                  setReportTab('composite');
+                  setReportSubTab('results');
+                }}
+                className={`px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-all ${
+                  reportTab === 'composite'
+                    ? 'border-purple-600 text-purple-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                📑 Composite
+              </button>
+              {ANALYZER_ORDER.map((analyzer) => (
+                <button
+                  key={analyzer}
+                  onClick={() => {
+                    setReportTab(analyzer);
+                    setReportSubTab('results');
+                  }}
+                  className={`px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-all flex items-center gap-1 ${
+                    reportTab === analyzer
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <span className={getStatusColor(analyzerProgress?.[analyzer])}>
+                    {getStatusIcon(analyzerProgress?.[analyzer])}
+                  </span>
+                  {REPORT_DESCRIPTIONS[analyzer].title}
+                </button>
+              ))}
+            </div>
+
+            {/* Results/Description sub-tabs */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setReportSubTab('results')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                  reportSubTab === 'results'
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Results
+              </button>
+              <button
+                onClick={() => setReportSubTab('description')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                  reportSubTab === 'description'
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Description
+              </button>
+
+              {/* Copy button - only for composite */}
+              {reportTab === 'composite' && reportSubTab === 'results' && compositeReport && (
+                <button
+                  onClick={handleCopyComposite}
+                  className={`ml-auto px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
+                    copySuccess
+                      ? 'bg-green-500 text-white'
+                      : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                  }`}
+                >
+                  {copySuccess ? '✓ Copied!' : '📋 Copy Report'}
+                </button>
+              )}
+            </div>
+
+            {/* Report content */}
+            <div className="flex-1 overflow-auto bg-white border border-gray-200 rounded-lg p-6">
+              {reportSubTab === 'description' ? (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {REPORT_DESCRIPTIONS[reportTab].title}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {REPORT_DESCRIPTIONS[reportTab].description}
+                  </p>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">What we check:</h4>
+                    <ul className="space-y-1">
+                      {REPORT_DESCRIPTIONS[reportTab].checks.map((check, i) => (
+                        <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                          <span className="text-green-500">✓</span>
+                          {check}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : getCurrentReportContent() ? (
+                <article className="prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+                    {getCurrentReportContent()!}
+                  </ReactMarkdown>
+                </article>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  {analysisStatus === 'running' ? (
+                    <>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4" />
+                      <p>Generating report...</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-4xl mb-4">📊</div>
+                      <p>No report available yet.</p>
+                      <p className="text-sm mt-2">Click "Analyze Skill" to generate reports.</p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Quick fix instructions for composite */}
+            {reportTab === 'composite' && reportSubTab === 'results' && compositeReport && (
+              <div className="mt-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
+                <h4 className="text-sm font-semibold text-indigo-900 mb-2">
+                  💡 Quick Fix with Claude Code
+                </h4>
+                <p className="text-xs text-indigo-700">
+                  Copy this report and paste into Claude Code:
+                  <span className="block mt-1 font-mono bg-white/50 px-2 py-1 rounded">
+                    "Please review this skill analysis and help me fix the issues."
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

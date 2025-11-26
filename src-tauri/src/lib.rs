@@ -27,7 +27,12 @@ pub fn run() {
             commands::get_pda_analysis_status,
             commands::validate_skill_links,
             commands::analyze_permissions,
-            commands::suggest_triggers
+            commands::suggest_triggers,
+            // FR-009, FR-010, FR-011: Markdown Report Commands
+            commands::start_full_analysis,
+            commands::get_analysis_progress,
+            commands::get_analyzer_report,
+            commands::get_composite_report
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

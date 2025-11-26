@@ -43,7 +43,7 @@ export const AnalysisTaskIndicator: React.FC = () => {
           title: `Analyzing: ${currentSkillName || 'processing'}`,
           icon: '🔬',
         };
-      case 'completed':
+      case 'complete':
         return {
           color: 'bg-green-500',
           glow: 'shadow-green-500/50',
@@ -95,7 +95,7 @@ export const AnalysisTaskIndicator: React.FC = () => {
             )}
           </>
         )}
-        {analysisStatus === 'completed' && <span className="text-green-600">Complete</span>}
+        {analysisStatus === 'complete' && <span className="text-green-600">Complete</span>}
         {analysisStatus === 'error' && <span className="text-red-600">Error</span>}
       </span>
     </div>

@@ -18,7 +18,14 @@ import { TABS } from '../types/layout';
 import type { NavigationEntry } from '../types/navigation';
 import 'highlight.js/styles/github.css';
 
-type TabType = 'overview' | 'content' | 'references' | 'scripts' | 'triggers' | 'diagram' | 'evaluation';
+type TabType =
+  | 'overview'
+  | 'content'
+  | 'references'
+  | 'scripts'
+  | 'triggers'
+  | 'diagram'
+  | 'evaluation';
 
 export const SkillViewer: React.FC = () => {
   const { selectedSkill } = useSkillStore();
