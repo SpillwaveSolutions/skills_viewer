@@ -6,7 +6,7 @@ use crate::utils::yaml_parser;
 use crate::analyzers::{spec_validator, pda_scorer};
 use crate::models::analysis::{CLIDetectionResult as ModelCLIDetectionResult, SpecCompliance, PDAAnalysis};
 
-/// Detect available CLI tools (Claude/OpenCode)
+/// Detect available CLI tools (Claude/OpenCode/Gemini)
 /// Returns detection status with paths if available
 #[tauri::command]
 pub fn detect_cli() -> Result<ModelCLIDetectionResult, String> {
@@ -15,8 +15,10 @@ pub fn detect_cli() -> Result<ModelCLIDetectionResult, String> {
     Ok(ModelCLIDetectionResult {
         claude_available: detection.claude_available,
         opencode_available: detection.opencode_available,
+        gemini_available: detection.gemini_available,
         claude_path: detection.claude_path.map(|p| p.to_string_lossy().to_string()),
         opencode_path: detection.opencode_path.map(|p| p.to_string_lossy().to_string()),
+        gemini_path: detection.gemini_path.map(|p| p.to_string_lossy().to_string()),
     })
 }
 
@@ -41,12 +43,52 @@ pub async fn validate_skill(
     Ok(compliance)
 }
 
-/// Analyze skill for PDA compliance
+/// Analyze skill for PDA compliance (script-based, fast)
 #[tauri::command]
 pub async fn analyze_pda(
     skill_content: String,
 ) -> Result<PDAAnalysis, String> {
     pda_scorer::analyze_pda(&skill_content).await
+}
+
+/// Start detailed LLM-based PDA analysis in background
+/// Returns analysis ID for polling
+#[tauri::command]
+pub async fn start_detailed_pda_analysis(
+    skill_name: String,
+    skill_content: String,
+) -> Result<String, String> {
+    // First, run fast script-based analysis
+    let script_analysis = pda_scorer::analyze_pda(&skill_content).await?;
+
+    // Start detailed LLM-based analysis in background
+    crate::orchestrator::ORCHESTRATOR
+        .start_detailed_analysis(skill_name, skill_content, script_analysis)
+        .await
+}
+
+/// Get status of a background PDA analysis
+#[tauri::command]
+pub fn get_pda_analysis_status(
+    analysis_id: String,
+) -> Result<serde_json::Value, String> {
+    use crate::orchestrator::JobStatus;
+
+    match crate::orchestrator::ORCHESTRATOR.get_status(&analysis_id) {
+        Some(JobStatus::Running { progress }) => Ok(serde_json::json!({
+            "status": "running",
+            "progress": progress
+        })),
+        Some(JobStatus::Completed { result }) => Ok(serde_json::json!({
+            "status": "completed",
+            "result": result
+        })),
+        Some(JobStatus::Failed { error }) => Ok(serde_json::json!({
+            "status": "failed",
+            "error": error
+        })),
+        None => Err(format!("Analysis ID not found: {}", analysis_id)),
+    }
 }
 
 #[cfg(test)]

@@ -2,6 +2,7 @@ mod commands;
 mod models;
 mod utils;
 mod analyzers;
+mod orchestrator;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -21,7 +22,9 @@ pub fn run() {
             commands::render_mermaid_to_svg,
             commands::detect_cli,
             commands::validate_skill,
-            commands::analyze_pda
+            commands::analyze_pda,
+            commands::start_detailed_pda_analysis,
+            commands::get_pda_analysis_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

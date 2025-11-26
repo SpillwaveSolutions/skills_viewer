@@ -3672,6 +3672,7 @@ dependencies = [
  "chrono",
  "dashmap",
  "dirs 5.0.1",
+ "lazy_static",
  "reqwest 0.11.27",
  "serde",
  "serde_json",

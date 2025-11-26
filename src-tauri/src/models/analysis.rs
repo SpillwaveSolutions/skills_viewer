@@ -67,6 +67,8 @@ pub struct PDAAnalysis {
     pub tier_breakdown: TierBreakdown,
     pub recommendations: Vec<String>,
     pub suggested_structure: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ai_insights: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -127,10 +129,13 @@ pub struct BrokenLink {
 pub struct CLIDetectionResult {
     pub claude_available: bool,
     pub opencode_available: bool,
+    pub gemini_available: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claude_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub opencode_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gemini_path: Option<String>,
 }
 
 /// Cached analysis result with expiry timestamp
@@ -238,6 +243,7 @@ mod tests {
                 "skill.md (orchestrator, ~1500 tokens)".to_string(),
                 "references/examples.md (~1800 tokens)".to_string(),
             ],
+            ai_insights: None,
         };
 
         let json = serde_json::to_string(&pda).unwrap();
@@ -278,8 +284,10 @@ mod tests {
         let detection = CLIDetectionResult {
             claude_available: true,
             opencode_available: false,
+            gemini_available: false,
             claude_path: Some("/usr/local/bin/claude".to_string()),
             opencode_path: None,
+            gemini_path: None,
         };
 
         let json = serde_json::to_string(&detection).unwrap();
@@ -287,8 +295,10 @@ mod tests {
 
         assert!(deserialized.claude_available);
         assert!(!deserialized.opencode_available);
+        assert!(!deserialized.gemini_available);
         assert_eq!(deserialized.claude_path.as_deref(), Some("/usr/local/bin/claude"));
         assert!(deserialized.opencode_path.is_none());
+        assert!(deserialized.gemini_path.is_none());
     }
 
     #[test]

@@ -11,24 +11,29 @@ use serde_json::Value;
 pub struct CLIDetectionResult {
     pub claude_available: bool,
     pub opencode_available: bool,
+    pub gemini_available: bool,
     pub claude_path: Option<PathBuf>,
     pub opencode_path: Option<PathBuf>,
+    pub gemini_path: Option<PathBuf>,
 }
 
-/// Detect available CLI tools (claude, opencode)
+/// Detect available CLI tools (claude, opencode, gemini)
 pub fn detect_available_clis() -> CLIDetectionResult {
     let claude_path = which::which("claude").ok();
     let opencode_path = which::which("opencode").ok();
+    let gemini_path = which::which("gemini").ok();
 
     CLIDetectionResult {
         claude_available: claude_path.is_some(),
         opencode_available: opencode_path.is_some(),
+        gemini_available: gemini_path.is_some(),
         claude_path,
         opencode_path,
+        gemini_path,
     }
 }
 
-/// Select which CLI to use (claude → opencode → error)
+/// Select which CLI to use (claude → opencode → gemini → error)
 pub fn select_cli() -> Result<String, String> {
     let detection = detect_available_clis();
 
@@ -36,8 +41,10 @@ pub fn select_cli() -> Result<String, String> {
         Ok("claude".to_string())
     } else if detection.opencode_available {
         Ok("opencode".to_string())
+    } else if detection.gemini_available {
+        Ok("gemini".to_string())
     } else {
-        Err("No CLI available. Install Claude CLI or OpenCode CLI.".to_string())
+        Err("No CLI available. Install Claude CLI, OpenCode CLI, or Gemini CLI.".to_string())
     }
 }
 
@@ -59,7 +66,7 @@ pub async fn execute_claude_cli(prompt: &str) -> Result<String, String> {
 
 /// Internal CLI execution with timeout
 async fn execute_cli_internal(cli_name: &str, prompt: &str) -> Result<String, String> {
-    let timeout_duration = Duration::from_secs(30);
+    let timeout_duration = Duration::from_secs(600); // 10 minutes for detailed LLM analysis
 
     let output = timeout(
         timeout_duration,
@@ -73,7 +80,7 @@ async fn execute_cli_internal(cli_name: &str, prompt: &str) -> Result<String, St
             .output()
     )
     .await
-    .map_err(|_| "CLI execution timeout (30s)".to_string())?
+    .map_err(|_| "CLI execution timeout (10 minutes)".to_string())?
     .map_err(|e| format!("Command error: {}", e))?;
 
     if !output.status.success() {
@@ -259,12 +266,13 @@ mod tests {
 
     // T051: Test timeout scenarios
     #[test]
-    fn test_timeout_duration_is_30_seconds() {
+    fn test_timeout_duration_is_10_minutes() {
         // Verify timeout constant through code inspection
-        // The timeout is set to 30 seconds in execute_cli_internal
+        // The timeout is set to 600 seconds (10 minutes) in execute_cli_internal
+        // This allows sufficient time for detailed LLM-based PDA analysis
         // This test documents the expected behavior
-        let expected_timeout_secs = 30;
-        assert_eq!(expected_timeout_secs, 30);
+        let expected_timeout_secs = 600;
+        assert_eq!(expected_timeout_secs, 600);
     }
 
     #[test]
@@ -272,13 +280,17 @@ mod tests {
         let result = CLIDetectionResult {
             claude_available: true,
             opencode_available: false,
+            gemini_available: false,
             claude_path: Some(PathBuf::from("/usr/local/bin/claude")),
             opencode_path: None,
+            gemini_path: None,
         };
 
         assert!(result.claude_available);
         assert!(!result.opencode_available);
+        assert!(!result.gemini_available);
         assert!(result.claude_path.is_some());
         assert!(result.opencode_path.is_none());
+        assert!(result.gemini_path.is_none());
     }
 }

@@ -2,6 +2,8 @@
 // Analyzes Progressive Disclosure Architecture compliance
 
 use crate::models::analysis::{PDAAnalysis, TierBreakdown};
+use crate::utils::cli_executor;
+use std::fs;
 
 /// Analyze skill for PDA compliance
 pub async fn analyze_pda(skill_content: &str) -> Result<PDAAnalysis, String> {
@@ -34,7 +36,138 @@ pub async fn analyze_pda(skill_content: &str) -> Result<PDAAnalysis, String> {
         tier_breakdown,
         recommendations,
         suggested_structure,
+        ai_insights: None, // Script-based analysis has no AI insights
     })
+}
+
+/// Partial PDA analysis with optional fields for graceful parsing
+#[derive(Debug, serde::Deserialize)]
+struct PDAAnalysisPartial {
+    score: Option<u8>,
+    token_estimate: Option<usize>,
+    tier_breakdown: Option<TierBreakdown>,
+    recommendations: Option<Vec<String>>,
+    suggested_structure: Option<Vec<String>>,
+    ai_insights: Option<Vec<String>>,
+}
+
+/// Analyze skill for PDA compliance using LLM (Claude/OpenCode CLI)
+/// This provides enhanced analysis by passing script-based results + rubric to an LLM
+pub async fn analyze_pda_with_llm(
+    skill_content: &str,
+    script_analysis: &PDAAnalysis,
+) -> Result<PDAAnalysis, String> {
+    // Load PDA rubric template
+    let rubric_template = load_pda_rubric_template()?;
+
+    // Serialize script analysis to JSON for injection into prompt
+    let script_analysis_json = serde_json::to_string_pretty(script_analysis)
+        .map_err(|e| format!("Failed to serialize script analysis: {}", e))?;
+
+    // Inject script analysis and skill content into rubric template
+    let prompt = rubric_template
+        .replace("{SCRIPT_ANALYSIS}", &script_analysis_json)
+        .replace("{SKILL_CONTENT}", skill_content);
+
+    // Execute CLI with fallback chain (claude → opencode → gemini)
+    let response = cli_executor::execute_claude_cli(&prompt).await?;
+
+    // Clean response: strip markdown code fences if present
+    let cleaned_response = strip_markdown_fences(&response);
+
+    // Try full parsing first
+    match cli_executor::parse_json_response::<PDAAnalysis>(&cleaned_response) {
+        Ok(analysis) => Ok(analysis),
+        Err(full_parse_err) => {
+            // Fallback: Try partial parsing with optional fields
+            match cli_executor::parse_json_response::<PDAAnalysisPartial>(&cleaned_response) {
+                Ok(partial) => {
+                    // Merge partial LLM results with script analysis defaults
+                    let mut ai_insights = partial.ai_insights.unwrap_or_default();
+
+                    // Add note about partial parsing
+                    ai_insights.insert(0, format!(
+                        "⚠️ LLM response incomplete ({}). Using script-based fallbacks for missing fields.",
+                        full_parse_err
+                    ));
+
+                    Ok(PDAAnalysis {
+                        score: partial.score.unwrap_or(script_analysis.score),
+                        token_estimate: partial.token_estimate.unwrap_or(script_analysis.token_estimate),
+                        tier_breakdown: partial.tier_breakdown
+                            .unwrap_or_else(|| script_analysis.tier_breakdown.clone()),
+                        recommendations: partial.recommendations
+                            .unwrap_or_else(|| script_analysis.recommendations.clone()),
+                        suggested_structure: partial.suggested_structure
+                            .unwrap_or_else(|| script_analysis.suggested_structure.clone()),
+                        ai_insights: Some(ai_insights),
+                    })
+                }
+                Err(partial_parse_err) => {
+                    // Both parsings failed - return script analysis with error note
+                    let mut result = script_analysis.clone();
+                    result.ai_insights = Some(vec![
+                        format!("⚠️ Failed to parse LLM response: {}", full_parse_err),
+                        format!("Partial parsing also failed: {}", partial_parse_err),
+                        "Using script-based analysis only. LLM response may be malformed.".to_string(),
+                    ]);
+                    Ok(result)
+                }
+            }
+        }
+    }
+}
+
+/// Strip markdown code fences from response (```json ... ``` or ``` ... ```)
+fn strip_markdown_fences(response: &str) -> String {
+    let trimmed = response.trim();
+
+    // Check for ```json ... ``` or ``` ... ```
+    if trimmed.starts_with("```") {
+        let lines: Vec<&str> = trimmed.lines().collect();
+        if lines.len() >= 3 && lines.last().map_or(false, |l| l.trim() == "```") {
+            // Remove first line (```json or ```) and last line (```)
+            let content_lines = &lines[1..lines.len()-1];
+            return content_lines.join("\n");
+        }
+    }
+
+    response.to_string()
+}
+
+/// Load PDA rubric prompt template from src-tauri/src/prompts/pda_rubric.txt
+fn load_pda_rubric_template() -> Result<String, String> {
+    // Get the directory where the executable is located
+    let exe_path = std::env::current_exe()
+        .map_err(|e| format!("Failed to get executable path: {}", e))?;
+
+    let exe_dir = exe_path
+        .parent()
+        .ok_or_else(|| "Failed to get executable directory".to_string())?;
+
+    // In development: exe is in src-tauri/target/debug/, template is in src-tauri/src/prompts/
+    // In production: template should be bundled next to executable in prompts/
+    let dev_path = exe_dir
+        .parent()
+        .and_then(|p| p.parent())
+        .map(|p| p.join("src/prompts/pda_rubric.txt"));
+
+    let prod_path = exe_dir.join("prompts/pda_rubric.txt");
+
+    // Try dev path first, then prod path
+    let template_path = if let Some(dev) = dev_path {
+        if dev.exists() {
+            dev
+        } else {
+            prod_path
+        }
+    } else {
+        prod_path
+    };
+
+    // Read template file
+    fs::read_to_string(&template_path)
+        .map_err(|e| format!("Failed to read PDA rubric template at {:?}: {}", template_path, e))
 }
 
 /// T070: Estimate tokens from content (word count / 0.75)
@@ -343,5 +476,49 @@ Some content here for testing.
 
         // Should have recommendations to split
         assert!(!analysis.recommendations.is_empty());
+    }
+
+    // Test graceful fallback parsing
+    #[test]
+    fn test_strip_markdown_fences_json() {
+        let response = r#"```json
+{
+  "score": 85,
+  "token_estimate": 3500
+}
+```"#;
+
+        let cleaned = strip_markdown_fences(response);
+        assert!(!cleaned.contains("```"));
+        assert!(cleaned.contains("\"score\": 85"));
+    }
+
+    #[test]
+    fn test_strip_markdown_fences_plain() {
+        let response = r#"```
+{
+  "score": 85
+}
+```"#;
+
+        let cleaned = strip_markdown_fences(response);
+        assert!(!cleaned.contains("```"));
+        assert!(cleaned.contains("\"score\": 85"));
+    }
+
+    #[test]
+    fn test_strip_markdown_fences_no_fences() {
+        let response = r#"{"score": 85}"#;
+        let cleaned = strip_markdown_fences(response);
+        assert_eq!(cleaned, response);
+    }
+
+    #[test]
+    fn test_strip_markdown_fences_incomplete() {
+        // If fences are incomplete, return original
+        let response = r#"```json
+{"score": 85}"#;
+        let cleaned = strip_markdown_fences(response);
+        assert_eq!(cleaned, response);
     }
 }
