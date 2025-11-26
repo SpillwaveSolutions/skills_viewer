@@ -10,6 +10,7 @@ import { DiagramView } from './DiagramView';
 import { ReferencesTab } from './ReferencesTab';
 import { ScriptsTab } from './ScriptsTab';
 import { EvaluationTab } from './analysis/EvaluationTab';
+import { ReportsTab } from './analysis/ReportsTab';
 import { TabBar } from './TabBar';
 import { TabAnnouncer } from './TabAnnouncer';
 import { SkillHeader } from './SkillHeader';
@@ -18,7 +19,15 @@ import { TABS } from '../types/layout';
 import type { NavigationEntry } from '../types/navigation';
 import 'highlight.js/styles/github.css';
 
-type TabType = 'overview' | 'content' | 'references' | 'scripts' | 'triggers' | 'diagram' | 'evaluation';
+type TabType =
+  | 'overview'
+  | 'content'
+  | 'references'
+  | 'scripts'
+  | 'triggers'
+  | 'diagram'
+  | 'evaluation'
+  | 'reports';
 
 export const SkillViewer: React.FC = () => {
   const { selectedSkill } = useSkillStore();
@@ -114,6 +123,8 @@ export const SkillViewer: React.FC = () => {
         {activeTab === 'diagram' && <DiagramView skill={selectedSkill} />}
 
         {activeTab === 'evaluation' && <EvaluationTab skill={selectedSkill} />}
+
+        {activeTab === 'reports' && <ReportsTab skill={selectedSkill} />}
       </div>
     </div>
   );

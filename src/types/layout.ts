@@ -99,17 +99,24 @@ export const TABS: readonly TabConfig[] = [
     ariaLabel: 'Evaluation tab - Spec compliance and PDA analysis',
   },
   {
+    id: 'reports',
+    label: 'Reports',
+    icon: '📊',
+    shortcutIndex: 6,
+    ariaLabel: 'Reports tab - Markdown analysis reports',
+  },
+  {
     id: 'references',
     label: 'References',
     icon: '📚',
-    shortcutIndex: 6,
+    shortcutIndex: 7,
     ariaLabel: 'References tab',
   },
   {
     id: 'scripts',
     label: 'Scripts',
     icon: '📜',
-    shortcutIndex: 7,
+    shortcutIndex: 8,
     ariaLabel: 'Scripts tab',
   },
 ] as const;

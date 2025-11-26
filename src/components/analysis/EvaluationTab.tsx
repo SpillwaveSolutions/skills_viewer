@@ -387,7 +387,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
               className={`px-6 py-3 rounded-lg font-semibold transition-all border-2 shadow-sm ${
                 loading
                   ? 'bg-gray-300 text-gray-600 border-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800 hover:shadow-md'
+                  : 'bg-blue-100 text-gray-900 border-blue-300 hover:bg-blue-200 hover:border-blue-400 hover:shadow-md'
               }`}
             >
               {loading ? '⏳ Analyzing...' : '🎯 Analyze Skill'}

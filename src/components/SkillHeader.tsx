@@ -16,6 +16,7 @@ import React, { useMemo } from 'react';
 import { Skill } from '../types';
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { analyzeTriggers } from '../utils/triggerAnalyzer';
+import { AnalysisLED } from './analysis/AnalysisLED';
 
 export interface SkillHeaderProps {
   /** Skill to display header for */
@@ -81,6 +82,9 @@ export const SkillHeader = React.memo<SkillHeaderProps>(({ skill }) => {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Analysis Status LED */}
+        <AnalysisLED />
+
         {/* Compact Mode Toggle Button */}
         <button
           onClick={toggleMode}

@@ -169,8 +169,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ skill }) => {
             disabled={analysisStatus === 'running'}
             className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${
               analysisStatus === 'running'
-                ? 'bg-purple-300 text-white cursor-not-allowed'
-                : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg'
+                ? 'bg-purple-200 text-purple-700 cursor-not-allowed'
+                : 'bg-gradient-to-r from-purple-100 to-indigo-100 text-gray-900 border border-purple-300 hover:from-purple-200 hover:to-indigo-200 shadow-sm hover:shadow-md'
             }`}
           >
             {analysisStatus === 'running' ? '⏳ Analyzing...' : '🎯 Analyze Skill'}
