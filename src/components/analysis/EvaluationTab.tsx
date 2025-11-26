@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import type { Skill } from '../../types/skill';
 import { useAnalysisStore } from '../../stores/analysisStore';
+import { AnalysisTaskIndicator } from './AnalysisTaskIndicator';
 
 interface SpecCompliance {
   score: number;
@@ -115,6 +116,9 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     setCachedAnalysis,
     setDetailedPdaAnalysis: cacheDetailedPdaAnalysis,
     clearCache,
+    setAnalysisRunning,
+    setAnalysisCompleted,
+    setAnalysisError,
   } = useAnalysisStore();
 
   // Load cached analysis on mount or skill change
@@ -194,6 +198,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
 
     setLoading(true);
     setError(null);
+    setAnalysisRunning(skill.name); // Update LED indicator
 
     try {
       // Extract skill directory from path (parent of skill.md)
@@ -203,33 +208,66 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
       const allowedTools: string[] = (skill.metadata?.['allowed-tools'] as string[]) ?? [];
       const currentTriggers: string[] = (skill.metadata?.triggers as string[]) ?? [];
 
-      // Step 1: Run quick analyses in parallel (spec + quick PDA + link validation + security + triggers)
-      const [specResult, quickPdaResult, linkResult, securityResult, triggerResult] =
-        await Promise.all([
-          invoke<SpecCompliance>('validate_skill', { skillContent: skill.content }),
-          invoke<PDAAnalysis>('analyze_pda', { skillContent: skill.content }),
-          invoke<LinkValidation>('validate_skill_links', {
-            skillContent: skill.content,
-            skillDir: skillDir,
-          }),
-          invoke<SecurityReview>('analyze_permissions', {
-            allowedTools: allowedTools,
-            skillContent: skill.content,
-          }),
-          invoke<TriggerSuggestion[]>('suggest_triggers', {
-            skillContent: skill.content,
-            currentTriggers: currentTriggers,
-          }),
-        ]);
+      // Step 1: Run quick analyses in parallel with individual error handling
+      // Each analyzer runs independently - failures don't block others
+      const results = await Promise.allSettled([
+        invoke<SpecCompliance>('validate_skill', { skillContent: skill.content }),
+        invoke<PDAAnalysis>('analyze_pda', { skillContent: skill.content }),
+        invoke<LinkValidation>('validate_skill_links', {
+          skillContent: skill.content,
+          skillDir: skillDir,
+        }),
+        invoke<SecurityReview>('analyze_permissions', {
+          allowedTools: allowedTools,
+          skillContent: skill.content,
+        }),
+        invoke<TriggerSuggestion[]>('suggest_triggers', {
+          skillContent: skill.content,
+          currentTriggers: currentTriggers,
+        }),
+      ]);
 
-      // Step 2: Display quick results immediately
-      setSpecCompliance(specResult);
-      setQuickPdaAnalysis(quickPdaResult);
-      setLinkValidation(linkResult);
-      setSecurityReview(securityResult);
-      setTriggerSuggestions(triggerResult);
-      setCachedAnalysis(skill.name, specResult, quickPdaResult);
+      // Step 2: Extract results, handling partial failures gracefully
+      const [specResult, pdaResult, linkResult, securityResult, triggerResult] = results;
+
+      // Process each result independently
+      if (specResult.status === 'fulfilled') {
+        setSpecCompliance(specResult.value);
+      } else {
+        console.error('Spec validation failed:', specResult.reason);
+      }
+
+      if (pdaResult.status === 'fulfilled') {
+        setQuickPdaAnalysis(pdaResult.value);
+      } else {
+        console.error('PDA analysis failed:', pdaResult.reason);
+      }
+
+      if (linkResult.status === 'fulfilled') {
+        setLinkValidation(linkResult.value);
+      } else {
+        console.error('Link validation failed:', linkResult.reason);
+      }
+
+      if (securityResult.status === 'fulfilled') {
+        setSecurityReview(securityResult.value);
+      } else {
+        console.error('Security review failed:', securityResult.reason);
+      }
+
+      if (triggerResult.status === 'fulfilled') {
+        setTriggerSuggestions(triggerResult.value);
+      } else {
+        console.error('Trigger suggestions failed:', triggerResult.reason);
+      }
+
+      // Cache successful results
+      if (specResult.status === 'fulfilled' && pdaResult.status === 'fulfilled') {
+        setCachedAnalysis(skill.name, specResult.value, pdaResult.value);
+      }
+
       setLoading(false);
+      setAnalysisCompleted(); // Update LED indicator
 
       // Step 3: Start background LLM analysis (fire-and-forget)
       try {
@@ -247,7 +285,9 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
         // Don't fail the whole operation if background analysis fails
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setError(errorMsg);
+      setAnalysisError(errorMsg); // Update LED indicator
       setLoading(false);
     }
   };
@@ -634,6 +674,120 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     </div>
   );
 
+  // Generate markdown report for copying
+  const generateMarkdownReport = (): string => {
+    const lines: string[] = [];
+    lines.push(`# Skill Evaluation Report: ${skill.name}`);
+    lines.push(`\n**Generated**: ${new Date().toISOString()}`);
+    lines.push(`\n---\n`);
+
+    // Spec Compliance
+    if (specCompliance) {
+      lines.push(`## Spec Compliance: ${specCompliance.score}/100\n`);
+      if (specCompliance.violations.length > 0) {
+        lines.push(`### Violations (${specCompliance.violations.length})\n`);
+        specCompliance.violations.forEach((v) => {
+          lines.push(`- **${v.rule}**: ${v.message}`);
+          if (v.fix_suggestion) lines.push(`  - 💡 Fix: ${v.fix_suggestion}`);
+          if (v.line_number) lines.push(`  - Line: ${v.line_number}`);
+        });
+        lines.push('');
+      }
+      if (specCompliance.warnings.length > 0) {
+        lines.push(`### Warnings (${specCompliance.warnings.length})\n`);
+        specCompliance.warnings.forEach((w) => {
+          lines.push(`- **${w.rule}**: ${w.message}`);
+          if (w.recommendation) lines.push(`  - 💡 ${w.recommendation}`);
+        });
+        lines.push('');
+      }
+    }
+
+    // PDA Analysis
+    const pda = detailedPdaAnalysis || quickPdaAnalysis;
+    if (pda) {
+      lines.push(`## PDA Analysis: ${pda.score}/100\n`);
+      lines.push(`**Token Estimate**: ${pda.token_estimate.toLocaleString()} tokens\n`);
+      lines.push(`| Tier | Tokens |`);
+      lines.push(`|------|--------|`);
+      lines.push(`| Metadata | ${pda.tier_breakdown.metadata_tokens} |`);
+      lines.push(`| Orchestrator | ${pda.tier_breakdown.orchestrator_tokens} |`);
+      lines.push(`| Resources | ${pda.tier_breakdown.resource_tokens} |`);
+      lines.push('');
+      if (pda.recommendations.length > 0) {
+        lines.push(`### Recommendations\n`);
+        pda.recommendations.forEach((r) => lines.push(`- ${r}`));
+        lines.push('');
+      }
+      if (pda.ai_insights && pda.ai_insights.length > 0) {
+        lines.push(`### AI Insights\n`);
+        pda.ai_insights.forEach((i) => lines.push(`- ${i}`));
+        lines.push('');
+      }
+    }
+
+    // Security Review
+    if (securityReview) {
+      lines.push(`## Security Review: ${securityReview.score}/100\n`);
+      if (securityReview.high_risk_permissions.length > 0) {
+        lines.push(`### Security Risks\n`);
+        securityReview.high_risk_permissions.forEach((r) => {
+          lines.push(`- **${r.permission}** (${r.risk_level.toUpperCase()}): ${r.explanation}`);
+          if (r.mitigation) lines.push(`  - Mitigation: ${r.mitigation}`);
+        });
+        lines.push('');
+      }
+      if (securityReview.unused_permissions.length > 0) {
+        lines.push(`### Unused Permissions\n`);
+        lines.push(`\`${securityReview.unused_permissions.join('`, `')}\`\n`);
+      }
+      if (securityReview.minimum_required.length > 0) {
+        lines.push(`### Minimum Required\n`);
+        lines.push(`\`${securityReview.minimum_required.join('`, `')}\`\n`);
+      }
+    }
+
+    // Link Validation
+    if (linkValidation) {
+      lines.push(
+        `## Link Validation: ${linkValidation.valid_links}/${linkValidation.total_links} valid\n`
+      );
+      if (linkValidation.broken_links.length > 0) {
+        lines.push(`### Broken Links\n`);
+        linkValidation.broken_links.forEach((l) => {
+          lines.push(`- \`${l.url}\` (line ${l.line_number}): ${l.error}`);
+        });
+        lines.push('');
+      }
+    }
+
+    // Trigger Suggestions
+    if (triggerSuggestions && triggerSuggestions.length > 0) {
+      lines.push(`## Trigger Suggestions\n`);
+      lines.push(`| Keyword | Relevance | Explanation |`);
+      lines.push(`|---------|-----------|-------------|`);
+      triggerSuggestions.forEach((t) => {
+        lines.push(`| \`${t.keyword}\` | ${t.relevance_score}% | ${t.explanation} |`);
+      });
+      lines.push('');
+    }
+
+    return lines.join('\n');
+  };
+
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  const handleCopyReport = async () => {
+    const markdown = generateMarkdownReport();
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -648,7 +802,23 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
               Analyzing: <span className="font-mono font-semibold text-gray-700">{skill.name}</span>
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            {/* LED Indicator */}
+            <AnalysisTaskIndicator />
+            {/* Copy Report Button */}
+            {(specCompliance || quickPdaAnalysis) && (
+              <button
+                onClick={handleCopyReport}
+                className={`px-4 py-3 rounded-lg font-semibold transition-all border-2 shadow-sm ${
+                  copySuccess
+                    ? 'bg-green-100 text-green-700 border-green-300'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+                title="Copy markdown report to clipboard"
+              >
+                {copySuccess ? '✓ Copied!' : '📋 Copy Report'}
+              </button>
+            )}
             {(specCompliance || quickPdaAnalysis) && (
               <button
                 onClick={() => handleAnalyzeSkill(true)}
@@ -666,10 +836,10 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
             <button
               onClick={() => handleAnalyzeSkill(false)}
               disabled={loading}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all border-2 shadow-sm ${
+              className={`px-6 py-3 rounded-lg font-semibold transition-all border-2 shadow-md ${
                 loading
-                  ? 'bg-gray-300 text-gray-600 border-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800 hover:shadow-md'
+                  ? 'bg-gray-400 text-gray-700 border-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-700 hover:from-purple-700 hover:to-indigo-700 hover:border-purple-800 hover:shadow-lg'
               }`}
             >
               {loading ? '⏳ Analyzing...' : '🎯 Analyze Skill'}
@@ -774,12 +944,14 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
                   activeView === 'detailed'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
-                }`}
-                disabled={!detailedPdaAnalysis}
+                } ${!detailedPdaAnalysis && backgroundJob?.state.status !== 'running' ? 'opacity-60' : ''}`}
               >
                 🤖 Detailed Analysis
+                {backgroundJob?.state.status === 'running' && (
+                  <span className="ml-2 text-xs text-indigo-500">(running...)</span>
+                )}
                 {!detailedPdaAnalysis && backgroundJob?.state.status !== 'running' && (
-                  <span className="ml-2 text-xs text-gray-400">(not available)</span>
+                  <span className="ml-2 text-xs text-gray-400">(click Analyze first)</span>
                 )}
               </button>
             </div>
