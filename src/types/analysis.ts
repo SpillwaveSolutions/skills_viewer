@@ -110,6 +110,9 @@ export interface PDAAnalysis {
 
   /** Suggested structural changes */
   suggested_structure: string[];
+
+  /** AI-powered insights (only present in LLM-enhanced analysis) */
+  ai_insights?: string[];
 }
 
 /**
@@ -217,9 +220,15 @@ export interface CLIDetectionResult {
   /** Whether OpenCode CLI is available */
   opencode_available: boolean;
 
+  /** Whether Gemini CLI is available */
+  gemini_available: boolean;
+
   /** Path to claude binary */
   claude_path?: string;
 
   /** Path to opencode binary */
   opencode_path?: string;
+
+  /** Path to gemini binary */
+  gemini_path?: string;
 }

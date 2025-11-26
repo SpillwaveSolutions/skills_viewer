@@ -9,6 +9,7 @@ import { TriggerAnalysis } from './TriggerAnalysis';
 import { DiagramView } from './DiagramView';
 import { ReferencesTab } from './ReferencesTab';
 import { ScriptsTab } from './ScriptsTab';
+import { EvaluationTab } from './analysis/EvaluationTab';
 import { TabBar } from './TabBar';
 import { TabAnnouncer } from './TabAnnouncer';
 import { SkillHeader } from './SkillHeader';
@@ -17,7 +18,7 @@ import { TABS } from '../types/layout';
 import type { NavigationEntry } from '../types/navigation';
 import 'highlight.js/styles/github.css';
 
-type TabType = 'overview' | 'content' | 'references' | 'scripts' | 'triggers' | 'diagram';
+type TabType = 'overview' | 'content' | 'references' | 'scripts' | 'triggers' | 'diagram' | 'evaluation';
 
 export const SkillViewer: React.FC = () => {
   const { selectedSkill } = useSkillStore();
@@ -111,6 +112,8 @@ export const SkillViewer: React.FC = () => {
         {activeTab === 'triggers' && <TriggerAnalysis skill={selectedSkill} />}
 
         {activeTab === 'diagram' && <DiagramView skill={selectedSkill} />}
+
+        {activeTab === 'evaluation' && <EvaluationTab skill={selectedSkill} />}
       </div>
     </div>
   );

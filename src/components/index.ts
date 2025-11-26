@@ -19,3 +19,4 @@ export { BreadcrumbNavigation } from './BreadcrumbNavigation';
 export { SkillHeader } from './SkillHeader';
 export { OverviewTab } from './OverviewTab';
 export { AriaLiveAnnouncer } from './AriaLiveAnnouncer';
+export { EvaluationTab } from './analysis/EvaluationTab';

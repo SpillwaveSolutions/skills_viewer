@@ -18,6 +18,7 @@ interface DiagramCache {
 interface DiagramCacheState {
   cache: DiagramCache;
   renderQueue: string[]; // Queue of skill names to pre-render
+  priorityQueue: string[]; // High-priority queue for user-selected skills
   currentlyRendering: string | null;
 
   // Cache operations
@@ -32,6 +33,7 @@ interface DiagramCacheState {
 
   // Queue operations
   addToQueue: (skillNames: string[]) => void;
+  addToPriorityQueue: (skillNames: string[]) => void;
   setCurrentlyRendering: (skillName: string | null) => void;
   removeFromQueue: (skillName: string) => void;
   getNextInQueue: () => string | null;
@@ -45,6 +47,7 @@ export const useDiagramCacheStore = create<DiagramCacheState>()(
     (set, get) => ({
       cache: {},
       renderQueue: [],
+      priorityQueue: [],
       currentlyRendering: null,
 
       getCachedSVG: (skillName: string, layout: DiagramLayout) => {
@@ -96,6 +99,12 @@ export const useDiagramCacheStore = create<DiagramCacheState>()(
         });
       },
 
+      addToPriorityQueue: (skillNames: string[]) => {
+        set((state) => ({
+          priorityQueue: [...new Set([...skillNames, ...state.priorityQueue])],
+        }));
+      },
+
       setCurrentlyRendering: (skillName: string | null) => {
         set({ currentlyRendering: skillName });
       },
@@ -107,12 +116,24 @@ export const useDiagramCacheStore = create<DiagramCacheState>()(
       },
 
       getNextInQueue: () => {
-        const queue = get().renderQueue;
-        return queue.length > 0 ? queue[0] : null;
+        const state = get();
+        // Check priority queue first
+        if (state.priorityQueue.length > 0) {
+          const next = state.priorityQueue[0];
+          set({ priorityQueue: state.priorityQueue.slice(1) });
+          return next;
+        }
+        // Fall back to regular queue
+        if (state.renderQueue.length > 0) {
+          const next = state.renderQueue[0];
+          set({ renderQueue: state.renderQueue.slice(1) });
+          return next;
+        }
+        return null;
       },
 
       clearCache: () => {
-        set({ cache: {}, renderQueue: [], currentlyRendering: null });
+        set({ cache: {}, renderQueue: [], priorityQueue: [], currentlyRendering: null });
       },
     }),
     {

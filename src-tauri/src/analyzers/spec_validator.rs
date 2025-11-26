@@ -8,18 +8,98 @@ pub fn validate_skill(skill_content: &str, frontmatter: &serde_yaml::Value) -> S
     let mut violations = Vec::new();
     let mut warnings = Vec::new();
 
-    // TODO: Implement validation logic (Phase 4)
-    // - validate_frontmatter() - check required fields
-    // - check_required_sections() - ## Triggers, ## Usage notes
-    // - validate_allowed_tools() - syntax validation
-    // - detect_common_typos() - triggers vs trigger, etc.
+    // T057: Validate frontmatter (check name, description required)
+    validate_frontmatter(frontmatter, &mut violations);
 
+    // T058: Check required sections
+    check_required_sections(skill_content, &mut warnings);
+
+    // T059: Validate allowed-tools syntax
+    validate_allowed_tools(frontmatter, &mut violations);
+
+    // T060: Detect common typos
+    detect_common_typos(frontmatter, &mut warnings);
+
+    // T061: Calculate spec score
     let score = calculate_spec_score(&violations, &warnings);
 
+    // T062: Return SpecCompliance struct
     SpecCompliance {
         score,
         violations,
         warnings,
+    }
+}
+
+/// T057: Validate frontmatter required fields
+fn validate_frontmatter(frontmatter: &serde_yaml::Value, violations: &mut Vec<Violation>) {
+    // Check for 'name' field
+    if frontmatter.get("name").is_none() {
+        violations.push(Violation {
+            rule: "missing_required_field".to_string(),
+            message: "Skill is missing required 'name' field in frontmatter".to_string(),
+            fix_suggestion: Some("Add 'name: your-skill-name' to the frontmatter section".to_string()),
+            line_number: Some(1),
+        });
+    }
+
+    // Check for 'description' field
+    if frontmatter.get("description").is_none() {
+        violations.push(Violation {
+            rule: "missing_required_field".to_string(),
+            message: "Skill is missing required 'description' field in frontmatter".to_string(),
+            fix_suggestion: Some("Add 'description: Your skill description' to the frontmatter section".to_string()),
+            line_number: Some(1),
+        });
+    }
+}
+
+/// T058: Check for required sections in skill content
+fn check_required_sections(skill_content: &str, warnings: &mut Vec<Warning>) {
+    let has_triggers_section = skill_content.contains("## Triggers") || skill_content.contains("## triggers");
+
+    if !has_triggers_section {
+        warnings.push(Warning {
+            rule: "missing_section".to_string(),
+            message: "Skill is missing recommended '## Triggers' section".to_string(),
+            recommendation: Some("Add a '## Triggers' section listing keywords that activate this skill".to_string()),
+        });
+    }
+}
+
+/// T059: Validate allowed-tools field syntax
+fn validate_allowed_tools(frontmatter: &serde_yaml::Value, violations: &mut Vec<Violation>) {
+    if let Some(allowed_tools) = frontmatter.get("allowed-tools") {
+        // Check if it's an array
+        if !allowed_tools.is_sequence() {
+            violations.push(Violation {
+                rule: "invalid_allowed_tools".to_string(),
+                message: "'allowed-tools' must be an array/list".to_string(),
+                fix_suggestion: Some("Use YAML array syntax: allowed-tools: [Read, Grep]".to_string()),
+                line_number: None,
+            });
+        }
+    }
+}
+
+/// T060: Detect common typos in frontmatter
+fn detect_common_typos(frontmatter: &serde_yaml::Value, warnings: &mut Vec<Warning>) {
+    // Check for 'trigger' (singular) instead of 'triggers'
+    if frontmatter.get("trigger").is_some() {
+        warnings.push(Warning {
+            rule: "possible_typo".to_string(),
+            message: "Found 'trigger' field, did you mean 'triggers'?".to_string(),
+            recommendation: Some("Use 'triggers' (plural) for the triggers field".to_string()),
+        });
+    }
+
+    // Check for 'tool' instead of 'allowed-tools'
+    if frontmatter.get("tool").is_some() || frontmatter.get("tools").is_some() {
+        warnings.push(Warning {
+            rule: "possible_typo".to_string(),
+            message: "Found 'tool' or 'tools' field, did you mean 'allowed-tools'?".to_string(),
+            recommendation: Some("Use 'allowed-tools' for specifying permitted tools".to_string()),
+        });
     }
 }
 
@@ -34,10 +114,118 @@ fn calculate_spec_score(violations: &[Violation], warnings: &[Warning]) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_yaml;
+
+    // T063: Test missing name field → violation
+    #[test]
+    fn test_missing_name_field_violation() {
+        let frontmatter_yaml = "description: Test skill";
+        let frontmatter: serde_yaml::Value = serde_yaml::from_str(frontmatter_yaml).unwrap();
+        let skill_content = "# Test Skill\n\nThis is a test.";
+
+        let result = validate_skill(skill_content, &frontmatter);
+
+        assert!(result.violations.iter().any(|v| v.rule == "missing_required_field" && v.message.contains("name")));
+        assert!(result.score < 100);
+    }
+
+    // T064: Test missing description field → violation
+    #[test]
+    fn test_missing_description_field_violation() {
+        let frontmatter_yaml = "name: test-skill";
+        let frontmatter: serde_yaml::Value = serde_yaml::from_str(frontmatter_yaml).unwrap();
+        let skill_content = "# Test Skill\n\nThis is a test.";
+
+        let result = validate_skill(skill_content, &frontmatter);
+
+        assert!(result.violations.iter().any(|v| v.rule == "missing_required_field" && v.message.contains("description")));
+        assert!(result.score < 100);
+    }
+
+    // T065: Test missing Triggers section → warning
+    #[test]
+    fn test_missing_triggers_section_warning() {
+        let frontmatter_yaml = "name: test-skill\ndescription: Test description";
+        let frontmatter: serde_yaml::Value = serde_yaml::from_str(frontmatter_yaml).unwrap();
+        let skill_content = "# Test Skill\n\n## Usage notes\n\nSome notes.";
+
+        let result = validate_skill(skill_content, &frontmatter);
+
+        assert!(result.warnings.iter().any(|w| w.rule == "missing_section" && w.message.contains("Triggers")));
+    }
+
+    // T066: Test malformed allowed-tools → violation
+    #[test]
+    fn test_malformed_allowed_tools_violation() {
+        let frontmatter_yaml = "name: test-skill\ndescription: Test\nallowed-tools: not_an_array";
+        let frontmatter: serde_yaml::Value = serde_yaml::from_str(frontmatter_yaml).unwrap();
+        let skill_content = "# Test";
+
+        let result = validate_skill(skill_content, &frontmatter);
+
+        assert!(result.violations.iter().any(|v| v.rule == "invalid_allowed_tools"));
+    }
+
+    // T067: Test valid skill → score 100, no violations
+    #[test]
+    fn test_valid_skill_perfect_score() {
+        let frontmatter_yaml = r#"
+name: test-skill
+description: A test skill
+allowed-tools:
+  - Read
+  - Grep
+"#;
+        let frontmatter: serde_yaml::Value = serde_yaml::from_str(frontmatter_yaml).unwrap();
+        let skill_content = r#"# Test Skill
+
+## Triggers
+
+- test
+- skill
+
+## Usage notes
+
+Use this skill for testing.
+"#;
+
+        let result = validate_skill(skill_content, &frontmatter);
+
+        assert_eq!(result.violations.len(), 0);
+        assert_eq!(result.warnings.len(), 0);
+        assert_eq!(result.score, 100);
+    }
 
     #[test]
     fn test_calculate_spec_score_no_issues() {
         let score = calculate_spec_score(&[], &[]);
         assert_eq!(score, 100);
+    }
+
+    #[test]
+    fn test_calculate_spec_score_with_violations() {
+        let violations = vec![
+            Violation {
+                rule: "test".to_string(),
+                message: "test".to_string(),
+                fix_suggestion: None,
+                line_number: None,
+            }
+        ];
+        let score = calculate_spec_score(&violations, &[]);
+        assert_eq!(score, 80); // 100 - (1 * 20) = 80
+    }
+
+    #[test]
+    fn test_calculate_spec_score_with_warnings() {
+        let warnings = vec![
+            Warning {
+                rule: "test".to_string(),
+                message: "test".to_string(),
+                recommendation: None,
+            }
+        ];
+        let score = calculate_spec_score(&[], &warnings);
+        assert_eq!(score, 95); // 100 - (1 * 5) = 95
     }
 }

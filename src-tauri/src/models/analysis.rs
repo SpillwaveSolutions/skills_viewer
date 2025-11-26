@@ -67,6 +67,8 @@ pub struct PDAAnalysis {
     pub tier_breakdown: TierBreakdown,
     pub recommendations: Vec<String>,
     pub suggested_structure: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ai_insights: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -127,8 +129,229 @@ pub struct BrokenLink {
 pub struct CLIDetectionResult {
     pub claude_available: bool,
     pub opencode_available: bool,
+    pub gemini_available: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claude_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub opencode_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gemini_path: Option<String>,
+}
+
+/// Cached analysis result with expiry timestamp
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CachedResult {
+    pub result: SkillAnalysisResult,
+    pub expires_at: DateTime<Utc>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    #[test]
+    fn test_analysis_status_serialization() {
+        let status = AnalysisStatus::Running;
+        let json = serde_json::to_string(&status).unwrap();
+        assert_eq!(json, "\"running\"");
+
+        let status: AnalysisStatus = serde_json::from_str(&json).unwrap();
+        assert_eq!(status, AnalysisStatus::Running);
+    }
+
+    #[test]
+    fn test_risk_level_serialization() {
+        let level = RiskLevel::Critical;
+        let json = serde_json::to_string(&level).unwrap();
+        assert_eq!(json, "\"critical\"");
+
+        let level: RiskLevel = serde_json::from_str(&json).unwrap();
+        assert_eq!(level, RiskLevel::Critical);
+    }
+
+    #[test]
+    fn test_skill_analysis_result_serialization() {
+        let result = SkillAnalysisResult {
+            analysis_id: "test-123".to_string(),
+            skill_name: "test-skill".to_string(),
+            skill_path: "/path/to/skill".to_string(),
+            timestamp: Utc::now(),
+            status: AnalysisStatus::Completed,
+            progress: 100,
+            spec_compliance: None,
+            pda_analysis: None,
+            security_review: None,
+            trigger_suggestions: None,
+            link_validation: None,
+            error: None,
+        };
+
+        let json = serde_json::to_string(&result).unwrap();
+        let deserialized: SkillAnalysisResult = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.analysis_id, "test-123");
+        assert_eq!(deserialized.skill_name, "test-skill");
+        assert_eq!(deserialized.status, AnalysisStatus::Completed);
+        assert_eq!(deserialized.progress, 100);
+    }
+
+    #[test]
+    fn test_spec_compliance_full_serialization() {
+        let compliance = SpecCompliance {
+            score: 85,
+            violations: vec![
+                Violation {
+                    rule: "missing_name".to_string(),
+                    message: "Skill is missing required 'name' field".to_string(),
+                    fix_suggestion: Some("Add 'name: my-skill' to frontmatter".to_string()),
+                    line_number: Some(1),
+                },
+            ],
+            warnings: vec![
+                Warning {
+                    rule: "missing_triggers".to_string(),
+                    message: "No triggers section found".to_string(),
+                    recommendation: Some("Add ## Triggers section".to_string()),
+                },
+            ],
+        };
+
+        let json = serde_json::to_string(&compliance).unwrap();
+        let deserialized: SpecCompliance = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.score, 85);
+        assert_eq!(deserialized.violations.len(), 1);
+        assert_eq!(deserialized.violations[0].rule, "missing_name");
+        assert_eq!(deserialized.warnings.len(), 1);
+    }
+
+    #[test]
+    fn test_pda_analysis_serialization() {
+        let pda = PDAAnalysis {
+            score: 75,
+            token_estimate: 3500,
+            tier_breakdown: TierBreakdown {
+                metadata_tokens: 200,
+                orchestrator_tokens: 1500,
+                resource_tokens: 1800,
+            },
+            recommendations: vec![
+                "Move detailed examples to references/ directory".to_string(),
+            ],
+            suggested_structure: vec![
+                "skill.md (orchestrator, ~1500 tokens)".to_string(),
+                "references/examples.md (~1800 tokens)".to_string(),
+            ],
+            ai_insights: None,
+        };
+
+        let json = serde_json::to_string(&pda).unwrap();
+        let deserialized: PDAAnalysis = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.score, 75);
+        assert_eq!(deserialized.token_estimate, 3500);
+        assert_eq!(deserialized.tier_breakdown.metadata_tokens, 200);
+        assert_eq!(deserialized.recommendations.len(), 1);
+    }
+
+    #[test]
+    fn test_security_review_serialization() {
+        let review = SecurityReview {
+            score: 60,
+            unused_permissions: vec!["Write".to_string()],
+            high_risk_permissions: vec![
+                RiskFlag {
+                    permission: "Bash".to_string(),
+                    risk_level: RiskLevel::High,
+                    explanation: "Bash with Write can modify files".to_string(),
+                    mitigation: Some("Remove Write permission if not needed".to_string()),
+                },
+            ],
+            minimum_required: vec!["Read".to_string(), "Grep".to_string()],
+        };
+
+        let json = serde_json::to_string(&review).unwrap();
+        let deserialized: SecurityReview = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.score, 60);
+        assert_eq!(deserialized.unused_permissions.len(), 1);
+        assert_eq!(deserialized.high_risk_permissions[0].risk_level, RiskLevel::High);
+    }
+
+    #[test]
+    fn test_cli_detection_result_serialization() {
+        let detection = CLIDetectionResult {
+            claude_available: true,
+            opencode_available: false,
+            gemini_available: false,
+            claude_path: Some("/usr/local/bin/claude".to_string()),
+            opencode_path: None,
+            gemini_path: None,
+        };
+
+        let json = serde_json::to_string(&detection).unwrap();
+        let deserialized: CLIDetectionResult = serde_json::from_str(&json).unwrap();
+
+        assert!(deserialized.claude_available);
+        assert!(!deserialized.opencode_available);
+        assert!(!deserialized.gemini_available);
+        assert_eq!(deserialized.claude_path.as_deref(), Some("/usr/local/bin/claude"));
+        assert!(deserialized.opencode_path.is_none());
+        assert!(deserialized.gemini_path.is_none());
+    }
+
+    #[test]
+    fn test_cached_result_serialization() {
+        let now = Utc::now();
+        let cached = CachedResult {
+            result: SkillAnalysisResult {
+                analysis_id: "cached-123".to_string(),
+                skill_name: "cached-skill".to_string(),
+                skill_path: "/path".to_string(),
+                timestamp: now,
+                status: AnalysisStatus::Completed,
+                progress: 100,
+                spec_compliance: None,
+                pda_analysis: None,
+                security_review: None,
+                trigger_suggestions: None,
+                link_validation: None,
+                error: None,
+            },
+            expires_at: now + chrono::Duration::hours(24),
+        };
+
+        let json = serde_json::to_string(&cached).unwrap();
+        let deserialized: CachedResult = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.result.analysis_id, "cached-123");
+        assert!(deserialized.expires_at > now);
+    }
+
+    #[test]
+    fn test_optional_fields_not_serialized_when_none() {
+        let result = SkillAnalysisResult {
+            analysis_id: "test".to_string(),
+            skill_name: "test".to_string(),
+            skill_path: "/test".to_string(),
+            timestamp: Utc::now(),
+            status: AnalysisStatus::Running,
+            progress: 50,
+            spec_compliance: None,
+            pda_analysis: None,
+            security_review: None,
+            trigger_suggestions: None,
+            link_validation: None,
+            error: None,
+        };
+
+        let json = serde_json::to_string(&result).unwrap();
+
+        // Verify optional fields are not present in JSON
+        assert!(!json.contains("spec_compliance"));
+        assert!(!json.contains("pda_analysis"));
+        assert!(!json.contains("security_review"));
+        assert!(!json.contains("error"));
+    }
 }

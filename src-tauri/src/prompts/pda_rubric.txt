@@ -1,0 +1,97 @@
+You are an expert in Anthropic's Progressive Disclosure Architecture (PDA) for Claude Code skills.
+
+Your task is to perform a detailed PDA compliance analysis for the skill provided below. A script-based preliminary analysis has already been performed - use these results as a foundation and enhance them with your AI-powered insights.
+
+## Preliminary Script-Based Analysis
+
+{SCRIPT_ANALYSIS}
+
+## Skill Content to Analyze
+
+---
+{SKILL_CONTENT}
+---
+
+## Analysis Requirements
+
+Please provide a comprehensive JSON response with the following structure:
+
+```json
+{
+  "score": <number 0-100>,
+  "token_estimate": <number>,
+  "tier_breakdown": {
+    "metadata_tokens": <number>,
+    "orchestrator_tokens": <number>,
+    "resource_tokens": <number>
+  },
+  "recommendations": [
+    "Specific actionable recommendation 1",
+    "Specific actionable recommendation 2"
+  ],
+  "suggested_structure": [
+    "skill.md (orchestrator tier, ~X tokens)",
+    "references/file1.md (~Y tokens)",
+    "references/file2.md (~Z tokens)"
+  ],
+  "ai_insights": [
+    "AI-powered insight about token efficiency",
+    "AI-powered insight about PDA structure",
+    "AI-powered insight about lazy loading opportunities"
+  ]
+}
+```
+
+## Scoring Rubric (0-100 scale)
+
+**Token Efficiency (40 points)**:
+- 0-2000 tokens total: 40 points (excellent)
+- 2001-3500 tokens: 30 points (good)
+- 3501-5000 tokens: 20 points (acceptable)
+- 5001-7500 tokens: 10 points (needs splitting)
+- 7500+ tokens: 0 points (critical - must split)
+
+**Tier Structure (30 points)**:
+- Metadata tier (frontmatter): Well-structured (10 pts)
+- Orchestrator tier (main skill.md): Clear, concise instructions (10 pts)
+- Resource tier (references/): Proper lazy loading of details (10 pts)
+
+**Lazy Loading (20 points)**:
+- Resources properly separated: 10 points
+- No inline large code blocks in orchestrator: 5 points
+- References linked but not inlined: 5 points
+
+**Metadata Quality (10 points)**:
+- Complete frontmatter (name, description, triggers): 5 points
+- Proper tool permissions (not overly broad): 5 points
+
+## AI Insights Guidelines
+
+Focus your AI insights on:
+
+1. **Token optimization opportunities**: Identify verbose sections that could be condensed
+2. **Structural improvements**: Suggest better PDA tier organization
+3. **Lazy loading patterns**: Point out content that should move to references/
+4. **Example quality**: Assess if examples are appropriately sized and placed
+5. **Readability vs efficiency**: Balance between clarity and token count
+
+## Important Notes
+
+- **Be specific**: Don't just say "move to references/" - specify WHAT content and WHY
+- **Be actionable**: Recommendations should be clear enough to implement immediately
+- **Compare with script analysis**: Your AI insights should ADD VALUE beyond the script's calculations
+- **Token estimates**: Validate the script's token estimates and adjust if significantly off
+- **Return ONLY valid JSON**: No markdown code blocks, no explanatory text before or after the JSON
+
+## Example AI Insights (for inspiration)
+
+```json
+"ai_insights": [
+  "The 'Advanced Usage' section (lines 45-120) contains 850 tokens of detailed examples that should move to references/advanced-usage.md. This would reduce orchestrator tier by 40% while maintaining clarity through lazy loading.",
+  "Frontmatter is complete but 'allowed-tools' includes Write, Bash, and Edit together - this is a high-risk combination. Consider if Write is truly needed or if Edit alone suffices.",
+  "The skill uses inline code blocks for 5 complete examples (totaling 1200 tokens). Extract these to references/examples/ directory with one-line links in the orchestrator tier.",
+  "Token efficiency is good (2800 total) but 60% is in the orchestrator tier. PDA best practice is ~50% orchestrator, ~50% resources. Move API reference tables to references/api-reference.md."
+]
+```
+
+**CRITICAL**: Return ONLY the JSON object. No markdown code fences. No explanatory text. Just raw JSON.
