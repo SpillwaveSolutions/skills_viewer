@@ -239,6 +239,76 @@ Provide JSON with:
 
 **Priority**: P2
 
+### FR-009: Markdown Report Output
+
+**Requirement**: Each analyzer shall generate standalone markdown reports with embedded JSON
+
+**Details**:
+
+- Each analyzer outputs a self-contained markdown file
+- Markdown includes human-readable findings and fix suggestions
+- Markdown ends with a JSON code block containing structured data
+- Reports display progressively as each analyzer completes
+- Composite report concatenates all individual analyzer reports
+
+**Markdown Format**:
+
+```markdown
+## [Analyzer Name] Analysis
+
+**Status**: [Pass/Warning/Fail]
+**Score**: [0-100]
+
+### Findings
+
+- Finding 1...
+- Finding 2...
+
+### Suggestions
+
+1. **Issue**: [description]
+   **Fix**: [how to fix]
+   **Location**: [file:line if applicable]
+
+---
+
+\`\`\`json
+{
+"analyzer": "[analyzer_name]",
+"score": [0-100],
+"data": { ... }
+}
+\`\`\`
+```
+
+**Priority**: P1
+
+### FR-010: Composite Report Generation
+
+**Requirement**: System shall generate a composite markdown report combining all analyzer outputs
+
+**Details**:
+
+- Concatenate all individual analyzer reports with separators
+- Include summary section with overall score and issue counts
+- Include "Quick Fix" section with copy-paste instructions for Claude Code
+- Report is designed for skill developers to share with AI assistants
+
+**Priority**: P1
+
+### FR-011: Progressive Report Display
+
+**Requirement**: System shall display analyzer reports as they complete (streaming)
+
+**Details**:
+
+- Frontend polls for individual analyzer status
+- Display each analyzer's markdown as soon as it completes
+- Don't wait for all analyzers to finish before showing results
+- Show checklist of analyzer progress with timing
+
+**Priority**: P1
+
 ### FR-007: Async Analysis Architecture
 
 **Requirement**: System shall execute analysis asynchronously without blocking UI
