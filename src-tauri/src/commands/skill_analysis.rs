@@ -1,9 +1,10 @@
 // Feature 021: Skill Analysis Tauri Commands
 // Provides async commands for skill evaluation and PDA analysis
 
-use crate::analyzers::{link_validator, pda_scorer, spec_validator};
+use crate::analyzers::{link_validator, pda_scorer, permissions_analyzer, spec_validator, trigger_analyzer};
 use crate::models::analysis::{
-    CLIDetectionResult as ModelCLIDetectionResult, LinkValidation, PDAAnalysis, SpecCompliance,
+    CLIDetectionResult as ModelCLIDetectionResult, LinkValidation, PDAAnalysis, SecurityReview,
+    SpecCompliance, TriggerSuggestion,
 };
 use crate::utils::cli_executor;
 use crate::utils::yaml_parser;
@@ -108,6 +109,26 @@ pub async fn validate_skill_links(
     }
 
     link_validator::validate_links(&skill_content, &skill_path).await
+}
+
+/// Analyze skill permissions for security risks
+/// Checks for high-risk tools, dangerous combinations, and unused permissions
+#[tauri::command]
+pub fn analyze_permissions(
+    allowed_tools: Vec<String>,
+    skill_content: String,
+) -> Result<SecurityReview, String> {
+    Ok(permissions_analyzer::analyze_permissions(&allowed_tools, &skill_content))
+}
+
+/// Suggest trigger keywords based on skill content analysis
+/// Returns suggestions with relevance scores and explanations
+#[tauri::command]
+pub fn suggest_triggers(
+    skill_content: String,
+    current_triggers: Vec<String>,
+) -> Result<Vec<TriggerSuggestion>, String> {
+    trigger_analyzer::suggest_triggers(&skill_content, &current_triggers)
 }
 
 #[cfg(test)]
