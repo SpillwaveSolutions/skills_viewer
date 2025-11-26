@@ -43,6 +43,18 @@ interface TierBreakdown {
   resource_tokens: number;
 }
 
+interface LinkValidation {
+  total_links: number;
+  valid_links: number;
+  broken_links: BrokenLink[];
+}
+
+interface BrokenLink {
+  url: string;
+  line_number: number;
+  error: string;
+}
+
 // Background analysis job status
 type AnalysisJobStatus = 'running' | 'completed' | 'failed';
 
@@ -65,6 +77,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
   const [quickPdaAnalysis, setQuickPdaAnalysis] = useState<PDAAnalysis | null>(null);
   const [detailedPdaAnalysis, setDetailedPdaAnalysis] = useState<PDAAnalysis | null>(null);
   const [specCompliance, setSpecCompliance] = useState<SpecCompliance | null>(null);
+  const [linkValidation, setLinkValidation] = useState<LinkValidation | null>(null);
 
   // Background job tracking
   const [backgroundJob, setBackgroundJob] = useState<{
@@ -94,6 +107,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
       setQuickPdaAnalysis(null);
       setDetailedPdaAnalysis(null);
     }
+    setLinkValidation(null); // Reset link validation on skill change
     setError(null);
   }, [skill.name, getCachedAnalysis]);
 
@@ -148,6 +162,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
       clearCache(skill.name); // Clears both quick and detailed analyses
       setQuickPdaAnalysis(null);
       setDetailedPdaAnalysis(null);
+      setLinkValidation(null);
       setBackgroundJob(null);
     }
 
@@ -155,15 +170,23 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     setError(null);
 
     try {
-      // Step 1: Run quick analyses in parallel (spec + quick PDA)
-      const [specResult, quickPdaResult] = await Promise.all([
+      // Extract skill directory from path (parent of skill.md)
+      const skillDir = skill.path.substring(0, skill.path.lastIndexOf('/'));
+
+      // Step 1: Run quick analyses in parallel (spec + quick PDA + link validation)
+      const [specResult, quickPdaResult, linkResult] = await Promise.all([
         invoke<SpecCompliance>('validate_skill', { skillContent: skill.content }),
         invoke<PDAAnalysis>('analyze_pda', { skillContent: skill.content }),
+        invoke<LinkValidation>('validate_skill_links', {
+          skillContent: skill.content,
+          skillDir: skillDir,
+        }),
       ]);
 
       // Step 2: Display quick results immediately
       setSpecCompliance(specResult);
       setQuickPdaAnalysis(quickPdaResult);
+      setLinkValidation(linkResult);
       setCachedAnalysis(skill.name, specResult, quickPdaResult);
       setLoading(false);
 
@@ -352,6 +375,65 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     </div>
   );
 
+  const renderLinkValidation = (validation: LinkValidation) => (
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">🔗 Link Validation</h3>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-600">
+            {validation.valid_links}/{validation.total_links} valid
+          </span>
+          {validation.broken_links.length === 0 ? (
+            <span className="text-green-600 font-bold text-lg">✓</span>
+          ) : (
+            <span className="text-red-600 font-bold text-lg">
+              {validation.broken_links.length} broken
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* All Links Valid */}
+      {validation.broken_links.length === 0 && validation.total_links > 0 && (
+        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+          <p className="text-sm text-green-700">
+            ✓ All {validation.total_links} link{validation.total_links !== 1 ? 's' : ''} are valid
+          </p>
+        </div>
+      )}
+
+      {/* No Links Found */}
+      {validation.total_links === 0 && (
+        <div className="bg-gray-50 border-l-4 border-gray-300 p-4 rounded">
+          <p className="text-sm text-gray-600">No links found in skill content</p>
+        </div>
+      )}
+
+      {/* Broken Links */}
+      {validation.broken_links.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-red-700 mb-2">
+            Broken Links ({validation.broken_links.length})
+          </h4>
+          <div className="space-y-2">
+            {validation.broken_links.map((link, idx) => (
+              <div key={idx} className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                <div className="flex items-start">
+                  <span className="text-red-600 font-bold mr-2">✗</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-mono text-red-800">{link.url}</p>
+                    <p className="text-xs text-red-600 mt-1">{link.error}</p>
+                    <p className="text-xs text-gray-500 mt-1">Line {link.line_number}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="p-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -508,6 +590,9 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
         {!loading && specCompliance && (
           <div className="space-y-6">
             {renderSpecCompliance(specCompliance)}
+
+            {/* Link Validation (always shown when available) */}
+            {linkValidation && renderLinkValidation(linkValidation)}
 
             {/* Quick Analysis View */}
             {activeView === 'quick' &&

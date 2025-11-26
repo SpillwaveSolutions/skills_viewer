@@ -24,7 +24,8 @@ pub fn run() {
             commands::validate_skill,
             commands::analyze_pda,
             commands::start_detailed_pda_analysis,
-            commands::get_pda_analysis_status
+            commands::get_pda_analysis_status,
+            commands::validate_skill_links
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

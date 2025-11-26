@@ -1,10 +1,13 @@
 // Feature 021: Skill Analysis Tauri Commands
 // Provides async commands for skill evaluation and PDA analysis
 
+use crate::analyzers::{link_validator, pda_scorer, spec_validator};
+use crate::models::analysis::{
+    CLIDetectionResult as ModelCLIDetectionResult, LinkValidation, PDAAnalysis, SpecCompliance,
+};
 use crate::utils::cli_executor;
 use crate::utils::yaml_parser;
-use crate::analyzers::{spec_validator, pda_scorer};
-use crate::models::analysis::{CLIDetectionResult as ModelCLIDetectionResult, SpecCompliance, PDAAnalysis};
+use std::path::PathBuf;
 
 /// Detect available CLI tools (Claude/OpenCode/Gemini)
 /// Returns detection status with paths if available
@@ -89,6 +92,22 @@ pub fn get_pda_analysis_status(
         })),
         None => Err(format!("Analysis ID not found: {}", analysis_id)),
     }
+}
+
+/// Validate links in skill content
+/// Checks that referenced files exist relative to the skill directory
+#[tauri::command]
+pub async fn validate_skill_links(
+    skill_content: String,
+    skill_dir: String,
+) -> Result<LinkValidation, String> {
+    let skill_path = PathBuf::from(&skill_dir);
+
+    if !skill_path.exists() {
+        return Err(format!("Skill directory does not exist: {}", skill_dir));
+    }
+
+    link_validator::validate_links(&skill_content, &skill_path).await
 }
 
 #[cfg(test)]
