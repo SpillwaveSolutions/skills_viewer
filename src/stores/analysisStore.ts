@@ -41,8 +41,15 @@ interface AnalysisCache {
   [skillName: string]: CachedAnalysis;
 }
 
+export type AnalysisTaskStatus = 'idle' | 'running' | 'completed' | 'error';
+
 interface AnalysisState {
   cache: AnalysisCache;
+
+  // Analysis task status (for LED indicator)
+  analysisStatus: AnalysisTaskStatus;
+  currentSkillName: string | null;
+  analysisError: string | null;
 
   // Cache operations
   getCachedAnalysis: (skillName: string) => CachedAnalysis | null;
@@ -59,12 +66,21 @@ interface AnalysisState {
 
   hasCached: (skillName: string) => boolean;
   clearCache: (skillName?: string) => void;
+
+  // Analysis status operations
+  setAnalysisRunning: (skillName: string) => void;
+  setAnalysisCompleted: () => void;
+  setAnalysisError: (error: string) => void;
+  clearAnalysisStatus: () => void;
 }
 
 export const useAnalysisStore = create<AnalysisState>()(
   persist(
     (set, get) => ({
       cache: {},
+      analysisStatus: 'idle',
+      currentSkillName: null,
+      analysisError: null,
 
       getCachedAnalysis: (skillName: string) => {
         const cached = get().cache[skillName];
@@ -143,10 +159,48 @@ export const useAnalysisStore = create<AnalysisState>()(
           set({ cache: {} });
         }
       },
+
+      // Analysis status operations (for LED indicator)
+      setAnalysisRunning: (skillName: string) => {
+        set({
+          analysisStatus: 'running',
+          currentSkillName: skillName,
+          analysisError: null,
+        });
+      },
+
+      setAnalysisCompleted: () => {
+        set({
+          analysisStatus: 'completed',
+          analysisError: null,
+        });
+        // Auto-clear after 3 seconds
+        setTimeout(() => {
+          const state = get();
+          if (state.analysisStatus === 'completed') {
+            set({ analysisStatus: 'idle', currentSkillName: null });
+          }
+        }, 3000);
+      },
+
+      setAnalysisError: (error: string) => {
+        set({
+          analysisStatus: 'error',
+          analysisError: error,
+        });
+      },
+
+      clearAnalysisStatus: () => {
+        set({
+          analysisStatus: 'idle',
+          currentSkillName: null,
+          analysisError: null,
+        });
+      },
     }),
     {
       name: 'analysis-cache-storage',
-      partialize: (state) => ({ cache: state.cache }),
+      partialize: (state) => ({ cache: state.cache }), // Don't persist status, only cache
     }
   )
 );
