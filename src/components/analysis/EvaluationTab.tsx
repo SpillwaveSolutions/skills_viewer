@@ -43,6 +43,38 @@ interface TierBreakdown {
   resource_tokens: number;
 }
 
+interface LinkValidation {
+  total_links: number;
+  valid_links: number;
+  broken_links: BrokenLink[];
+}
+
+interface BrokenLink {
+  url: string;
+  line_number: number;
+  error: string;
+}
+
+interface SecurityReview {
+  score: number;
+  unused_permissions: string[];
+  high_risk_permissions: RiskFlag[];
+  minimum_required: string[];
+}
+
+interface RiskFlag {
+  permission: string;
+  risk_level: 'critical' | 'high' | 'medium' | 'low';
+  explanation: string;
+  mitigation?: string;
+}
+
+interface TriggerSuggestion {
+  keyword: string;
+  relevance_score: number;
+  explanation: string;
+}
+
 // Background analysis job status
 type AnalysisJobStatus = 'running' | 'completed' | 'failed';
 
@@ -65,6 +97,9 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
   const [quickPdaAnalysis, setQuickPdaAnalysis] = useState<PDAAnalysis | null>(null);
   const [detailedPdaAnalysis, setDetailedPdaAnalysis] = useState<PDAAnalysis | null>(null);
   const [specCompliance, setSpecCompliance] = useState<SpecCompliance | null>(null);
+  const [linkValidation, setLinkValidation] = useState<LinkValidation | null>(null);
+  const [securityReview, setSecurityReview] = useState<SecurityReview | null>(null);
+  const [triggerSuggestions, setTriggerSuggestions] = useState<TriggerSuggestion[] | null>(null);
 
   // Background job tracking
   const [backgroundJob, setBackgroundJob] = useState<{
@@ -94,6 +129,9 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
       setQuickPdaAnalysis(null);
       setDetailedPdaAnalysis(null);
     }
+    setLinkValidation(null); // Reset link validation on skill change
+    setSecurityReview(null); // Reset security review on skill change
+    setTriggerSuggestions(null); // Reset trigger suggestions on skill change
     setError(null);
   }, [skill.name, getCachedAnalysis]);
 
@@ -148,6 +186,9 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
       clearCache(skill.name); // Clears both quick and detailed analyses
       setQuickPdaAnalysis(null);
       setDetailedPdaAnalysis(null);
+      setLinkValidation(null);
+      setSecurityReview(null);
+      setTriggerSuggestions(null);
       setBackgroundJob(null);
     }
 
@@ -155,15 +196,38 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     setError(null);
 
     try {
-      // Step 1: Run quick analyses in parallel (spec + quick PDA)
-      const [specResult, quickPdaResult] = await Promise.all([
-        invoke<SpecCompliance>('validate_skill', { skillContent: skill.content }),
-        invoke<PDAAnalysis>('analyze_pda', { skillContent: skill.content }),
-      ]);
+      // Extract skill directory from path (parent of skill.md)
+      const skillDir = skill.path.substring(0, skill.path.lastIndexOf('/'));
+
+      // Extract allowed_tools from metadata (if available)
+      const allowedTools: string[] = (skill.metadata?.['allowed-tools'] as string[]) ?? [];
+      const currentTriggers: string[] = (skill.metadata?.triggers as string[]) ?? [];
+
+      // Step 1: Run quick analyses in parallel (spec + quick PDA + link validation + security + triggers)
+      const [specResult, quickPdaResult, linkResult, securityResult, triggerResult] =
+        await Promise.all([
+          invoke<SpecCompliance>('validate_skill', { skillContent: skill.content }),
+          invoke<PDAAnalysis>('analyze_pda', { skillContent: skill.content }),
+          invoke<LinkValidation>('validate_skill_links', {
+            skillContent: skill.content,
+            skillDir: skillDir,
+          }),
+          invoke<SecurityReview>('analyze_permissions', {
+            allowedTools: allowedTools,
+            skillContent: skill.content,
+          }),
+          invoke<TriggerSuggestion[]>('suggest_triggers', {
+            skillContent: skill.content,
+            currentTriggers: currentTriggers,
+          }),
+        ]);
 
       // Step 2: Display quick results immediately
       setSpecCompliance(specResult);
       setQuickPdaAnalysis(quickPdaResult);
+      setLinkValidation(linkResult);
+      setSecurityReview(securityResult);
+      setTriggerSuggestions(triggerResult);
       setCachedAnalysis(skill.name, specResult, quickPdaResult);
       setLoading(false);
 
@@ -352,6 +416,224 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     </div>
   );
 
+  const renderLinkValidation = (validation: LinkValidation) => (
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">🔗 Link Validation</h3>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-600">
+            {validation.valid_links}/{validation.total_links} valid
+          </span>
+          {validation.broken_links.length === 0 ? (
+            <span className="text-green-600 font-bold text-lg">✓</span>
+          ) : (
+            <span className="text-red-600 font-bold text-lg">
+              {validation.broken_links.length} broken
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* All Links Valid */}
+      {validation.broken_links.length === 0 && validation.total_links > 0 && (
+        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+          <p className="text-sm text-green-700">
+            ✓ All {validation.total_links} link{validation.total_links !== 1 ? 's' : ''} are valid
+          </p>
+        </div>
+      )}
+
+      {/* No Links Found */}
+      {validation.total_links === 0 && (
+        <div className="bg-gray-50 border-l-4 border-gray-300 p-4 rounded">
+          <p className="text-sm text-gray-600">No links found in skill content</p>
+        </div>
+      )}
+
+      {/* Broken Links */}
+      {validation.broken_links.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-red-700 mb-2">
+            Broken Links ({validation.broken_links.length})
+          </h4>
+          <div className="space-y-2">
+            {validation.broken_links.map((link, idx) => (
+              <div key={idx} className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                <div className="flex items-start">
+                  <span className="text-red-600 font-bold mr-2">✗</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-mono text-red-800">{link.url}</p>
+                    <p className="text-xs text-red-600 mt-1">{link.error}</p>
+                    <p className="text-xs text-gray-500 mt-1">Line {link.line_number}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderSecurityReview = (review: SecurityReview) => {
+    const getRiskColor = (level: string) => {
+      switch (level) {
+        case 'critical':
+          return 'bg-red-100 border-red-500 text-red-800';
+        case 'high':
+          return 'bg-orange-100 border-orange-500 text-orange-800';
+        case 'medium':
+          return 'bg-yellow-100 border-yellow-500 text-yellow-800';
+        case 'low':
+          return 'bg-blue-100 border-blue-500 text-blue-800';
+        default:
+          return 'bg-gray-100 border-gray-500 text-gray-800';
+      }
+    };
+
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Security Review</h3>
+          <div
+            className={`text-2xl font-bold ${review.score >= 80 ? 'text-green-600' : review.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}
+          >
+            {review.score}/100
+          </div>
+        </div>
+
+        {/* High Risk Permissions */}
+        {review.high_risk_permissions.length > 0 && (
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-red-700 mb-2">
+              Security Risks ({review.high_risk_permissions.length})
+            </h4>
+            <div className="space-y-2">
+              {review.high_risk_permissions.map((risk, idx) => (
+                <div
+                  key={idx}
+                  className={`border-l-4 p-3 rounded ${getRiskColor(risk.risk_level)}`}
+                >
+                  <div className="flex items-start">
+                    <span className="font-bold mr-2">
+                      {risk.risk_level === 'critical' ? '!!' : '!'}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">
+                        <span className="font-mono">{risk.permission}</span> -{' '}
+                        <span className="uppercase text-xs">{risk.risk_level}</span>
+                      </p>
+                      <p className="text-xs mt-1">{risk.explanation}</p>
+                      {risk.mitigation && (
+                        <p className="text-xs mt-1 opacity-80">Mitigation: {risk.mitigation}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Unused Permissions */}
+        {review.unused_permissions.length > 0 && (
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-yellow-700 mb-2">
+              Unused Permissions ({review.unused_permissions.length})
+            </h4>
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded">
+              <p className="text-sm text-yellow-800">
+                These permissions are declared but not referenced in the skill content:
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {review.unused_permissions.map((perm, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded font-mono text-xs"
+                  >
+                    {perm}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Minimum Required */}
+        {review.minimum_required.length > 0 && (
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-blue-700 mb-2">
+              Suggested Minimum Permissions
+            </h4>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
+              <div className="flex flex-wrap gap-2">
+                {review.minimum_required.map((perm, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-1 bg-blue-200 text-blue-800 rounded font-mono text-xs"
+                  >
+                    {perm}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* All Clear */}
+        {review.high_risk_permissions.length === 0 && review.unused_permissions.length === 0 && (
+          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+            <p className="text-sm text-green-700">No security issues found</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderTriggerSuggestions = (suggestions: TriggerSuggestion[]) => (
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Trigger Suggestions</h3>
+        <span className="text-sm text-gray-500">{suggestions.length} suggestions</span>
+      </div>
+
+      {suggestions.length === 0 ? (
+        <div className="bg-gray-50 border-l-4 border-gray-300 p-4 rounded">
+          <p className="text-sm text-gray-600">No trigger suggestions available for this skill</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {suggestions.map((suggestion, idx) => (
+            <div
+              key={idx}
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-semibold text-purple-700">
+                    {suggestion.keyword}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      suggestion.relevance_score >= 90
+                        ? 'bg-green-100 text-green-700'
+                        : suggestion.relevance_score >= 75
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {suggestion.relevance_score}%
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{suggestion.explanation}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="p-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -508,6 +790,15 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
         {!loading && specCompliance && (
           <div className="space-y-6">
             {renderSpecCompliance(specCompliance)}
+
+            {/* Link Validation (always shown when available) */}
+            {linkValidation && renderLinkValidation(linkValidation)}
+
+            {/* Security Review (always shown when available) */}
+            {securityReview && renderSecurityReview(securityReview)}
+
+            {/* Trigger Suggestions (always shown when available) */}
+            {triggerSuggestions && renderTriggerSuggestions(triggerSuggestions)}
 
             {/* Quick Analysis View */}
             {activeView === 'quick' &&
