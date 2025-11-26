@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useDiagramCacheStore, BackgroundTaskStatus } from '../stores/diagramCacheStore';
+import { useDiagramCacheStore } from '../stores/diagramCacheStore';
 
 /**
  * BackgroundTaskIndicator - LED-style status indicator for background tasks
@@ -8,28 +8,34 @@ import { useDiagramCacheStore, BackgroundTaskStatus } from '../stores/diagramCac
  * - Green (pulsing): Background task is running
  * - Red: Background task encountered an error
  * - Off/Gray: No background tasks running (idle)
+ *
+ * OPTIMIZED: Uses a single shallow selector to minimize re-renders.
+ * Only re-renders when status, error, or skill name actually changes.
  */
 export const BackgroundTaskIndicator: React.FC = () => {
-  const backgroundStatus = useDiagramCacheStore((state) => state.backgroundStatus);
-  const currentlyRendering = useDiagramCacheStore((state) => state.currentlyRendering);
-  const lastError = useDiagramCacheStore((state) => state.lastError);
-  const renderQueueLength = useDiagramCacheStore((state) => state.renderQueue.length);
-  const priorityQueueLength = useDiagramCacheStore((state) => state.priorityQueue.length);
-
-  // Memoize the computed queue length to avoid re-render loops
-  const queueLength = useMemo(
-    () => renderQueueLength + priorityQueueLength,
-    [renderQueueLength, priorityQueueLength]
+  // Single optimized selector - only re-renders when these specific values change
+  const { backgroundStatus, currentlyRendering, lastError } = useDiagramCacheStore(
+    (state) => ({
+      backgroundStatus: state.backgroundStatus,
+      currentlyRendering: state.currentlyRendering,
+      lastError: state.lastError,
+    }),
+    // Shallow equality check to prevent unnecessary re-renders
+    (a, b) =>
+      a.backgroundStatus === b.backgroundStatus &&
+      a.currentlyRendering === b.currentlyRendering &&
+      a.lastError === b.lastError
   );
 
-  const getStatusConfig = (status: BackgroundTaskStatus) => {
-    switch (status) {
+  // Memoize config to avoid recalculating on every render
+  const config = useMemo(() => {
+    switch (backgroundStatus) {
       case 'running':
         return {
           color: 'bg-green-500',
           glow: 'shadow-green-500/50',
           animate: 'animate-pulse',
-          title: `Rendering: ${currentlyRendering || 'processing'} (${queueLength} in queue)`,
+          title: `Rendering: ${currentlyRendering || 'processing'}`,
         };
       case 'error':
         return {
@@ -47,11 +53,9 @@ export const BackgroundTaskIndicator: React.FC = () => {
           title: 'Background tasks idle',
         };
     }
-  };
+  }, [backgroundStatus, currentlyRendering, lastError]);
 
-  const config = getStatusConfig(backgroundStatus);
-
-  // Don't show indicator if idle and no recent activity
+  // Don't show indicator if idle
   if (backgroundStatus === 'idle') {
     return null;
   }
@@ -69,14 +73,14 @@ export const BackgroundTaskIndicator: React.FC = () => {
         aria-label={config.title}
       />
 
-      {/* Optional: Show text for running status */}
-      {backgroundStatus === 'running' && (
-        <span className="text-xs text-gray-600 bg-white/90 px-2 py-1 rounded shadow-sm">
-          {queueLength > 0 ? `${queueLength} diagrams` : 'Processing...'}
+      {/* Show current skill name when running */}
+      {backgroundStatus === 'running' && currentlyRendering && (
+        <span className="text-xs text-gray-600 bg-white/90 px-2 py-1 rounded shadow-sm max-w-[200px] truncate">
+          {currentlyRendering}
         </span>
       )}
 
-      {/* Error tooltip */}
+      {/* Error message */}
       {backgroundStatus === 'error' && (
         <span className="text-xs text-red-600 bg-white/90 px-2 py-1 rounded shadow-sm max-w-xs truncate">
           Error: {lastError?.slice(0, 50)}
