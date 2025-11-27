@@ -396,13 +396,17 @@ pub fn generate_triggers_report(suggestions: &[TriggerSuggestion], duration_ms: 
             ));
         }
 
-        markdown.push_str("\n### How to Add\n\n");
-        markdown.push_str("Add these keywords to your skill's frontmatter:\n\n");
-        markdown.push_str("```yaml\ntriggers:\n");
-        for suggestion in suggestions.iter().filter(|s| s.relevance_score >= 70) {
-            markdown.push_str(&format!("  - {}\n", suggestion.keyword));
+        markdown.push_str("\n### How to Use These Keywords\n\n");
+        markdown.push_str("The Agent Skills Spec does not have a `triggers` frontmatter property. Instead, incorporate these keywords naturally into your skill's `description` field to help agents discover your skill.\n\n");
+        markdown.push_str("**Example description incorporating keywords:**\n\n");
+        markdown.push_str("```yaml\ndescription: \"");
+        let high_relevance: Vec<_> = suggestions.iter().filter(|s| s.relevance_score >= 70).take(5).collect();
+        if !high_relevance.is_empty() {
+            markdown.push_str(&format!("Use this skill when working with {}. ",
+                high_relevance.iter().map(|s| s.keyword.as_str()).collect::<Vec<_>>().join(", ")));
         }
-        markdown.push_str("```\n\n");
+        markdown.push_str("...\"\n```\n\n");
+        markdown.push_str("**Note:** The `description` field is what agents use to determine when to load your skill. Make it descriptive and include relevant domain terms.\n\n");
     }
 
     // JSON data block

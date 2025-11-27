@@ -55,16 +55,10 @@ fn validate_frontmatter(frontmatter: &serde_yaml::Value, violations: &mut Vec<Vi
 }
 
 /// T058: Check for required sections in skill content
-fn check_required_sections(skill_content: &str, warnings: &mut Vec<Warning>) {
-    let has_triggers_section = skill_content.contains("## Triggers") || skill_content.contains("## triggers");
-
-    if !has_triggers_section {
-        warnings.push(Warning {
-            rule: "missing_section".to_string(),
-            message: "Skill is missing recommended '## Triggers' section".to_string(),
-            recommendation: Some("Add a '## Triggers' section listing keywords that activate this skill".to_string()),
-        });
-    }
+fn check_required_sections(_skill_content: &str, _warnings: &mut Vec<Warning>) {
+    // Note: The Agent Skills Spec does not mandate any specific markdown sections.
+    // The only required elements are the `name` and `description` frontmatter fields.
+    // Skills can organize their markdown body however they see fit.
 }
 
 /// T059: Validate allowed-tools field syntax
@@ -82,14 +76,14 @@ fn validate_allowed_tools(frontmatter: &serde_yaml::Value, violations: &mut Vec<
     }
 }
 
-/// T060: Detect common typos in frontmatter
+/// T060: Detect common typos and non-standard fields in frontmatter
 fn detect_common_typos(frontmatter: &serde_yaml::Value, warnings: &mut Vec<Warning>) {
-    // Check for 'trigger' (singular) instead of 'triggers'
-    if frontmatter.get("trigger").is_some() {
+    // Check for 'trigger' or 'triggers' - neither is part of the spec
+    if frontmatter.get("trigger").is_some() || frontmatter.get("triggers").is_some() {
         warnings.push(Warning {
-            rule: "possible_typo".to_string(),
-            message: "Found 'trigger' field, did you mean 'triggers'?".to_string(),
-            recommendation: Some("Use 'triggers' (plural) for the triggers field".to_string()),
+            rule: "non_standard_field".to_string(),
+            message: "Found 'trigger'/'triggers' field which is not part of the Agent Skills Spec".to_string(),
+            recommendation: Some("Incorporate trigger keywords into your 'description' field instead. Use the 'metadata' field for custom properties.".to_string()),
         });
     }
 
