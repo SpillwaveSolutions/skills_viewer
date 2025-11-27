@@ -203,20 +203,21 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     setAnalysisError: setStoreAnalysisError,
   } = useAnalysisStore();
 
-  // Load cached analysis on mount
+  // Load cached analysis on mount (with content-based invalidation)
   useEffect(() => {
-    const cached = getCachedAnalysis(skill.name);
+    const cached = getCachedAnalysis(skill.name, skill.content);
     if (cached) {
       setSpecCompliance(cached.specCompliance);
       setQuickPdaAnalysis(cached.quickPdaAnalysis);
       setDetailedPdaAnalysis(cached.detailedPdaAnalysis ?? null);
     } else {
+      // No cache or content changed - clear state
       setSpecCompliance(null);
       setQuickPdaAnalysis(null);
       setDetailedPdaAnalysis(null);
     }
     setError(null);
-  }, [skill.name, getCachedAnalysis]);
+  }, [skill.name, skill.content, getCachedAnalysis]);
 
   // Polling for background LLM analysis
   useEffect(() => {
@@ -279,7 +280,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
 
         setSpecCompliance(specResult);
         setQuickPdaAnalysis(quickPdaResult);
-        setCachedAnalysis(skill.name, specResult, quickPdaResult);
+        setCachedAnalysis(skill.name, specResult, quickPdaResult, skill.content);
         setLoading(false);
         setAnalysisCompleted();
 

@@ -70,10 +70,22 @@ interface CachedAnalysis {
   detailedPdaAnalysis?: PDAAnalysis; // LLM-based, optional
   timestamp: number;
   detailedTimestamp?: number; // Separate timestamp for detailed analysis
+  contentHash: string; // Hash of skill content for cache invalidation
 }
 
 interface AnalysisCache {
   [skillName: string]: CachedAnalysis;
+}
+
+// Simple hash function for content-based cache invalidation
+function hashContent(content: string): string {
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return hash.toString(16) + '-' + content.length;
 }
 
 interface AnalysisState {
@@ -108,13 +120,14 @@ interface AnalysisState {
   // =============================================================================
   // Cache Operations
   // =============================================================================
-  getCachedAnalysis: (skillName: string) => CachedAnalysis | null;
+  getCachedAnalysis: (skillName: string, content?: string) => CachedAnalysis | null;
 
   // Set quick analysis (spec + quick PDA)
   setCachedAnalysis: (
     skillName: string,
     specCompliance: SpecCompliance,
-    quickPdaAnalysis: PDAAnalysis
+    quickPdaAnalysis: PDAAnalysis,
+    content: string
   ) => void;
 
   // Set detailed PDA analysis (called when LLM analysis completes)
@@ -289,9 +302,15 @@ export const useAnalysisStore = create<AnalysisState>()(
       // =============================================================================
       // Cache Operations
       // =============================================================================
-      getCachedAnalysis: (skillName: string) => {
+      getCachedAnalysis: (skillName: string, content?: string) => {
         const cached = get().cache[skillName];
         if (!cached) return null;
+
+        // Check if content has changed (if content provided)
+        if (content && cached.contentHash !== hashContent(content)) {
+          // Content changed, invalidate cache
+          return null;
+        }
 
         // Check if cache is still fresh (24 hours)
         const now = Date.now();
@@ -309,17 +328,25 @@ export const useAnalysisStore = create<AnalysisState>()(
       setCachedAnalysis: (
         skillName: string,
         specCompliance: SpecCompliance,
-        quickPdaAnalysis: PDAAnalysis
+        quickPdaAnalysis: PDAAnalysis,
+        content: string
       ) => {
+        const newContentHash = hashContent(content);
+        const existingCache = get().cache[skillName];
+
+        // Only preserve detailed analysis if content hasn't changed
+        const preserveDetailed = existingCache?.contentHash === newContentHash;
+
         set((state) => ({
           cache: {
             ...state.cache,
             [skillName]: {
               specCompliance,
               quickPdaAnalysis,
-              detailedPdaAnalysis: state.cache[skillName]?.detailedPdaAnalysis, // Preserve existing detailed analysis
+              contentHash: newContentHash,
+              detailedPdaAnalysis: preserveDetailed ? state.cache[skillName]?.detailedPdaAnalysis : undefined,
               timestamp: Date.now(),
-              detailedTimestamp: state.cache[skillName]?.detailedTimestamp, // Preserve detailed timestamp
+              detailedTimestamp: preserveDetailed ? state.cache[skillName]?.detailedTimestamp : undefined,
             },
           },
         }));
