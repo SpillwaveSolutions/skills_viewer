@@ -205,7 +205,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
 
   // Load cached analysis on mount (with content-based invalidation)
   useEffect(() => {
-    const cached = getCachedAnalysis(skill.name, skill.content);
+    const cached = getCachedAnalysis(skill.name, skill.location, skill.content);
     if (cached) {
       setSpecCompliance(cached.specCompliance);
       setQuickPdaAnalysis(cached.quickPdaAnalysis);
@@ -217,7 +217,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
       setDetailedPdaAnalysis(null);
     }
     setError(null);
-  }, [skill.name, skill.content, getCachedAnalysis]);
+  }, [skill.name, skill.location, skill.content, getCachedAnalysis]);
 
   // Polling for background LLM analysis
   useEffect(() => {
@@ -231,7 +231,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
 
         if (statusResponse.status === 'completed' && statusResponse.result) {
           setDetailedPdaAnalysis(statusResponse.result);
-          cacheDetailedPdaAnalysis(skill.name, statusResponse.result);
+          cacheDetailedPdaAnalysis(skill.name, skill.location, statusResponse.result);
         }
         setBackgroundJob({ analysisId: backgroundJob.analysisId, state: statusResponse });
       } catch (err) {
@@ -243,7 +243,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
     }, 5000);
 
     return () => clearInterval(pollInterval);
-  }, [backgroundJob, skill.name, cacheDetailedPdaAnalysis]);
+  }, [backgroundJob, skill.name, skill.location, cacheDetailedPdaAnalysis]);
 
   // Polling for markdown reports
   useEffect(() => {
@@ -260,7 +260,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
   const handleAnalyzeSkill = useCallback(
     async (forceRefresh = false) => {
       if (forceRefresh) {
-        clearCache(skill.name);
+        clearCache(skill.name, skill.location);
         resetAnalysis();
         setQuickPdaAnalysis(null);
         setDetailedPdaAnalysis(null);
@@ -280,7 +280,7 @@ export const EvaluationTab: React.FC<EvaluationTabProps> = ({ skill }) => {
 
         setSpecCompliance(specResult);
         setQuickPdaAnalysis(quickPdaResult);
-        setCachedAnalysis(skill.name, specResult, quickPdaResult, skill.content);
+        setCachedAnalysis(skill.name, skill.location, specResult, quickPdaResult, skill.content);
         setLoading(false);
         setAnalysisCompleted();
 

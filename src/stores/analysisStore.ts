@@ -88,6 +88,12 @@ function hashContent(content: string): string {
   return hash.toString(16) + '-' + content.length;
 }
 
+// Generate cache key from skill name and location
+// This allows same-named skills in different locations (claude vs opencode, global vs project)
+function getCacheKey(skillName: string, location: string): string {
+  return `${location}:${skillName}`;
+}
+
 interface AnalysisState {
   cache: AnalysisCache;
 
@@ -120,21 +126,22 @@ interface AnalysisState {
   // =============================================================================
   // Cache Operations
   // =============================================================================
-  getCachedAnalysis: (skillName: string, content?: string) => CachedAnalysis | null;
+  getCachedAnalysis: (skillName: string, location: string, content?: string) => CachedAnalysis | null;
 
   // Set quick analysis (spec + quick PDA)
   setCachedAnalysis: (
     skillName: string,
+    location: string,
     specCompliance: SpecCompliance,
     quickPdaAnalysis: PDAAnalysis,
     content: string
   ) => void;
 
   // Set detailed PDA analysis (called when LLM analysis completes)
-  setDetailedPdaAnalysis: (skillName: string, detailedPdaAnalysis: PDAAnalysis) => void;
+  setDetailedPdaAnalysis: (skillName: string, location: string, detailedPdaAnalysis: PDAAnalysis) => void;
 
-  hasCached: (skillName: string) => boolean;
-  clearCache: (skillName?: string) => void;
+  hasCached: (skillName: string, location: string) => boolean;
+  clearCache: (skillName?: string, location?: string) => void;
 
   // Analysis status operations (for LED indicator)
   setAnalysisRunning: (skillName: string) => void;
@@ -302,8 +309,9 @@ export const useAnalysisStore = create<AnalysisState>()(
       // =============================================================================
       // Cache Operations
       // =============================================================================
-      getCachedAnalysis: (skillName: string, content?: string) => {
-        const cached = get().cache[skillName];
+      getCachedAnalysis: (skillName: string, location: string, content?: string) => {
+        const cacheKey = getCacheKey(skillName, location);
+        const cached = get().cache[cacheKey];
         if (!cached) return null;
 
         // Check if content has changed (if content provided)
@@ -327,12 +335,14 @@ export const useAnalysisStore = create<AnalysisState>()(
 
       setCachedAnalysis: (
         skillName: string,
+        location: string,
         specCompliance: SpecCompliance,
         quickPdaAnalysis: PDAAnalysis,
         content: string
       ) => {
+        const cacheKey = getCacheKey(skillName, location);
         const newContentHash = hashContent(content);
-        const existingCache = get().cache[skillName];
+        const existingCache = get().cache[cacheKey];
 
         // Only preserve detailed analysis if content hasn't changed
         const preserveDetailed = existingCache?.contentHash === newContentHash;
@@ -340,21 +350,22 @@ export const useAnalysisStore = create<AnalysisState>()(
         set((state) => ({
           cache: {
             ...state.cache,
-            [skillName]: {
+            [cacheKey]: {
               specCompliance,
               quickPdaAnalysis,
               contentHash: newContentHash,
-              detailedPdaAnalysis: preserveDetailed ? state.cache[skillName]?.detailedPdaAnalysis : undefined,
+              detailedPdaAnalysis: preserveDetailed ? state.cache[cacheKey]?.detailedPdaAnalysis : undefined,
               timestamp: Date.now(),
-              detailedTimestamp: preserveDetailed ? state.cache[skillName]?.detailedTimestamp : undefined,
+              detailedTimestamp: preserveDetailed ? state.cache[cacheKey]?.detailedTimestamp : undefined,
             },
           },
         }));
       },
 
-      setDetailedPdaAnalysis: (skillName: string, detailedPdaAnalysis: PDAAnalysis) => {
+      setDetailedPdaAnalysis: (skillName: string, location: string, detailedPdaAnalysis: PDAAnalysis) => {
+        const cacheKey = getCacheKey(skillName, location);
         set((state) => {
-          const existing = state.cache[skillName];
+          const existing = state.cache[cacheKey];
           if (!existing) {
             // No quick analysis yet - should not happen in normal flow
             console.warn(
@@ -366,7 +377,7 @@ export const useAnalysisStore = create<AnalysisState>()(
           return {
             cache: {
               ...state.cache,
-              [skillName]: {
+              [cacheKey]: {
                 ...existing,
                 detailedPdaAnalysis,
                 detailedTimestamp: Date.now(),
@@ -376,16 +387,18 @@ export const useAnalysisStore = create<AnalysisState>()(
         });
       },
 
-      hasCached: (skillName: string) => {
-        return get().getCachedAnalysis(skillName) !== null;
+      hasCached: (skillName: string, location: string) => {
+        const cacheKey = getCacheKey(skillName, location);
+        return get().cache[cacheKey] !== null;
       },
 
-      clearCache: (skillName?: string) => {
-        if (skillName) {
+      clearCache: (skillName?: string, location?: string) => {
+        if (skillName && location) {
           // Clear specific skill
+          const cacheKey = getCacheKey(skillName, location);
           set((state) => {
             const newCache = { ...state.cache };
-            delete newCache[skillName];
+            delete newCache[cacheKey];
             return { cache: newCache };
           });
         } else {
