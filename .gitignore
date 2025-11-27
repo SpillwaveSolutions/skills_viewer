@@ -41,7 +41,6 @@ coverage/
 
 # Tauri
 src-tauri/target/
-src-tauri/Cargo.lock
 
 # Test artifacts
 tests/e2e/test-results/
